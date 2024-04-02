@@ -1,5 +1,6 @@
 # Импортируем необходимые модули
 import glob
+import itertools
 import os
 import zipfile
 from concurrent.futures import ThreadPoolExecutor
@@ -31,11 +32,11 @@ def main():
     # Создаем пул потоков для параллельной обработки файлов
     with ThreadPoolExecutor(max_workers=min(num_cores, 8)) as ex:
         # Используем map для применения функции unzip_and_read_file к каждому ZIP-файлу
-        # и объединяем результаты в один список
-        merged_data = [item for lst in ex.map(unzip_and_read_file, glob.glob('*.zip')) for item in lst]
+        # и получаем итератор по результатам
+        merged_data_iterator = itertools.chain.from_iterable(ex.map(unzip_and_read_file, glob.glob('*.zip')))
 
     # Создаем DataFrame из объединенных данных без указания типов данных
-    data = pd.DataFrame(merged_data)
+    data = pd.DataFrame(merged_data_iterator)
 
     # Преобразуем столбец 'publishedDate' в формат datetime для дальнейшего анализа
     data['publishedDate'] = pd.to_datetime(data['publishedDate'])

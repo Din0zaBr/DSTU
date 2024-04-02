@@ -1,4 +1,4 @@
-import cProfile
+# Импортируем необходимые модули
 import glob
 import os
 import zipfile
@@ -9,43 +9,53 @@ import pandas as pd
 
 
 def main():
+    # Устанавливаем опции pandas для отображения большого количества строк и столбцов
     pd.set_option('display.max_rows', None)
     pd.set_option('display.max_columns', None)
 
+    # Функция для распаковки и чтения JSON файлов из ZIP-архивов
     def unzip_and_read_file(zip_file_path):
+        # Открываем ZIP-архив на чтение
         with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+            # Проходим по всем файлам в архиве
             for file in zip_ref.namelist():
+                # Если файл имеет расширение .json, то читаем его
                 if file.endswith('.json'):
                     with zip_ref.open(file) as f:
+                        # Используем orjson для быстрого чтения JSON и извлечения данных
                         yield from orjson.loads(f.read())['CVE_Items']
 
+    # Определяем количество ядер процессора для оптимизации параллелизма
     num_cores = os.cpu_count() or 4
 
+    # Создаем пул потоков для параллельной обработки файлов
     with ThreadPoolExecutor(max_workers=min(num_cores, 8)) as ex:
+        # Используем map для применения функции unzip_and_read_file к каждому ZIP-файлу
+        # и объединяем результаты в один список
         merged_data = [item for lst in ex.map(unzip_and_read_file, glob.glob('*.zip')) for item in lst]
 
-    # Создаем DataFrame без указания типов данных
+    # Создаем DataFrame из объединенных данных без указания типов данных
     data = pd.DataFrame(merged_data)
 
-    # Теперь мы можем изменить типы данных столбцов
-    # Например, если у нас есть столбец 'column_name', мы можем изменить его тип данных на 'category'
-    # data['column_name'] = data['column_name'].astype('category')
-
-    # Обработка и анализ данных
+    # Преобразуем столбец 'publishedDate' в формат datetime для дальнейшего анализа
     data['publishedDate'] = pd.to_datetime(data['publishedDate'])
+    # Группируем данные по дате публикации и подсчитываем количество CVE для каждой даты
     cve_per_day = data.groupby(data['publishedDate'].dt.date).size()
 
+    # Выводим количество CVE для каждой даты
     print("Number of CVEs per Day:")
     for date, count in cve_per_day.items():
         # print(f"{date}: {count}")
         print(f"{count}", end=' ')  # для удобного копирования элементов
-        print()
 
+    # Вычисляем статистику для количества CVE: минимальное, максимальное и среднее значение
     summary_stats = cve_per_day.agg(['min', 'max', 'mean'])
 
     # Данные в файл
+    # 1ую строку в файле можно удалить
     summary_stats.to_csv('summary_stats.csv')
 
 
 if __name__ == "__main__":
+    # Запускаем основную функцию
     main()

@@ -9,7 +9,6 @@ import pandas as pd
 
 
 def main():
-    # Установка настроек отображения для полного вывода данных
     pd.set_option('display.max_rows', None)
     pd.set_option('display.max_columns', None)
 
@@ -18,28 +17,24 @@ def main():
             for file in zip_ref.namelist():
                 if file.endswith('.json'):
                     with zip_ref.open(file) as f:
-                        # Использование генератора для чтения JSON по частям
                         yield from orjson.loads(f.read())['CVE_Items']
 
-    # Определение количества ядер процессора для оптимизации параллельной обработки
     num_cores = os.cpu_count() or 4
 
-    # Ограничение размера пула
     with ThreadPoolExecutor(max_workers=min(num_cores, 8)) as ex:
         merged_data = [item for lst in ex.map(unzip_and_read_file, glob.glob('*.zip')) for item in lst]
 
-    # Разархивация всех .zip файлов в текущем каталоге и чтение данных
-    with ThreadPoolExecutor(max_workers=num_cores) as ex:
-        merged_data = [item for lst in ex.map(unzip_and_read_file, glob.glob('*.zip')) for item in lst]
+    # Создаем DataFrame без указания типов данных
+    data = pd.DataFrame(merged_data)
 
-# Преобразование списка в DataFrame
-data = pd.DataFrame(merged_data)
+    # Теперь мы можем изменить типы данных столбцов
+    # Например, если у нас есть столбец 'column_name', мы можем изменить его тип данных на 'category'
+    # data['column_name'] = data['column_name'].astype('category')
 
     # Обработка и анализ данных
     data['publishedDate'] = pd.to_datetime(data['publishedDate'])
     cve_per_day = data.groupby(data['publishedDate'].dt.date).size()
 
-    # Вывод результата
     print("Number of CVEs per Day:")
     for date, count in cve_per_day.items():
         # print(f"{date}: {count}")
@@ -49,6 +44,8 @@ data = pd.DataFrame(merged_data)
     summary_stats = cve_per_day.agg(['min', 'max', 'mean'])
     date_with_max_cve = cve_per_day.idxmax()
     date_with_min_cve = cve_per_day.idxmin()
+
+    # Данные в файл
     summary_stats.to_csv('summary_stats.csv')
     date_with_max_cve.to_csv('date_with_max_cve.csv')
     date_with_min_cve.to_csv('date_with_min_cve.csv')

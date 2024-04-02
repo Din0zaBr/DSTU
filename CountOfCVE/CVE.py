@@ -30,9 +30,8 @@ with ThreadPoolExecutor(max_workers=num_cores) as ex:
 data = pd.DataFrame(merged_data)
 
 # Обработка и анализ данных
-# Использование 'category' для столбца 'publishedDate' для уменьшения использования памяти
-data['publishedDate'] = pd.to_datetime(data['publishedDate']).dt.date.astype('category')
-cve_per_day = data.groupby('publishedDate').size()
+data['publishedDate'] = pd.to_datetime(data['publishedDate'])
+cve_per_day = data.groupby(data['publishedDate'].dt.date).size()
 
 # Вывод результата
 print("Number of CVEs per Day:")

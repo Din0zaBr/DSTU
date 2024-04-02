@@ -42,14 +42,10 @@ def main():
         print()
 
     summary_stats = cve_per_day.agg(['min', 'max', 'mean'])
-    date_with_max_cve = cve_per_day.idxmax()
-    date_with_min_cve = cve_per_day.idxmin()
 
     # Данные в файл
     summary_stats.to_csv('summary_stats.csv')
-    date_with_max_cve.to_csv('date_with_max_cve.csv')
-    date_with_min_cve.to_csv('date_with_min_cve.csv')
 
 
 if __name__ == "__main__":
-    cProfile.run('main()')
+    main()

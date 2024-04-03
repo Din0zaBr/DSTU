@@ -3,6 +3,7 @@ import glob
 import itertools
 import os
 import zipfile
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 
 import orjson
@@ -42,27 +43,18 @@ def main():
     data['publishedDate'] = pd.to_datetime(data['publishedDate'])
     # Группируем данные по дате публикации и подсчитываем количество CVE для каждой даты
     cve_per_day = data.groupby(data['publishedDate'].dt.date).size()
-    cve_count = []
-    for count in cve_per_day:
-        cve_count.append(count)
 
-    def count_repeats(arr):
-        # Создаем словарь для подсчета повторений
-        count_dict = {}
-        for num in arr:
-            if num in count_dict:
-                count_dict[num] += 1
-            else:
-                count_dict[num] = 1
+    # Для работы с вычислениями создам список значений
+    cve_count_list = []
+    for cve in cve_per_day:
+        cve_count_list.append(cve)
+    print(cve_count_list)
 
-        # Создаем новый массив, где каждое число заменяется на количество его повторений
-        result = []
-        for num, count in count_dict.items():
-            result.append((num, count))
+    # Используем collections.Counter для подсчета повторений
+    cve_count_dict = Counter(cve_per_day)
 
-        return result
-
-    print(count_repeats(sorted(cve_count)))
+    # Выводим отсортированный список количества CVE (вариационный ряд) (значение, количество)
+    print(sorted(cve_count_dict.items()))
     # # Выводим количество CVE для каждой даты
     # print("Number of CVEs per Day:")
     # for date, count in cve_per_day.items.sort_values():

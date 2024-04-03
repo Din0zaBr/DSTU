@@ -42,39 +42,47 @@ def main():
     data['publishedDate'] = pd.to_datetime(data['publishedDate'])
     # Группируем данные по дате публикации и подсчитываем количество CVE для каждой даты
     cve_per_day = data.groupby(data['publishedDate'].dt.date).size()
+    cve_count = []
+    for count in cve_per_day:
+        cve_count.append(count)
 
+    def count_repeats(arr):
+        # Создаем словарь для подсчета повторений
+        count_dict = {}
+        for num in arr:
+            if num in count_dict:
+                count_dict[num] += 1
+            else:
+                count_dict[num] = 1
+
+        # Создаем новый массив, где каждое число заменяется на количество его повторений
+        result = []
+        for num, count in count_dict.items():
+            result.append((num, count))
+
+        return result
+
+    print(count_repeats(sorted(cve_count)))
     # # Выводим количество CVE для каждой даты
     # print("Number of CVEs per Day:")
-    # for date, count in cve_per_day.items():
+    # for date, count in cve_per_day.items.sort_values():
     #     # print(f"{date}: {count}")
     #     print(f"{count}", end=' ')  # для удобного копирования элементов
+    #
+    # # Вычисляем статистику для количества CVE: минимальное, максимальное и среднее значение
+    # summary_stats = cve_per_day.agg(['min', 'max', 'mean'])
+    #
+    # # Данные в файл
+    # # 1ую строку в файле можно удалить
+    # summary_stats.to_csv('summary_stats.csv')
 
-    # Вычисляем статистику для количества CVE: минимальное, максимальное и среднее значение
-    summary_stats = cve_per_day.agg(['min', 'max', 'mean'])
-
-    # Данные в файл
-    # 1ую строку в файле можно удалить
-    summary_stats.to_csv('summary_stats.csv')
-    list = []
-    for date, count in cve_per_day.items():
-        list.append(count)
-    print(list)
-
-    # Сортируем данные по возрастанию
-    cve_per_day_sorted = list.sort()
-
-    # Создаем вариационный ряд
-    variation_series = cve_per_day_sorted
-
-    # Выводим вариационный ряд
-    print("Вариационный ряд:")
-    print(variation_series)
-
-    # Сохраняем вариационный ряд в CSV-файл
-    variation_series.to_csv("variation_series.csv", header=False, index=False)
-
-    # Выводим сообщение об успешном сохранении
-    print("Вариационный ряд сохранен в файл variation_series.csv")
+    # # Упорядочиваем количество CVE по возрастанию
+    # sorted_cve_per_day = cve_per_day.sort_values()
+    #
+    # # Выводим упорядоченные значения количества CVE без даты
+    # print("Sorted CVE Counts:")
+    # for count in sorted_cve_per_day:
+    #     print(count, end=' ')
 
 
 if __name__ == "__main__":

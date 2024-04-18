@@ -2,14 +2,6 @@ import requests
 import json
 import re
 
-# Ваш API ключ от Google Cloud
-api_key = 'YOUR_API_KEY'
-
-# ID канала YouTube
-channel_id = 'UC-9-kyTW8ZkZNDHQJ6FgpwQ'
-
-# Название плейлиста
-playlist_name = 'Hans Zimmer'
 
 # Функция для получения ID плейлиста по имени
 def get_playlist_id(api_key, channel_id, playlist_name):
@@ -21,6 +13,7 @@ def get_playlist_id(api_key, channel_id, playlist_name):
             return data['items'][0]['id']['playlistId']
     return None
 
+
 # Функция для получения списка видео в плейлисте
 def get_playlist_videos(api_key, playlist_id):
     url = f"https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId={playlist_id}&maxResults=50&key={api_key}"
@@ -30,6 +23,7 @@ def get_playlist_videos(api_key, playlist_id):
         if 'items' in data:
             return data['items']
     return None
+
 
 # Функция для получения длительности видео
 def get_video_duration(video_id, api_key):
@@ -43,6 +37,7 @@ def get_video_duration(video_id, api_key):
             return convert_iso8601_to_seconds(duration)
     return None
 
+
 # Функция для преобразования длительности в формате ISO 8601 в секунды
 def convert_iso8601_to_seconds(iso8601_duration):
     match = re.match(r'PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?', iso8601_duration)
@@ -52,6 +47,12 @@ def convert_iso8601_to_seconds(iso8601_duration):
         seconds = int(match.group(3)) if match.group(3) else 0
         return hours * 3600 + minutes * 60 + seconds
     return 0
+
+
+# Запрашиваем у пользователя ввод данных
+api_key = input("Введите ваш API ключ от Google Cloud: ")
+channel_id = input("Введите ID канала YouTube: ")
+playlist_name = input("Введите название плейлиста: ")
 
 # Получаем ID плейлиста
 playlist_id = get_playlist_id(api_key, channel_id, playlist_name)

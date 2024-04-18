@@ -1,4 +1,5 @@
 import os
+from collections import Counter
 
 
 def count_seconds_from_file(file_path):
@@ -31,4 +32,12 @@ if __name__ == "__main__":
     current_directory = os.path.dirname(os.path.realpath(__file__))
     file_path = os.path.join(current_directory, 'times.txt')
     Data = count_seconds_from_file(file_path)
-    print(f"Список секунд: {Data}")
+
+    # Создаем словарь с количеством повторений каждого элемента
+    counter = Counter(Data)
+
+    # Выводим количество повторений каждого элемента
+    for element, count in counter.items():
+        print(f"Элемент: {element}, количество повторений: {count}")
+    Data = set(count_seconds_from_file(file_path))
+    print(len(Data))

@@ -10,14 +10,6 @@ from probability_theory_and_mathematical_statistics.home import (count_seconds_f
                                                                  plot_frequency_polygon)
 
 general = count_seconds_from_file()
-
-# # Создаем словарь с количеством повторений каждого элемента
-# counter = Counter(Data)
-#
-# # Выводим количество повторений каждого элемента
-# for element, count in counter.items():
-#     print(f"Элемент: {element}, количество повторений: {count}")
-print(general)
 selection = range_every_four_odd(general)
 variation_range = variation_range(selection)
 mean = calculate_mean(variation_range)

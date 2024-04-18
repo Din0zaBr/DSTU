@@ -1,82 +1,36 @@
-# Импортируем необходимые модули
-import glob
-import itertools
-import os
-import zipfile
-from collections import Counter
-from concurrent.futures import ThreadPoolExecutor
-
-import orjson
+import requests
+from bs4 import BeautifulSoup
 import pandas as pd
 
+# URL страницы с песнями Ханса Циммера
+url = "https://genius.com/artists/Hans-zimmer/songs"
 
-def main():
-    # Устанавливаем опции pandas для отображения большого количества строк и столбцов
-    pd.set_option('display.max_rows', None)
-    pd.set_option('display.max_columns', None)
+# Отправляем запрос на страницу
+response = requests.get(url)
 
-    # Функция для распаковки и чтения JSON файлов из ZIP-архивов
-    def unzip_and_read_file(zip_file_path):
-        # Открываем ZIP-архив на чтение
-        with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
-            # Проходим по всем файлам в архиве
-            for file in zip_ref.namelist():
-                # Если файл имеет расширение .json, то читаем его
-                if file.endswith('.json'):
-                    with zip_ref.open(file) as f:
-                        # Используем orjson для быстрого чтения JSON и извлечения данных
-                        yield from orjson.loads(f.read())['CVE_Items']
+# Проверяем, что запрос был успешным
+if response.status_code == 200:
+    # Парсим HTML-страницу
+    soup = BeautifulSoup(response.text, 'html.parser')
 
-    # Определяем количество ядер процессора для оптимизации параллелизма
-    num_cores = os.cpu_count() or 4
+    # Находим все элементы с названиями песен и их длительностью
+    songs = soup.find_all('div', class_='song_title')
+    durations = soup.find_all('span', class_='song_info_duration')
 
-    # Создаем пул потоков для параллельной обработки файлов
-    with ThreadPoolExecutor(max_workers=min(num_cores, 8)) as ex:
-        # Используем map для применения функции unzip_and_read_file к каждому ZIP-файлу
-        # и получаем итератор по результатам
-        merged_data_iterator = itertools.chain.from_iterable(ex.map(unzip_and_read_file, glob.glob('*.zip')))
+    # Создаем список для хранения данных о песнях
+    songs_data = []
 
-    # Создаем DataFrame из объединенных данных без указания типов данных
-    data = pd.DataFrame(merged_data_iterator)
+    # Проходим по каждой песне и извлекаем название и длительность
+    for song, duration in zip(songs, durations):
+        title = song.text.strip()
+        duration_text = duration.text.strip()
+        # Добавляем данные в список
+        songs_data.append([title, duration_text])
 
-    # Преобразуем столбец 'publishedDate' в формат datetime для дальнейшего анализа
-    data['publishedDate'] = pd.to_datetime(data['publishedDate'])
-    # Группируем данные по дате публикации и подсчитываем количество CVE для каждой даты
-    cve_per_day = data.groupby(data['publishedDate'].dt.date).size()
+    # Преобразуем список в DataFrame для удобства работы
+    df = pd.DataFrame(songs_data, columns=['Title', 'Duration'])
 
-    # Для работы с вычислениями создам список значений
-    cve_count_list = []
-    for cve in cve_per_day:
-        cve_count_list.append(cve)
-    print(cve_count_list)
-
-    # Используем collections.Counter для подсчета повторений
-    cve_count_dict = Counter(cve_per_day)
-
-    # Выводим отсортированный список количества CVE (вариационный ряд) (значение, количество)
-    print(sorted(cve_count_dict.items()))
-    # # Выводим количество CVE для каждой даты
-    # print("Number of CVEs per Day:")
-    # for date, count in cve_per_day.items.sort_values():
-    #     # print(f"{date}: {count}")
-    #     print(f"{count}", end=' ')  # для удобного копирования элементов
-    #
-    # # Вычисляем статистику для количества CVE: минимальное, максимальное и среднее значение
-    # summary_stats = cve_per_day.agg(['min', 'max', 'mean'])
-    #
-    # # Данные в файл
-    # # 1ую строку в файле можно удалить
-    # summary_stats.to_csv('summary_stats.csv')
-
-    # # Упорядочиваем количество CVE по возрастанию
-    # sorted_cve_per_day = cve_per_day.sort_values()
-    #
-    # # Выводим упорядоченные значения количества CVE без даты
-    # print("Sorted CVE Counts:")
-    # for count in sorted_cve_per_day:
-    #     print(count, end=' ')
-
-
-if __name__ == "__main__":
-    # Запускаем основную функцию
-    main()
+    # Выводим DataFrame
+    print(df)
+else:
+    print("Ошибка при получении страницы")

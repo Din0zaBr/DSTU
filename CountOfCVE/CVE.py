@@ -1,67 +1,76 @@
 import requests
 import json
-import pandas as pd
+import re
 
-# Ваш ключ API Genius
-api_key = 'vHkykJyc-MRW_7tRxW2xa86E1KZjinHeE48YUwv3PgoW3H5g4ohy-bTNkuVC8SSW'
+# Ваш API ключ от Google Cloud
+api_key = 'YOUR_API_KEY'
 
-# URL API Genius для поиска песен Ханса Циммера
-search_url = 'https://api.genius.com/search'
+# ID канала YouTube
+channel_id = 'UC-9-kyTW8ZkZNDHQJ6FgpwQ'
 
-# Параметры запроса
-params = {
-    'q': 'Hans Zimmer songs',
-    'access_token': api_key
-}
+# Название плейлиста
+playlist_name = 'Hans Zimmer'
 
-# Отправляем запрос к API Genius
-response = requests.get(search_url, params=params)
+# Функция для получения ID плейлиста по имени
+def get_playlist_id(api_key, channel_id, playlist_name):
+    url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&channelId={channel_id}&q={playlist_name}&type=playlist&key={api_key}"
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = json.loads(response.text)
+        if 'items' in data and len(data['items']) > 0:
+            return data['items'][0]['id']['playlistId']
+    return None
 
+# Функция для получения списка видео в плейлисте
+def get_playlist_videos(api_key, playlist_id):
+    url = f"https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId={playlist_id}&maxResults=50&key={api_key}"
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = json.loads(response.text)
+        if 'items' in data:
+            return data['items']
+    return None
 
-# Функция для преобразования строки с длительностью в секунды
-def convert_duration_to_seconds(duration_str):
-    """
-    Преобразует строку с длительностью в секунды.
+# Функция для получения длительности видео
+def get_video_duration(video_id, api_key):
+    url = f"https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id={video_id}&key={api_key}"
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = json.loads(response.text)
+        if 'items' in data and len(data['items']) > 0:
+            duration = data['items'][0]['contentDetails']['duration']
+            # Преобразование ISO 8601 длительности в секунды
+            return convert_iso8601_to_seconds(duration)
+    return None
 
-    :param duration_str: Строка с длительностью, например, "3:30".
-    :return: Количество секунд.
-    """
-    minutes, seconds = map(int, duration_str.split(':'))
-    return minutes * 60 + seconds
+# Функция для преобразования длительности в формате ISO 8601 в секунды
+def convert_iso8601_to_seconds(iso8601_duration):
+    match = re.match(r'PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?', iso8601_duration)
+    if match:
+        hours = int(match.group(1)) if match.group(1) else 0
+        minutes = int(match.group(2)) if match.group(2) else 0
+        seconds = int(match.group(3)) if match.group(3) else 0
+        return hours * 3600 + minutes * 60 + seconds
+    return 0
 
-
-# Проверяем, что запрос был успешным
-if response.status_code == 200:
-    # Парсим JSON-ответ
-    data = json.loads(response.text)
-
-    # Извлекаем информацию о песнях
-    songs = data['response']['hits']
-
-    # Создаем список для хранения данных о песнях
-    songs_data = []
-
-    # Проходим по каждой песне и извлекаем название и длительность
-    for song in songs:
-        title = song['result']['title']
-        # Получаем URL песни для дальнейшего запроса к API
-        song_url = song['result']['url']
-
-        # Отправляем запрос к API для получения деталей песни
-        song_details_response = requests.get(song_url, params={'access_token': api_key})
-        if song_details_response.status_code == 200:
-            song_details = json.loads(song_details_response.text)
-            # Извлекаем длительность песни
-            duration_str = song_details['response']['song']['lyrics_state']
-            # Преобразуем длительность в секунды
-            duration_seconds = convert_duration_to_seconds(duration_str)
-            # Добавляем данные в список
-            songs_data.append([title, duration_seconds])
-
-    # Преобразуем список в DataFrame для удобства работы
-    df = pd.DataFrame(songs_data, columns=['Title', 'Duration'])
-
-    # Выводим DataFrame
-    print(df)
+# Получаем ID плейлиста
+playlist_id = get_playlist_id(api_key, channel_id, playlist_name)
+if playlist_id:
+    print(f"ID плейлиста: {playlist_id}")
+    # Получаем список видео в плейлисте
+    videos = get_playlist_videos(api_key, playlist_id)
+    if videos:
+        # Открываем файл для записи
+        with open('times.txt', 'w') as file:
+            for video in videos:
+                video_id = video['snippet']['resourceId']['videoId']
+                duration = get_video_duration(video_id, api_key)
+                if duration:
+                    # Записываем название видео и его длительность в файл
+                    file.write(f"{video['snippet']['title']}: {duration} секунд\n")
+                else:
+                    print(f"Не удалось получить длительность для видео: {video['snippet']['title']}")
+    else:
+        print("Не удалось получить список видео")
 else:
-    print("Ошибка при получении данных от API Genius")
+    print("Не удалось получить ID плейлиста")

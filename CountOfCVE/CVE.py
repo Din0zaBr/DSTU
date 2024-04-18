@@ -11,6 +11,10 @@ def get_playlist_id(api_key, channel_id, playlist_name):
         data = json.loads(response.text)
         if 'items' in data and len(data['items']) > 0:
             return data['items'][0]['id']['playlistId']
+        else:
+            print("Плейлисты не найдены. Возможно, название плейлиста неверно или плейлист не существует.")
+    else:
+        print(f"Ошибка при запросе к API: {response.status_code}. Ответ: {response.text}")
     return None
 
 
@@ -22,6 +26,8 @@ def get_playlist_videos(api_key, playlist_id):
         data = json.loads(response.text)
         if 'items' in data:
             return data['items']
+    else:
+        print(f"Ошибка при запросе к API: {response.status_code}. Ответ: {response.text}")
     return None
 
 
@@ -35,6 +41,8 @@ def get_video_duration(video_id, api_key):
             duration = data['items'][0]['contentDetails']['duration']
             # Преобразование ISO 8601 длительности в секунды
             return convert_iso8601_to_seconds(duration)
+    else:
+        print(f"Ошибка при запросе к API: {response.status_code}. Ответ: {response.text}")
     return None
 
 

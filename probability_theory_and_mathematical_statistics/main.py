@@ -1,6 +1,3 @@
-import os
-from collections import Counter
-
 from probability_theory_and_mathematical_statistics.home import (count_seconds_from_file, calculate_mean,
                                                                  range_every_four_odd,
                                                                  calculate_dispersion,

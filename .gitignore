@@ -242,7 +242,7 @@ dkms.conf
 # BlueJ files
 *.ctxt
 
-# Mobile Tools for Java (J2ME)
+# Mobile Tools for java (J2ME)
 .mtj.tmp/
 
 # Package Files #
@@ -718,7 +718,7 @@ tmp/
 # CDT- autotools
 .autotools
 
-# Java annotation processor (APT)
+# java annotation processor (APT)
 .factorypath
 
 # PDT-specific (PHP Development Tools)
@@ -743,7 +743,7 @@ tmp/
 .apt_generated/
 .apt_generated_test/
 
-# Scala IDE specific (Scala & Java development for Eclipse)
+# Scala IDE specific (Scala & java development for Eclipse)
 .cache-main
 .scala_dependencies
 .worksheet

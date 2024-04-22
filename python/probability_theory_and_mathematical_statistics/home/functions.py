@@ -27,9 +27,6 @@ def count_seconds_from_file():
     return times_list[:-6]
 
 
-print(count_seconds_from_file())
-
-
 def calculate_mean(data):  # Среднее арифметическое из выборки ряда
     sum = 0
     for i in range(len(data)):

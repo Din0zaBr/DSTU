@@ -1,10 +1,10 @@
-from probability_theory_and_mathematical_statistics.home import (count_seconds_from_file, calculate_mean,
-                                                                 range_every_four_odd,
-                                                                 calculate_dispersion,
-                                                                 calculate_correct_dispersion,
-                                                                 calculate_standard_deviation,
-                                                                 variation_range, plot_histogram,
-                                                                 plot_frequency_polygon)
+from python.probability_theory_and_mathematical_statistics.home import (count_seconds_from_file, calculate_mean,
+                                                                        range_every_four_odd,
+                                                                        calculate_dispersion,
+                                                                        calculate_correct_dispersion,
+                                                                        calculate_standard_deviation,
+                                                                        variation_range, plot_histogram,
+                                                                        plot_frequency_polygon)
 
 general = count_seconds_from_file()
 selection = range_every_four_odd(general)

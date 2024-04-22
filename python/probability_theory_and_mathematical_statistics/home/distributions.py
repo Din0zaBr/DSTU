@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from collections import Counter
 
 
 def plot_frequency_polygon(data):  # Печать полигона частот

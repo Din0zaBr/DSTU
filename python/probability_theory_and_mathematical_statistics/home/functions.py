@@ -18,17 +18,20 @@ def count_seconds_from_file():
     if not os.path.exists(file_path):
         with open(file_path, 'w') as file:
             print("Наполните файл dataset.txt данными")
-        return []
+        return 0
 
     with open(file_path, 'r') as file:
         times_list = [int(line) // 100 * 60 + int(line) % 100 for line in file]
         times_list.sort()
-    return times_list
+    # не возвращаю последние 6 элементов, так как портят статистику
+    return times_list[:-6]
+
+
+print(count_seconds_from_file())
 
 
 def calculate_mean(data):  # Среднее арифметическое из выборки ряда
     sum = 0
-    print(data)
     for i in range(len(data)):
         sum += data[i]
     return sum / len(data)

@@ -347,12 +347,12 @@ for i in range(n):
     sp_pr.append(input())
 if pr_na_3(sp_pr) or pr_na_2(sp_pr):
     print('Эта грамматика является контекстно-свободной')
-    # susch_yaz(sp_pr)
-    # besp_s(sp_pr)
-    # ned_s(sp_pr)
-    # cep_pr(sp_pr)
-    # e_pr(sp_pr)
-    # lev_fact(sp_pr)
+    susch_yaz(sp_pr)
+    besp_s(sp_pr)
+    ned_s(sp_pr)
+    cep_pr(sp_pr)
+    e_pr(sp_pr)
+    lev_fact(sp_pr)
     pr_lev_rec(sp_pr)
 else:
     print("Эта грамматика не является контекстно-свободной")
@@ -371,3 +371,5 @@ else:
 # B>BA0|B1|C|E
 # C>0C11
 # D>-D1|-0|-1
+
+#

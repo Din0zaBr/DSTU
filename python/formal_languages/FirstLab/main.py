@@ -1,78 +1,164 @@
-import utils
+"""
+ Мой вариант:
+S -> aA
+S -> bA
+A -> +aB-bC
+A -> +bC-aB
+A -> +aB-aB
+A -> +bC-bC
+B -> aB
+B -> a
+C -> bC
+C -> b
+"""
+import re
+from typing import Pattern, AnyStr, Set, Mapping, List
+from utils import get_rules_from_console
 
 
-# a, b
-# A, B
-# S
+def is_left_linear(*,
+                   set_of_terminals: Set[AnyStr],
+                   set_of_non_terminals: Set[AnyStr],
+                   grammar: Mapping[AnyStr, List[AnyStr]]) -> bool:
+    """
+    Лево линейная регулярная грамматика
+    A ⇢ Bx
+    A ⇢ x
+    where A, B ∈ V and x ∈ T*
+    ---
+    Пример:
 
-# S -> aA|bA
-# A -> + aB - bC|+ bC - aB| + aB - aB| + bC - bC
-# A -> + aBC - bBC|+ bBC - aBC| + aBC - aBC| + bBC - bBC
-# B -> aB|a
-# C -> bC|b
+    S -> Ab
+    A -> Ab
+    A -> Za
+    Z -> Za
+    Z -> $
+    """
+    non_terminals = '|'.join(map(re.escape, set_of_non_terminals))
+    terminals = '|'.join(map(re.escape, set_of_terminals))
+    pattern = re.compile(fr'^({non_terminals}) -> (({non_terminals})*({terminals})+|ε)$')
+
+    return _checker(grammar=grammar, pattern=pattern)
+
+
+def is_right_linear(*,
+                    set_of_terminals: Set[AnyStr],
+                    set_of_non_terminals: Set[AnyStr],
+                    grammar: Mapping[AnyStr, List[AnyStr]]) -> bool:
+    """
+    Правая линейная регулярная грамматика
+    A ⇢ xB
+    A ⇢ x
+    where A, B ∈ V and x ∈ T*
+    ---
+    Пример:
+
+    S -> aS
+    S -> aA
+    A -> bA
+    A -> bZ
+    Z -> $
+    """
+    non_terminals = '|'.join(map(re.escape, set_of_non_terminals))
+    terminals = '|'.join(map(re.escape, set_of_terminals))
+    pattern = re.compile(fr'^({non_terminals}) -> (({terminals})+({non_terminals})*|ε)$')
+
+    return _checker(grammar=grammar, pattern=pattern)
+
+
+def is_context_sensitive(*,
+                         set_of_terminals: Set[AnyStr],
+                         set_of_non_terminals: Set[AnyStr],
+                         grammar: Mapping[AnyStr, List[AnyStr]]) -> bool:
+    """
+    Контекстно-зависимая грамматика (КЗ-грамматика, контекстная грамматика) — частный случай формальной
+    грамматики (тип 1 по иерархии Хомского), у которой левые и правые части всех продукций могут быть
+    окружены терминальными и нетерминальными символами.
+    ---
+    Пример:
+
+    S -> aAS
+    AS -> AAS
+    AAA -> ABA
+    A -> b
+    bBA -> bcdA
+    bS -> ba
+    """
+    non_terminals = '|'.join(map(re.escape, set_of_non_terminals))
+    terminals = '|'.join(map(re.escape, set_of_terminals))
+    union_of_symbols = non_terminals + "|" + terminals
+    pattern = re.compile(fr'^(({union_of_symbols})*({non_terminals})({union_of_symbols})*) -> (({union_of_symbols})+|ε)$')
+
+    return (all(len(key) <= len(value) for key, values in grammar.items() for value in values) and
+            _checker(grammar=grammar, pattern=pattern))
+
+
+def is_context_free(*,
+                    set_of_terminals: Set[AnyStr],
+                    set_of_non_terminals: Set[AnyStr],
+                    grammar: Mapping[AnyStr, List[AnyStr]]) -> bool:
+    """
+    Проверяет, что является контекстно-свободной грамматикой.
+    ---
+    Пример:
+
+    S -> aSa
+    S -> bSb
+    S -> aa
+    I -> bb
+    """
+
+    terminals = '|'.join(map(re.escape, set_of_terminals))
+    non_terminals = '|'.join(map(re.escape, set_of_non_terminals))
+    union_of_symbols = non_terminals + "|" + terminals
+
+    pattern = re.compile(rf'^({non_terminals}) -> (({union_of_symbols})*|ε)$')
+
+    return _checker(grammar=grammar, pattern=pattern)
+
+
+def _checker(grammar: Mapping[str, list[str]], pattern: Pattern[AnyStr]) -> bool:
+    """
+    В данную функцию передают саму грамматику, которую пользователь ввел с консоли и паттерн для проверки.
+    """
+    for first_half, second_half in grammar.items():
+        if not all(pattern.fullmatch(f"{first_half} -> {second_half_el}") for second_half_el in second_half):
+            return False
+    return True
+
+
 def main():
-    print(
-        "Введите терминальные символы"
-        " ('end' для окончания): "
-    )
-    terms = []
-    while True:
-        term = input("> ").strip()
-        if term == "end":
-            break
+    dictionary = get_rules_from_console("don't_remove")
+    set_of_terminals = set(input("Введите множество терминалов через пробел: ").strip().split())
+    set_of_non_terminals = set(input("Введите множество не терминалов через пробел: ").strip().split())
 
-        if len(term) == 1:
-            terms.append(term)
+    if is_left_linear(
+            set_of_terminals=set_of_terminals,
+            set_of_non_terminals=set_of_non_terminals,
+            grammar=dictionary):
+        return "Тип 3: регулярная лево линейная грамматика"
 
-    print(
-        "Введите нетерминальные символы"
-        " ('end' для окончания): "
-    )
-    non_terms = []
-    while True:
-        non_term = input("> ").strip()
-        if non_term == "end":
-            break
+    if is_right_linear(
+            set_of_terminals=set_of_terminals,
+            set_of_non_terminals=set_of_non_terminals,
+            grammar=dictionary):
+        return "Тип 3: регулярная право линейная грамматика"
 
-        if len(non_term) == 1:
-            non_terms.append(non_term)
+    if is_context_free(
+            set_of_terminals=set_of_terminals,
+            set_of_non_terminals=set_of_non_terminals,
+            grammar=dictionary):
+        return "Тип 2: контекстно-свободная грамматика"
 
-    start_symbol = input("Введите стартовый символ: ").strip()
+    if is_context_sensitive(
+            set_of_terminals=set_of_terminals,
+            set_of_non_terminals=set_of_non_terminals,
+            grammar=dictionary):
+        return "Тип 1: контекстно-зависимая грамматика"
 
-    print(
-        "Введите правила грамматики в формате: "
-        "'A->a|b|c' или 'S -> a'"
-        " ('end' для окончания): "
-    )
-    rules = []
-    while True:
-        rule = input("> ").strip()
-        if rule != 'end':
-            left, right = rule.split('->')
-            for el in right.split('|'):
-                rules.append((left.strip(), el.strip()))
-        else:
-            break
-
-    if utils.is_rrg(rules, terms, non_terms):
-        print("Класс 3: Праволинейная грамматика")
-        return
-    elif utils.is_lrg(rules, terms, non_terms):
-        print("Класс 3: Леволинейная грамматика")
-        return
-    elif utils.is_cfg(rules, non_terms):
-        print("Класс 2: Контекстно-свободная грамматика")
-        return
-    elif utils.is_ng(rules, start_symbol):
-        if utils.is_csg(rules, non_terms, start_symbol):
-            print("Класс 1: Контекстно-зависимая грамматика")
-            return
-        else:
-            print("Класс 1: Неукорачивающая грамматика")
-            return
-    else:
-        print("Класс 0:  Неограниченная грамматика")
+    # xAbCD -> xHD
+    return "Грамматика типа 0"
 
 
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    print(main())

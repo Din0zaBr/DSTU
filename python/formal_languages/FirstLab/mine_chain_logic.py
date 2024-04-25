@@ -4,10 +4,10 @@
 from typing import Final
 
 RULES: Final = {
-        "S": {"1": "0A0", "2": "0B0"},
-        "A": {"1": "1B1", "2": "11"},
-        "B": {"1": "0S0", "2": "00"}
-    }
+    "S": {"1": "aA", "2": "bA"},
+    "A": {"1": "+aB-bC", "2": "+bC-aB", "3": "+aB-aB", "4": "+bC-bC"},
+    "B": {"1": "aB", "2": "a", "3": "bC", "4": "b"}
+}
 
 
 def chain_generator(string: str) -> None:

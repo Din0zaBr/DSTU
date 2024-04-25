@@ -2,14 +2,10 @@
  Мой вариант:
 S -> aA
 S -> bA
-A -> +aB-bC
-A -> +bC-aB
-A -> +aB-aB
-A -> +bC-bC
-B -> aB
-B -> a
-C -> bC
-C -> b
+A -> +a-b
+A -> +b-a
+A -> +a-a
+A -> +b-b
 """
 import re
 from typing import Pattern, AnyStr, Set, Mapping, List
@@ -156,7 +152,6 @@ def main():
             grammar=dictionary):
         return "Тип 1: контекстно-зависимая грамматика"
 
-    # xAbCD -> xHD
     return "Грамматика типа 0"
 
 

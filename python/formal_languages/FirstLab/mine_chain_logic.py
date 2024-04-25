@@ -5,8 +5,7 @@ from typing import Final
 
 RULES: Final = {
     "S": {"1": "aA", "2": "bA"},
-    "A": {"1": "+aB-bC", "2": "+bC-aB", "3": "+aB-aB", "4": "+bC-bC"},
-    "B": {"1": "aB", "2": "a", "3": "bC", "4": "b"}
+    "A": {"1": "+a-b", "2": "+b-a", "3": "+a-a", "4": "+b-b"},
 }
 
 

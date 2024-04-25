@@ -1,375 +1,402 @@
-"""
-Проверка на регулярную грамматику
-"""
+import itertools as iter
+import string
+from itertools import chain
+
+massT = str(input("Множество терминалов: ")).split()
+massN = str(input("Множество нетерминалов: ")).split()
+S = str(input("Введите стартовый символ: "))
+n = int(input("Количество правил: "))
+print("Введите правила по типу: Aa = Rpppp\n"
+      "Если из левой части есть несколько переходов, пропишите их через пробел слева\n"
+      "В качестве пустой цепочки выступает точка (.)\n")
 
 
-def pr_na_3(sp):
-    # Проходит по всем правилам
-    for i in range(len(sp)):
-        sp1 = sp[i].split('>')
-        # Слева - нетерминалы (Большие)
-        lev = sp1[0]
-        # Справа - правила
-        sp_pr = sp1[1].split('|')
-        # Если слева терминалы, то это не регулярная грамматика
-        if not lev.isupper():
-            return False
-        # Проходимся по каждому правилу т.е. T1T, T1U, W, E
-        for k in range(len(sp_pr)):
-            ind = 0
-            pr = sp_pr[k]
-            # Если есть эпсилон, то нам всё равно, всё ок
-            if len(pr) == 1 and pr == 'E':
-                break
-            # Проверка на лево и право стороннюю грамматику
-            for j in range(len(pr) - 1):
-                if ((pr[j].islower() and pr[j + 1].isupper()) or
-                        (pr[j + 1].islower() and pr[j].isupper()) or pr.islower()):
-                    ind = j
-                    break
-            ## Это ...
-            if ind == 0:
-                ind += 1
-            if not ((pr[:ind].islower() and pr[ind:].isupper()) or
-                    (pr[ind:].islower() and pr[:ind].isupper()) or pr.islower()):
-                return False
-    return True
-
-
-"""
-Проверка на КС
-"""
-
-
-def pr_na_2(sp):
-    for i in range(len(sp)):
-        # Проверка на то, чтобы слева были только нетерминалы
-        lev = sp[i].split('>')[0]
-        if not lev.isupper():
-            return False
-    return True
-
-
-"""
-Существование языка
-"""
-
-
-def susch_yaz(sp):  # правая цепочка должна принадлежать множетсву нетерминалов?
-    # term = input('Введите множество терминалов').split()
-    # множество нетерминалов
-    N = []
-    st = input('Введите стартовый символ >> ')
-    # .reverse, так как существование языка смотрится в обратном порядке правил
-    sp.reverse()
-    for i in range(len(sp)):
-        par = sp[i].split('>')
-        lev = par[0]
-        pr = par[1].split('|')
-        marker = True
-        for j in range(len(pr)):
-            # Проверка на конечность цепочки
-            if (not (not pr[j].isupper()) or lev in pr[j]):
-                marker = False  # это говорит о том, что мы работаем не с конечной (последней) строкой
-        if marker == True:
-            # Если с этим правилом ок, то добавляем его нетерминалы в множество нетерминалов
-            N.append(lev)
-        else:
-            # Если с правилом не всё ок, то
-            marker1 = False
-            for x in N:
-                for y in pr:
-                    # Если хоть какой-нибудь из множества нетерминалов содержится в правиле, то не ок
-                    if x in y:
-                        marker1 = True
-            # Если правило выводимо и оно не выводится само в себя
-            if marker1 and lev not in N:
-                N.append(lev)
-    if st in N:
-        print('Язык КС-грамматики существует')
+def check_KS():
+    """
+        Предлагает пользователю ввести последовательность строк, представляющих контекстно-свободную грамматику.
+        Анализирует каждую введенную строку и сохраняет разобранное представление в списке списков под названием `rooles`.
+        Проверяет, присутствуют ли все символы в первой строке каждого ввода в заранее определенном списке под названием `massN`.
+        Если какие-либо символы отсутствуют, увеличивает счетчик под названием `count`.
+        Если `count` равно нулю, устанавливает строку результата равной "Введена КС-грамматика" и устанавливает флаг в 1.
+        В противном случае устанавливает строку результата равной "Введенная грамматика не является КС-грамматикой" и устанавливает флаг в 0.
+        Возвращает кортеж, содержащий строку результата, флаг и список `rooles`.
+        """
+    count = 0
+    rooles = []
+    for i in range(n):
+        roole_n = str(input()).split()
+        a = roole_n[0]
+        b = []
+        raw_count = 0
+        for j in roole_n:
+            if j == '=':
+                raw_count = 1
+            elif raw_count > 0 and j != '=':
+                b.append(j)
+        rooles.append([a, b])
+        list_a = list(a)
+        if not all(x in massN for x in list_a):
+            count += 1
+    if count == 0:
+        rez, c = 'Введена КС-грамматика', 1
     else:
-        print('Язык КС-грамматики не существует')
+        rez, c = "Введенная грамматика не является КС-грамматикой", 0
+    return rez, c, rooles
 
 
-"""
-Бесполезные символы
-"""
+def check_exist(lst, massN, S):
+    """
+    Проверяет, существует ли данная строка S в списке строк massN.
 
+    Параметры:
+        lst (list): Список кортежей, каждый из которых представляет язык. Каждый кортеж содержит два списка:
+                    первый список представляет нетерминальные символы, второй список - терминальные символы.
+        massN (list): Список строк, представляющих все возможные терминальные символы.
+        S (str): Строка, представляющая язык для проверки существования.
 
-def besp_s(sp):
-    N = []
-    # Список итоговых правил
-    sp1 = []
-    for i in range(len(sp)):
-        par = sp[i].split('>')
-        lev = par[0]
-        pr = par[1].split('|')
-        marker = True
-        for j in range(len(pr)):
-            # Проверка на конечность цепочки (из большой буквы выводятся большие буквы и это считается как
-            # бесполезные символы)
-            # not (not pr[j].isupper()) - проверка на то, что терминал порождает нетерминал
-            if (not (not pr[j].isupper()) or lev in pr[j]):
-                marker = False
-        # Если терминал порождает нетерминал, то добавляем его в список итоговых правил
-        if marker == True:
-            sp1.append(sp[i])
-            # if lev not in N:
-            #     N.append(lev)
-
-    if sp1 == [] and N == []:
-        print('Таких строк нет')
+    Возвращает:
+        str: Строка, указывающая на существование или несуществование языка. Возвращает 'Язык не существует',
+             если язык не существует, и 'Язык существует', если язык существует.
+    """
+    N0 = []
+    for i in range(len(lst)):
+        for j in chain(lst[i][1], lst[i][0]):
+            [N0.append(x) for x in list(j) if x in massN and x not in N0]
+    if S not in N0:
+        return 'Язык не существует'
     else:
-        for i in sp1:
-            print(i)
+        return "Язык существует"
 
 
-"""
-Недостижимые символы
-"""
+def del_useless_sym(massT, massN, lst):
+    """
+        Эта функция принимает три параметра: massT, massN и lst.
+        Она удаляет ненужные символы из переданных списков и возвращает обновленные списки.
+        Затем определяется вложенная функция cycle_el(), которая принимает список mass и итерируется по lst,
+        чтобы найти элементы, имеющие подмножества massT и mass.
+        Функция инициализирует массив mass значением '.' и вызывает cycle_el() для обновления массива mass.
+        Затем вызывается cycle_el() еще раз для обновления Ni.
+        Процесс продолжается до тех пор, пока N1 и Ni не будут равны.
+        Затем функция создает новый список N, фильтруя элементы из massN, которые находятся в Ni.
+        Если длина списка N не равна 0, функция создает новый список r и итерируется по lst, чтобы найти элементы,
+        имеющие подмножества Ni, massT или '.'.
+    """
+
+    print('a) бесполезных символов')
+
+    def cycle_el(mass):
+        mass_el_mass = massT + mass
+        for i in range(len(lst)):
+            for x in lst[i][1]:
+                if set(list(x)).issubset(mass_el_mass):
+                    if lst[i][0] not in mass:
+                        mass.append(lst[i][0])
+        return mass
+
+    mass = ['.']
+    N1 = cycle_el(mass)
+    Ni = cycle_el(N1.copy())
+    while N1 != Ni:
+        N1 = Ni
+        Ni = cycle_el(N1.copy())
+    N = [element for element in massN if element not in Ni]  # Бесполезные символы
+    if len(N) != 0:
+        r = []  # Будущие новые правила
+        for i in range(len(lst)):
+            r0 = []
+            for j in lst[i][1]:
+                v = []
+                [v.append(x) for x in list(j) if x in Ni or x in massT or x == '.']
+                if ''.join(v) == j:
+                    r0.append(j)
+            if len(r0) != 0:
+                r.append([lst[i][0], r0])
+    else:
+        r = lst
+    Ni.remove('.')
+    return Ni, r
 
 
-def ned_s(sp):
-    N = []
-    N.append(input('Введите стартовый символ >> '))
-    sp1 = []
-    for i in range(len(sp)):
-        par = sp[i].split('>')
-        lev = par[0]
-        pr = par[1].split('|')
-        # Проверка на то, что нетерминалы выводимы из правил
-        # Если нетерминал есть в N, то мы добавляем всё, что есть справа
-        if lev in N:
-            sp1.append(sp[i])
-            for x in pr:
-                for y in x:
-                    N.append(y)
+def no_way_sym(lst):
+    """
+       Находит недостижимые символы в заданном списке правил.
 
-    for i in sp1:
-        print(i)
+       Параметры:
+       - lst (list): Список правил, где каждое правило представляет собой кортеж, содержащий символ и список символов.
+
+       Возвращает:
+       - T (list): Список символов, которые достижимы из начального символа.
+       - Ni (list): Список символов, которые недостижимы.
+       - r (list): Список правил, где каждое правило представляет собой кортеж, содержащий символ и список символов.
+
+       Функция принимает список правил, где каждое правило представляет собой кортеж, содержащий символ и список символов.
+       Она находит символы, не достижимые из начального символа, выполняя алгоритм обнаружения циклов. Затем определяет
+       достижимые символы и возвращает их вместе с недостижимыми символами и правилами, содержащими недостижимые символы.
+
+       Пример:
+        lst = [('S', [('A', 'B'), ('C', 'D')]), ('A', [('A', 'A'), ('B', 'B')]), ('B', [('C', 'C'), ('D', 'D')]), ('C', [('A', 'A'), ('B', 'B')]), ('D', [('C', 'C'), ('D', 'D')])]
+        no_way_sym(lst)
+       (['A', 'C'], ['B', 'D'], [('A', [('A', 'A'), ('B', 'B')]), ('C', [('A', 'A'), ('B', 'B')])])
+    """
+
+    print('б) недостижимых символов')
+
+    def cycle_el(mass):
+        for i in range(len(lst)):
+            if lst[i][0] in mass:
+                [mass.append(x) for j in lst[i][1] for x in list(j) if x in massN and x not in mass]
+        return mass
+
+    mass = [lst[0][0]]
+    N1 = cycle_el(mass)
+    Ni = cycle_el(N1.copy())
+    while N1 != Ni:
+        N1 = Ni
+        Ni = cycle_el(N1.copy())
+    N = [element for element in massN if element not in Ni]  # Бесполезные символы
+    if len(N) != 0:
+        r = []  # Будущие новые правила
+        for i in range(len(lst)):
+            if lst[i][0] in Ni:
+                r.append(lst[i])
+    else:
+        r = lst
+    T = []
+    for i in range(len(r)):
+        [T.append(x) for j in lst[i][1] for x in list(j) if x in massT and x not in T]
+    return T, Ni, r
 
 
-def e_pr(sp):
-    n = input('Введите множество нетерминалов >> ').split()
-    start_s = input('Введите стартовый символ >> ')
-    N = []
-    it = []
-    it_n = []
-    for i in range(len(sp)):
-        it_pr = ''
-        par = sp[i].split('>')
-        lev = par[0]
-        pr = par[1].split('|')
-        for j in pr:
-            if j == 'E':
-                N.append(lev)
-            mark = True
-            for x in j:
-                if x not in n:
-                    mark = False
-            if mark == True:
-                it_pr += (j + '|')
-                if len(j) > 1:
-                    for x in j:
-                        it_pr += (x + '|')
+################################################################################
+#                                                                              #
+# Данная функция с удаление из грамматики эпсилон-правил работает некорректно  #
+# TODO                                                                          #
+################################################################################
+def del_eps_rooles(massN, lst, S):
+    """
+    Функция для удаления эпсилон-правил из заданного грамматического разбора.
+
+    Параметры:
+    - massN: список, содержащий нетерминальные символы
+    - lst: список, представляющий правила грамматики
+    - S: начальный символ
+
+    Возвращает:
+    - massN: обновленный список нетерминальных символов
+    - r: обновленные правила грамматики после удаления эпсилон-правил
+    - S_new: обновленный начальный символ после удаления эпсилон-правил
+    """
+
+    print('в) е-правил')
+
+    def cycle_el(mass):
+        for i in range(len(lst)):
+            for x in lst[i][1]:
+                if set(list(x)).issubset(mass):
+                    if lst[i][0] not in mass:
+                        mass.append(lst[i][0])
+        return mass
+
+    mass = ['.']
+    N1 = cycle_el(mass)
+    Ni = cycle_el(N1.copy())
+    while N1 != Ni:
+        N1 = Ni
+        Ni = cycle_el(N1.copy())
+    if S in Ni:
+        c = 0
+        i = 0
+        S_new = list(string.ascii_uppercase)
+        while c == 0:
+            if S_new[i] not in Ni:
+                S_new = S_new[i]
+                c = 1
             else:
-                it_pr += (j + '|')
-            # print(it_pr)
-        it_n.append(lev)
-        it.append(it_pr[:(len(it_pr) - 1)])
-        # if j.isupper() and j != 'E':
-        #     print(j)
-        #     it_pr += j + '|'
-        #     for x in j:
-        #         it_pr += x + '|'
-        #     it_n.append(lev)
-        #     it.append(it_pr[:(len(it_pr) - 1)])
-    for i in N:
-        for j in range(len(it)):
-            it_st = ''
-            if n[j] == i:
-                st = ''
-                pr = it[j].split('|')
-                for x in pr:
-                    if x != 'E':
-                        if st == '':
-                            for y in range(len(x)):
-                                if x[y] not in n:
-                                    st += x[y]
-                        it_st += x + '|'
-                    elif x == 'E' and st != '':
-                        it_st += st + '|'
-                it[j] = it_st[:(len(it_st) - 1)]
-    str_b = 'WRTYUIOPASDFGHJKLZXCVBNM'
-    if start_s in it_n:
-        for i in str_b:
-            if i not in n:
-                it_n.insert(0, i)
-                it.insert(0, (start_s + '|E'))
-                break
-    for i in range(len(it_n)):
-        print(it_n[i] + '>' + it[i])
-
-
-"""
-Цепные правила
-"""
-
-
-def cep_pr(sp):
-    N = input('Введите множество нетерминалов в строку >> ').split()
-    # Итоговый список правил
-    it_sp = []
-    for i in N:
-        # Список нетерминалов
-        sp_r = []
-        sp_r.append(i)
-        for j in range(len(sp)):
-            par = sp[j].split('>')
-            lev = par[0]
-            pr = par[1].split('|')
-            # Если левая часть находится в списке нетерминалов,
-            # то ищем все нетерминалы в правой части и добавляем в список нетерминалов
-            # Делаем до последнего правила
-            if lev in sp_r:
-                for x in pr:
-                    for y in x:
-                        if y.isupper() and y not in sp_r and y != 'E':
-                            sp_r.append(y)
-        # Добавляем в итоговую строку 1ый нетерминал
-        it_str = sp_r[0] + ">"
-        for j in sp:
-            # Мы ищем правило, которое выводится из последнего нетерминала
-            par = j.split('>')
-            lev = par[0]
-            # Если левая часть, совпадает с нашим нетерминалом, то добавляем это правило
-            if lev == sp_r[-1]:
-                it_str += par[1]
-        it_sp.append(it_str)
-    # print(it_sp)
-    for i in it_sp:
-        print(i)
-
-"""
-Левая факторизация
-"""
-def lev_fact(sp):
-    N = input('Введите множество нетерминалов >> ').split()
-    str_b = 'WRTYUIOPASDFGHJKLZXCVBNM'
-    it_n = []
-    it_pr = []
-    for i in range(len(sp)):
-        par = sp[i].split('>')
-        lev = par[0]
-        pr = par[1].split('|')
-        nach = ''
-        ind = 0
-        for j in range(len(pr) - 1):
-            # print(pr[j])
-            marker = False
-            if nach == '':
-                dl = len(pr[j]) - 1
-                while dl != 0:
-                    if pr[j][:dl] == pr[j + 1][:dl]:
-                        marker = True
-                        nach = pr[j][:dl]
-                        for x in str_b:
-                            if x not in N:
-                                N.append(x)
-                                it_n.append(lev)
-                                it_pr.append(
-                                    nach + x)  # заменить x на любую другую букву, x - это локальная переменная цикла
-                                it_n.append(x)
-                                it_pr.append(pr[j][dl:])
-                                it_n.append(x)
-                                it_pr.append(pr[j + 1][dl:])
-                                break
-                        break
-                    dl -= 1
+                i += 1
+        massN.append(S_new)
+        # Формируем новые правила
+        r = [[S_new, [S, '.']]]
+        for i in range(len(lst)):
+            r0 = []
+            # Если левая часть есть в списке Ni (правила переходят в е)
+            if lst[i][0] in Ni:
+                # Пробегаемся по правым частям
+                for j in range(len(lst[i][1])):
+                    if (any(ele in lst[i][1][j] for ele in Ni)) and (lst[i][1][j] != '.'):
+                        # Добавляем ориг. в итоговый список
+                        r0.append(lst[i][1][j])
+                        # Рассматриваем правило как список элементов
+                        el = list(lst[i][1][j])
+                        ind = [x for x in range(len(el)) if el[x] in Ni]  # Индексы элементов из Ni в el
+                        # Формируем список комбинаций индексов, которые позже удалим
+                        combin = []
+                        for k in range(1, len(ind) + 1):
+                            for comb in iter.combinations(ind, k):
+                                combin.append(comb)
+                        # Удаляем элементы поиндексно и добавляем результат в итоговый список
+                        for m in range(len(combin)):
+                            orig_prav = list(lst[i][1][j])
+                            for x in reversed(combin[m]):
+                                orig_prav.pop(x)
+                            r0.append(''.join(orig_prav))
+                    elif lst[i][1][j] != '.':
+                        r0.append(lst[i][1][j])
+                r.append([lst[i][0], r0])
             else:
-                if pr[j + 1][:len(nach)] == nach:
-                    marker = True
-                    it_n.append(N[-1])
-                    it_pr.append(pr[j + 1][len(nach):])
-            if not marker and nach == '':
-                it_n.append(lev)
-                it_pr.append(pr[j])
-                if j == (len(pr) - 2):
-                    it_n.append(lev)
-                    it_pr.append(pr[j + 1])
-            elif not marker:
-                it_n.append(lev)
-                it_pr.append(pr[j + 1])
-    for i in range(len(it_n)):
-        print(it_n[i] + '>' + it_pr[i])
+                r.append(lst[i])
+    else:
+        r = lst
+        S_new = S
+    return massN, r, S_new
 
-"""
-Устранение прямой левой рекурсии
-"""
-def pr_lev_rec(sp):
-    N = input('Введите множество нетерминалов >> ').split()
-    str_b = 'WRTYUIOPASDFGHJKLZXCVBNM'
-    it_sp = []
-    it_N = []
-    for i in range(len(sp)):
-        it_pr = ''
-        par = sp[i].split('>')
-        lev = par[0]
-        pr = par[1].split('|')
-        b = ''
-        for j in pr:
-            if lev == j[0]:
-                for x in str_b:
-                    if x not in N and b == '':
-                        b = x
-                        N.append(x)
-                        break
-                it_pr += (j[1:] + b) + '|'
-                vt_pr = (j[1:] + b) + '|' + j[1:]
-                it_sp.append(vt_pr)
-                it_N.append(b)
+
+def zip_rooles(massN, lst):
+    """
+        Функция для генерации списка правил без правил-epsilon.
+
+        Параметры:
+        massN (list): Список терминалов.
+        lst (list): Список правил, где каждое правило представлено кортежем, где первый элемент - нетерминал, а второй элемент - список терминалов/нетерминалов.
+
+        Возвращает:
+        list: Список правил без правил-epsilon.
+    """
+
+    print('г) цепных правил')
+
+    def cycle_el(mass):
+        for i in range(len(lst)):
+            if lst[i][0] in mass:
+                [mass.append(j) for j in lst[i][1] if j in massN and j not in mass]
+        return mass
+
+    # Формируем общий список Ni для каждого нетерминала
+    mass_Ni = []
+    for i in range(len(lst)):
+        mass = [lst[i][0]]
+        N1 = cycle_el(mass)
+        Ni = cycle_el(N1.copy())
+        while N1 != Ni:
+            N1 = Ni
+            Ni = cycle_el(N1.copy())
+        mass_Ni.append([lst[i][0], Ni.copy()])
+    # Формируем новый список правил без цепных правил
+    r = []
+    for i in range(len(mass_Ni)):
+        r0 = []
+        for j in range(len(lst)):
+            if lst[j][0] in mass_Ni[i][1]:
+                r01 = [el for el in lst[j][1] if el not in massN]
+                r0.extend(r01)
+        r.append([mass_Ni[i][0], r0])
+    return r
+
+
+def left_factorize(grammar: dict[str, list[str]]) -> dict[str, list[str]]:
+    """
+    Эта функция выполняет левую факторизацию по данной грамматике
+    Параметры:
+        grammar: словарь, представляющий грамматику, где ключи - это нетерминальные символы,
+        а значения - списки производственных правил.
+    Возвращает:
+        Left-factorized грамматику
+    """
+    print('д) левой факторизации правил')
+    updated_grammar = {}
+
+    for non_terminal in grammar:
+        productions = grammar[non_terminal]
+        common_prefixes = {}
+
+        for production in productions:
+            prefix = production[0]
+            if prefix not in common_prefixes:
+                common_prefixes[prefix] = []
+            common_prefixes[prefix].append(production)
+
+        new_productions = []
+
+        for prefix in common_prefixes:
+            if len(common_prefixes[prefix]) > 1:
+                new_non_terminal = non_terminal + "'"
+                updated_grammar[new_non_terminal] = [production[1:] for production in common_prefixes[prefix]]
+                new_productions.append(prefix + new_non_terminal)
             else:
-                it_pr += (j + '|')
+                new_productions.extend(common_prefixes[prefix])
 
-        it_pr = it_pr[:(len(it_pr) - 1)]
-        it_sp.append(it_pr)
-        it_N.append(lev)
-    for i in range(len(it_N)):
-        print(it_N[i] + '>' + it_sp[i])
+        updated_grammar[non_terminal] = new_productions
+
+    grammar.update(updated_grammar)
+    return grammar
 
 
-print('Эта программа определяет тип грамматики по классификации Хомского')
-print('Для корректной работы программы терминалы вводите с прописной, а нетерминалы с заглавной буквы')
-n = int(input('Введите количество правил вывода >> '))
-print('Введите правила вывода, разделяя их знаком > без пробелов')
-sp_pr = []
-for i in range(n):
-    sp_pr.append(input())
-if pr_na_3(sp_pr) or pr_na_2(sp_pr):
-    print('Эта грамматика является контекстно-свободной')
-    susch_yaz(sp_pr)
-    besp_s(sp_pr)
-    ned_s(sp_pr)
-    cep_pr(sp_pr)
-    e_pr(sp_pr)
-    lev_fact(sp_pr)
-    pr_lev_rec(sp_pr)
-else:
-    print("Эта грамматика не является контекстно-свободной")
+def remove_left_recursion(grammar):
+    print('е) левой рекурсии')
+    new_grammar = {}
+    non_terminals = list(grammar.keys())
 
-# elif pr_na_2(sp_pr):
-#     print('Эта грамматика принадлежит к типу 2 (контекстно-свободная)')
+    for A in non_terminals:
+        A_rules = grammar[A]
+        alpha_rules = [rule for rule in A_rules if rule.startswith(A)]
+        beta_rules = [rule for rule in A_rules if not rule.startswith(A)]
 
-# R>T1T|T1U|W|E
-# T>U|T01|T10|E
-# U>+U|+0|+1
-# W>W-W|W+W
-# V>*0|/1
+        if not alpha_rules:
+            new_grammar[A] = A_rules
+            continue
 
-# Q>01A|01B|A
-# A>0B1|B|1|E
-# B>BA0|B1|C|E
-# C>0C11
-# D>-D1|-0|-1
+        A_prime = A + "'"
+        new_rules_A = []
+        new_rules_A_prime = []
 
-#
+        for beta_rule in beta_rules:
+            new_rule = beta_rule + A_prime
+            new_rules_A.append(new_rule)
+
+        for alpha_rule in alpha_rules:
+            new_rule = alpha_rule[len(A):] + A_prime
+            new_rules_A_prime.append(new_rule)
+
+        new_rules_A_prime.append('.')  # точка (.) представляет собой пустую цепочку
+
+        new_grammar[A] = new_rules_A
+        new_grammar[A_prime] = new_rules_A_prime
+
+    return new_grammar
+
+
+rez, c, rooles = check_KS()
+print('1)', rez)
+if c == 1:
+    rez = check_exist(rooles, massN, S)
+    print('2)', rez)
+
+print('Исходная грамматика:')
+print('G = (', massT, ',', massN, ', P,', S, ')')
+print("\n".join(f"{i[0]} -> {' '.join(i[1])}" for i in rooles))
+
+print('Эквивалентное преобразование грамматики посредству удаления:')
+
+massN1, rooles1 = del_useless_sym(massT, massN, rooles)
+print('G = (', massT, ',', massN1, ', P,', S, ')')
+print("\n".join(f"{i[0]} -> {' '.join(i[1])}" for i in rooles1))
+
+massT1, massN1, rooles1 = no_way_sym(rooles)
+print('G = (', massT1, ',', massN1, ', P,', S, ')')
+print("\n".join(f"{i[0]} -> {' '.join(i[1])}" for i in rooles1))
+
+massN1, rooles1, S_new = del_eps_rooles(massN, rooles, S)
+print('G = (', massT, ',', massN1, ', P,', S_new, ')')
+print("\n".join(f"{i[0]} -> {' '.join(i[1])}" for i in rooles1))
+
+rooles1 = zip_rooles(massN1, rooles1)
+print('G = (', massT, ',', massN1, ', P,', S_new, ')')
+print("\n".join(f"{i[0]} -> {' '.join(i[1])}" for i in rooles1))
+
+rooles1 = left_factorize({item[0]: item[1] for item in rooles})
+print(type(rooles1))
+print("\n".join(f"{key} -> {value}" for key, value in rooles1.items()))
+
+grammar = {item[0]: item[1] for item in rooles}
+new_grammar = remove_left_recursion(grammar)
+new_grammar = {key: value for key, value in new_grammar.items()}
+print("\n".join(f"{key} -> {value}".rstrip("|") for key, value in new_grammar.items()))

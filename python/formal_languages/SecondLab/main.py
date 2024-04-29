@@ -1,3 +1,6 @@
+# S = X|Y|Z, X = x#X|x#Y|., Y = Yy$|Yz$|$|., Z = Zz$, K = Kk$|k$
+
+
 import itertools as iter
 import string
 from itertools import chain
@@ -26,142 +29,146 @@ def check_KS():
     pravila = input().split(", ")
     for pravilo in pravila:
         current_rule = str(pravilo).split()
-        a = current_rule[0] # roole_n = ['S', '=', 'X|Y|Z'] -> 'S'
-        b = current_rule[2] # roole_n = ['S', '=', 'X|Y|Z'] -> 'X|Y|Z'
-        rules.append([a, b]) # [['S', ['X|Y|Z']]]
-        list_a = list(a) # костыляка
-        if not all(x in massN for x in list_a): # Проверка, что слева д/б только терминалы
+        a = current_rule[0]  # roole_n = ['S', '=', 'X|Y|Z'] -> 'S'
+        b = current_rule[2]  # roole_n = ['S', '=', 'X|Y|Z'] -> 'X|Y|Z'
+        rules.append([a, b])  # [['S', ['X|Y|Z']]]
+        if a not in massT:  # Проверка, что слева д/б только терминалы
             count += 1
-            print(count)
     if count == 0:
-        rez = 'Введена КС-грамматика'
+        rez, flag = 'Введена КС-грамматика', True
     else:
-        rez = "Введенная грамматика не является КС-грамматикой"
-    return rez, rules
+        rez, flag = "Введенная грамматика не является КС-грамматикой", False
+    return rez, rules, flag
 
-rez, rooles = check_KS()
-print(rez, rooles)
-# def check_exist(lst, massN, S):
-#     """
-#     Проверяет, существует ли данная строка S в списке строк massN.
-#
-#     Параметры:
-#         lst (list): Список кортежей, каждый из которых представляет язык. Каждый кортеж содержит два списка:
-#                     первый список представляет нетерминальные символы, второй список - терминальные символы.
-#         massN (list): Список строк, представляющих все возможные терминальные символы.
-#         S (str): Строка, представляющая язык для проверки существования.
-#
-#     Возвращает:
-#         str: Строка, указывающая на существование или несуществование языка. Возвращает 'Язык не существует',
-#              если язык не существует, и 'Язык существует', если язык существует.
-#     """
-#     N0 = []
-#     for i in range(len(lst)):
-#         for j in chain(lst[i][1], lst[i][0]):
-#             [N0.append(x) for x in list(j) if x in massN and x not in N0]
-#     if S not in N0:
-#         return 'Язык не существует'
-#     else:
-#         return "Язык существует"
-#
-#
-# def del_useless_sym(massT, massN, lst):
-#     """
-#         Эта функция принимает три параметра: massT, massN и lst.
-#         Она удаляет ненужные символы из переданных списков и возвращает обновленные списки.
-#         Затем определяется вложенная функция cycle_el(), которая принимает список mass и итерируется по lst,
-#         чтобы найти элементы, имеющие подмножества massT и mass.
-#         Функция инициализирует массив mass значением '.' и вызывает cycle_el() для обновления массива mass.
-#         Затем вызывается cycle_el() еще раз для обновления Ni.
-#         Процесс продолжается до тех пор, пока N1 и Ni не будут равны.
-#         Затем функция создает новый список N, фильтруя элементы из massN, которые находятся в Ni.
-#         Если длина списка N не равна 0, функция создает новый список r и итерируется по lst, чтобы найти элементы,
-#         имеющие подмножества Ni, massT или '.'.
-#     """
-#
-#     print('a) бесполезных символов')
-#
-#     def cycle_el(mass):
-#         mass_el_mass = massT + mass
-#         for i in range(len(lst)):
-#             for x in lst[i][1]:
-#                 if set(list(x)).issubset(mass_el_mass):
-#                     if lst[i][0] not in mass:
-#                         mass.append(lst[i][0])
-#         return mass
-#
-#     mass = ['.']
-#     N1 = cycle_el(mass)
-#     Ni = cycle_el(N1.copy())
-#     while N1 != Ni:
-#         N1 = Ni
-#         Ni = cycle_el(N1.copy())
-#     N = [element for element in massN if element not in Ni]  # Бесполезные символы
-#     if len(N) != 0:
-#         r = []  # Будущие новые правила
-#         for i in range(len(lst)):
-#             r0 = []
-#             for j in lst[i][1]:
-#                 v = []
-#                 [v.append(x) for x in list(j) if x in Ni or x in massT or x == '.']
-#                 if ''.join(v) == j:
-#                     r0.append(j)
-#             if len(r0) != 0:
-#                 r.append([lst[i][0], r0])
-#     else:
-#         r = lst
-#     Ni.remove('.')
-#     return Ni, r
-#
-#
-# def no_way_sym(lst):
-#     """
-#        Находит недостижимые символы в заданном списке правил.
-#
-#        Параметры:
-#        - lst (list): Список правил, где каждое правило представляет собой кортеж, содержащий символ и список символов.
-#
-#        Возвращает:
-#        - T (list): Список символов, которые достижимы из начального символа.
-#        - Ni (list): Список символов, которые недостижимы.
-#        - r (list): Список правил, где каждое правило представляет собой кортеж, содержащий символ и список символов.
-#
-#        Функция принимает список правил, где каждое правило представляет собой кортеж, содержащий символ и список символов.
-#        Она находит символы, не достижимые из начального символа, выполняя алгоритм обнаружения циклов. Затем определяет
-#        достижимые символы и возвращает их вместе с недостижимыми символами и правилами, содержащими недостижимые символы.
-#
-#        Пример:
-#         lst = [('S', [('A', 'B'), ('C', 'D')]), ('A', [('A', 'A'), ('B', 'B')]), ('B', [('C', 'C'), ('D', 'D')]), ('C', [('A', 'A'), ('B', 'B')]), ('D', [('C', 'C'), ('D', 'D')])]
-#         no_way_sym(lst)
-#        (['A', 'C'], ['B', 'D'], [('A', [('A', 'A'), ('B', 'B')]), ('C', [('A', 'A'), ('B', 'B')])])
-#     """
-#
-#     print('б) недостижимых символов')
-#
-#     def cycle_el(mass):
-#         for i in range(len(lst)):
-#             if lst[i][0] in mass:
-#                 [mass.append(x) for j in lst[i][1] for x in list(j) if x in massN and x not in mass]
-#         return mass
-#
-#     mass = [lst[0][0]]
-#     N1 = cycle_el(mass)
-#     Ni = cycle_el(N1.copy())
-#     while N1 != Ni:
-#         N1 = Ni
-#         Ni = cycle_el(N1.copy())
-#     N = [element for element in massN if element not in Ni]  # Бесполезные символы
-#     if len(N) != 0:
-#         r = []  # Будущие новые правила
-#         for i in range(len(lst)):
-#             if lst[i][0] in Ni:
-#                 r.append(lst[i])
-#     else:
-#         r = lst
-#     T = []
-#     for i in range(len(r)):
-#         [T.append(x) for j in lst[i][1] for x in list(j) if x in massT and x not in T]
-#     return T, Ni, r
+
+def check_exist(lst, massT, S):  # есть ли S в множестве Терминалов
+    """
+    Проверяет, существует ли данная строка S в списке строк massN.
+
+    Параметры:
+        lst (list): Список кортежей, каждый из которых представляет язык. Каждый кортеж содержит два списка:
+                    первый список представляет нетерминальные символы, второй список - терминальные символы.
+        massT (list): Список строк, представляющих все возможные терминальные символы.
+        S (str): Строка, представляющая язык для проверки существования.
+
+    Возвращает:
+        str: Строка, указывающая на существование или несуществование языка. Возвращает 'Язык не существует',
+             если язык не существует, и 'Язык существует', если язык существует.
+    """
+    N0 = []
+    for i in range(len(lst)):
+        for j in chain(lst[i][1], lst[i][0]):
+            # print(lst[i][1], lst[i][0])
+            [N0.append(x) for x in list(j) if x in massT and x not in N0]
+            # print(N0)
+    if S not in N0:
+        return 'Язык не существует'
+    else:
+        return "Язык существует"
+
+
+def del_useless_sym(massT, massN, lst):
+    """
+        Эта функция принимает три параметра: massT, massN и lst.
+        Она удаляет ненужные символы из переданных списков и возвращает обновленные списки.
+        Затем определяется вложенная функция cycle_el(), которая принимает список mass и итерируется по lst,
+        чтобы найти элементы, имеющие подмножества massT и mass.
+        Функция инициализирует массив mass значением '.' и вызывает cycle_el() для обновления массива mass.
+        Затем вызывается cycle_el() еще раз для обновления Ni.
+        Процесс продолжается до тех пор, пока N1 и Ni не будут равны.
+        Затем функция создает новый список N, фильтруя элементы из massN, которые находятся в Ni.
+        Если длина списка N не равна 0, функция создает новый список r и итерируется по lst, чтобы найти элементы,
+        имеющие подмножества Ni, massT или '.'.
+    """
+
+    print('a) бесполезных символов')
+
+    def cycle_el(mass):
+        mass_el_mass = massT + mass
+        for i in range(len(lst)):
+            for x in lst[i][1]:
+                if set(list(x)).issubset(mass_el_mass):
+                    if lst[i][0] not in mass:
+                        mass.append(lst[i][0])
+        return mass
+
+    mass = ['.']
+    N1 = cycle_el(mass)
+    Ni = cycle_el(N1.copy())
+    while N1 != Ni:
+        N1 = Ni
+        Ni = cycle_el(N1.copy())
+    N = [element for element in massN if element not in Ni]  # Бесполезные символы
+    if len(N) != 0:
+        r = []  # Будущие новые правила
+        for i in range(len(lst)):
+            r0 = []
+            for j in lst[i][1]:
+                v = []
+                [v.append(x) for x in list(j) if x in Ni or x in massT or x == '.']
+                if ''.join(v) == j:
+                    r0.append(j)
+            if len(r0) != 0:
+                r.append([lst[i][0], r0])
+    else:
+        r = lst
+    Ni.remove('.')
+    return Ni, r
+
+
+
+
+def no_way_sym(lst):
+    """
+       Находит недостижимые символы в заданном списке правил.
+
+       Параметры:
+       - lst (list): Список правил, где каждое правило представляет собой кортеж, содержащий символ и список символов.
+
+       Возвращает:
+       - T (list): Список символов, которые достижимы из начального символа.
+       - Ni (list): Список символов, которые недостижимы.
+       - r (list): Список правил, где каждое правило представляет собой кортеж, содержащий символ и список символов.
+
+       Функция принимает список правил, где каждое правило представляет собой кортеж, содержащий символ и список символов.
+       Она находит символы, не достижимые из начального символа, выполняя алгоритм обнаружения циклов. Затем определяет
+       достижимые символы и возвращает их вместе с недостижимыми символами и правилами, содержащими недостижимые символы.
+
+       Пример:
+        lst = [('S', [('A', 'B'), ('C', 'D')]), ('A', [('A', 'A'), ('B', 'B')]), ('B', [('C', 'C'), ('D', 'D')]), ('C', [('A', 'A'), ('B', 'B')]), ('D', [('C', 'C'), ('D', 'D')])]
+        no_way_sym(lst)
+       (['A', 'C'], ['B', 'D'], [('A', [('A', 'A'), ('B', 'B')]), ('C', [('A', 'A'), ('B', 'B')])])
+    """
+
+    print('б) недостижимых символов')
+    # просматриваем каждое правильно по отдельности, заносим каждый этот символ в список, вне зависимости терминал это или нет
+    # если левая часть данного правила уже имеется в нашем списке, то добавляем правую частьного правила в этот список
+    # если нет, то пропускаем это правило, правило со стартовым символом вносим обязательно
+
+    def cycle_el(mass):
+        for i in range(len(lst)):
+            if lst[i][0] in mass:
+                [mass.append(x) for j in lst[i][1] for x in list(j) if x in massN and x not in mass]
+        return mass
+
+    mass = [lst[0][0]]
+    N1 = cycle_el(mass)
+    Ni = cycle_el(N1.copy())
+    while N1 != Ni:
+        N1 = Ni
+        Ni = cycle_el(N1.copy())
+    N = [element for element in massN if element not in Ni]  # Бесполезные символы
+    if len(N) != 0:
+        r = []  # Будущие новые правила
+        for i in range(len(lst)):
+            if lst[i][0] in Ni:
+                r.append(lst[i])
+    else:
+        r = lst
+    T = []
+    for i in range(len(r)):
+        [T.append(x) for j in lst[i][1] for x in list(j) if x in massT and x not in T]
+    return T, Ni, r
 #
 #
 # ################################################################################
@@ -361,26 +368,26 @@ print(rez, rooles)
 #     return new_grammar
 
 
-# rez, c, rooles = check_KS()
-# print('1)', rez)
-# if c == 1:
-#     rez = check_exist(rooles, massN, S)
-#     print('2)', rez)
-#
-# print('Исходная грамматика:')
-# print('G = (', massT, ',', massN, ', P,', S, ')')
-# print("\n".join(f"{i[0]} -> {' '.join(i[1])}" for i in rooles))
-#
-# print('Эквивалентное преобразование грамматики посредству удаления:')
-#
-# massN1, rooles1 = del_useless_sym(massT, massN, rooles)
-# print('G = (', massT, ',', massN1, ', P,', S, ')')
-# print("\n".join(f"{i[0]} -> {' '.join(i[1])}" for i in rooles1))
-#
-# massT1, massN1, rooles1 = no_way_sym(rooles)
-# print('G = (', massT1, ',', massN1, ', P,', S, ')')
-# print("\n".join(f"{i[0]} -> {' '.join(i[1])}" for i in rooles1))
-#
+rez, rooles, flag = check_KS()
+print('1)', rez)
+if flag == True:
+    rez = check_exist(rooles, massT, S)
+    print('2)', rez)
+
+print('Исходная грамматика:')
+print('G = (', massT, ',', massN, ', P,', S, ')')
+print("\n".join(f"{i[0]} -> {' '.join(i[1])}" for i in rooles))
+
+print('Эквивалентное преобразование грамматики посредству удаления:')
+
+massN1, rooles1 = del_useless_sym(massT, massN, rooles)
+print('G = (', massT, ',', massN1, ', P,', S, ')')
+print("\n".join(f"{i[0]} -> {' '.join(i[1])}" for i in rooles1))
+
+massT1, massN1, rooles1 = no_way_sym(rooles)
+print('G = (', massT1, ',', massN1, ', P,', S, ')')
+print("\n".join(f"{i[0]} -> {' '.join(i[1])}" for i in rooles1))
+
 # massN1, rooles1, S_new = del_eps_rooles(massN, rooles, S)
 # print('G = (', massT, ',', massN1, ', P,', S_new, ')')
 # print("\n".join(f"{i[0]} -> {' '.join(i[1])}" for i in rooles1))

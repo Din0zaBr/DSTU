@@ -1,13 +1,15 @@
 import os
-from math import sqrt
+from math import sqrt, pow
 
 
 def count_seconds_from_file():
     """
-    Считает общее количество секунд, указанных в файле.
+    Считает общее количество секунд, указанных в файле, который находится в папке с этим файлом.
 
     Возвращает:
-    int: Общее количество секунд, указанных в файле.
+    list: Список секунд, указанных в файле, без последних 6 элементов.
+    P.S.
+    Не возвращаю последние 6 элементов, так как они портят статистику
 
     Исключения:
     FileNotFoundError: Если файл не найден.
@@ -23,43 +25,92 @@ def count_seconds_from_file():
     with open(file_path, 'r') as file:
         times_list = [int(line) // 100 * 60 + int(line) % 100 for line in file]
         times_list.sort()
-    # не возвращаю последние 6 элементов, так как портят статистику
     return times_list[:-6]
 
 
-def calculate_mean(data):  # Среднее арифметическое из выборки ряда
-    sum = 0
-    for i in range(len(data)):
-        sum += data[i]
-    return sum / len(data)
+def compute_average(data):
+    """
+    Вычисляет среднее арифметическое из выборки ряда.
+
+    Параметры:
+    data (list): Список чисел.
+
+    Возвращает:
+    float: Среднее арифметическое.
+    """
+    return sum(data) / len(data)
 
 
-def calculate_dispersion(data, mean):  # Дисперсия из выборки ряда
-    sum = 0
-    for i in range(len(data)):
-        sum = sum + pow((float(data[i]) - mean), 2)
-    return sum / len(data)
+def compute_variance(data, average):
+    """
+    Вычисляет дисперсию из выборки ряда.
+
+    Параметры:
+    data (list): Список чисел.
+    average (float): Среднее значение.
+
+    Возвращает:
+    float: Дисперсия.
+    """
+    return sum(pow(value - average, 2) for value in data) / len(data)
 
 
-def calculate_correct_dispersion(dispersion, data):  # Исправленная дисперсия
-    return dispersion * (len(data) / (len(data) - 1))
+def adjust_variance(variance, data):
+    """
+    Вычисляет исправленную дисперсию.
+
+    Параметры:
+    variance (float): Дисперсия.
+    data (list): Список чисел.
+
+    Возвращает:
+    float: Исправленная дисперсия.
+    """
+    return variance * (len(data) / (len(data) - 1))
 
 
-def calculate_standard_deviation(dispersion):  # Стандартное отклонение
-    return sqrt(dispersion)
+def compute_std_dev(variance):
+    """
+    Вычисляет стандартное отклонение.
+
+    Параметры:
+    variance (float): Дисперсия.
+
+    Возвращает:
+    float: Стандартное отклонение.
+    """
+    return sqrt(variance)
 
 
-def variation_range(data):  # Вариационный ряд
-    variation_range = data.copy()
-    variation_range.sort()
-    return variation_range
+def get_variation_range(data):
+    """
+    Возвращает вариационный ряд.
+
+    Параметры:
+    data (list): Список чисел.
+
+    Возвращает:
+    list: Отсортированный список чисел.
+    """
+    # variation_range = data.copy()
+    # variation_range.sort()
+    # return variation_range
+    return sorted(data.copy())
 
 
-def range_every_four_odd(data):  # Из выборки ряда оставляется каждый через 4 элемента, начиная с первого
-    data = [data[i] for i in range(1, len(data), 4)]
-    return data
+# def range_every_four_odd(data):  # Из выборки ряда оставляется каждый через 4 элемента, начиная с первого
+#     data = [data[i] for i in range(1, len(data), 4)]
+#     return data
 
 
-def range_every_four_odd(data):  # Из выборки ряда оставляется каждый через 4 элемента, начиная с первого
-    data = [data[i] for i in range(1, len(data), 4)]
-    return data
+def filter_data(data):
+    """
+    Фильтрует данные, оставляя каждый четвертый элемент, начиная с первого.
+
+    Параметры:
+    data (list): Список чисел.
+
+    Возвращает:
+    list: Фильтрованный список.
+    """
+    return data[1::4]

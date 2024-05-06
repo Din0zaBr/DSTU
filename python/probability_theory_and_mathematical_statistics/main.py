@@ -1,30 +1,33 @@
-from python.probability_theory_and_mathematical_statistics.home import (count_seconds_from_file, calculate_mean,
-                                                                        range_every_four_odd,
-                                                                        calculate_dispersion,
-                                                                        calculate_correct_dispersion,
-                                                                        calculate_standard_deviation,
-                                                                        variation_range, plot_histogram,
+from python.probability_theory_and_mathematical_statistics.home import (count_seconds_from_file, compute_average,
+                                                                        filter_data,
+                                                                        compute_variance,
+                                                                        adjust_variance,
+                                                                        compute_std_dev,
+                                                                        get_variation_range, plot_histogram,
                                                                         plot_frequency_polygon)
+from pprint import pprint
 
-general = count_seconds_from_file()
-selection = range_every_four_odd(general)
-variation_range = variation_range(selection)
-mean = calculate_mean(variation_range)
-dispersion = calculate_dispersion(variation_range, mean)
-correct_dispersion = calculate_correct_dispersion(dispersion, selection)
-standard_deviation = calculate_standard_deviation(dispersion)
-correct_standard_deviation = calculate_standard_deviation(correct_dispersion)
+general_data = count_seconds_from_file()
+selected_data = filter_data(general_data)
+var_range = get_variation_range(selected_data)
+mean_value = compute_average(var_range)
+dispersion_value = compute_variance(var_range, mean_value)
+corrected_dispersion = adjust_variance(dispersion_value, selected_data)
+std_dev = compute_std_dev(dispersion_value)
+correct_std_dev = compute_std_dev(corrected_dispersion)
 
-print("Выборка из Генеральной Совокупности: {}".format(selection))
-print('Вариационный ряд выборки: {}'.format(variation_range))
-print('Среднее значение выборки: {}'.format(mean))
-print('Дисперсия выборки: {}'.format(dispersion))
-print('Дисперсия исправленная: {}'.format(correct_dispersion))
-print('Среднее квадратичное отклонение выборки: {}'.format(standard_deviation))
-print('Среднее квадратичное отклонение исправленное: {}'.format(correct_standard_deviation))
+pprint(f'Выборка из Генеральной Совокупности: {selected_data}')
+print()
+pprint(f'Вариационный ряд выборки: {var_range}')
+print()
+print(f'Среднее значение выборки: {mean_value}')
+print(f'Дисперсия выборки: {dispersion_value}')
+print(f'Дисперсия исправленная: {corrected_dispersion}')
+print(f'Среднее квадратичное отклонение выборки: {std_dev}')
+print(f'Среднее квадратичное отклонение исправленное: {correct_std_dev}')
 
 # Здесь не обязательно выводить полигон частот и гистограмму
-plot_frequency_polygon(variation_range)
-plot_histogram(variation_range)
+plot_frequency_polygon(var_range)
+plot_histogram(var_range)
 
-print("n = ", len(selection))
+print("n = ", len(selected_data))

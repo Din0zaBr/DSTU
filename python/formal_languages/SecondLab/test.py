@@ -331,7 +331,8 @@ new_grammar = remove_left_recursion(grammar)
 new_grammar = {key: value for key, value in new_grammar.items()}
 print("\n".join(f"{key} -> {value}".rstrip("|") for key, value in new_grammar.items()))
 
-# a b l = < > ^ v ~
-# X Y Z K L
-# X
-# X = Y|Y=Y|Y<Y|Y>Y|K, Y = Y^Z|YvZ|., Z = ~a|~b|., K = ~K, L = l|a|b
+# S X Y Z K
+# x y z k # $
+# S
+# 5
+# S = X|Y|Z, X = x#X|x#Y|., Y = Yy$|Yz$|$|., Z = Zz$, K = Kk$|k$

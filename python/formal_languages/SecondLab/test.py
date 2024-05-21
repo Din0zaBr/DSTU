@@ -321,11 +321,13 @@ print("\n".join(f"{i[0]} -> {' '.join(i[1])}" for i in rooles1))
 rooles1 = zip_rooles(massN1, rooles1)
 print('G = (', massT, ',', massN1, ', P,', S_new, ')')
 print("\n".join(f"{i[0]} -> {' '.join(i[1])}" for i in rooles1))
+print("Начало левой рекурсии" + "\n")
 
 rooles1 = left_factorize(rooles)
 print(type(rooles1))
-print("\n".join(f"{key} -> {value}" for key, value in rooles1.items()))
+# print("\n".join(f"{key} -> {value}" for key, value in rooles1.items()))
 
+print("Окончание левой рекурсии" + "\n")
 grammar = {item[0]: item[1] for item in rooles}
 new_grammar = remove_left_recursion(grammar)
 new_grammar = {key: value for key, value in new_grammar.items()}

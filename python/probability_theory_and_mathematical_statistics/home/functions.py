@@ -24,8 +24,7 @@ def count_seconds_from_file():
 
     with open(file_path, 'r') as file:
         times_list = [int(line) // 100 * 60 + int(line) % 100 for line in file]
-        times_list.sort()
-    return times_list[:-6]
+    return times_list
 
 
 def compute_average(data):
@@ -98,14 +97,9 @@ def get_variation_range(data):
     return sorted(data.copy())
 
 
-# def range_every_four_odd(data):  # Из выборки ряда оставляется каждый через 4 элемента, начиная с первого
-#     data = [data[i] for i in range(1, len(data), 4)]
-#     return data
-
-
 def filter_data(data):
     """
-    Фильтрует данные, оставляя каждый четвертый элемент, начиная с первого.
+    Фильтрует данные, оставляя каждый четвертый элемент, начиная с второго.
 
     Параметры:
     data (list): Список чисел.
@@ -113,4 +107,4 @@ def filter_data(data):
     Возвращает:
     list: Фильтрованный список.
     """
-    return data[1::4]
+    return data[1::3]

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from tkinter import messagebox
 
 
-def analyze_text(file_entry, entropy_label, progress_bar, results_table):
+def analyze_text(file_entry, entropy_label, progress_bar, results_table, loading_label, root):
     file_path = file_entry.get()
 
     # Проверка существования файла
@@ -16,6 +16,10 @@ def analyze_text(file_entry, entropy_label, progress_bar, results_table):
     # Подтверждение операции
     if not messagebox.askyesno('Подтверждение', 'Вы уверены, что хотите проанализировать этот файл?'):
         return
+
+    # Отображение индикатора загрузки
+    loading_label.config(text='Вычисление энтропии...')
+    root.after(100)
 
     # Вычисление энтропии файла
     file_entropy = calculate_file_entropy(file_path)
@@ -53,6 +57,9 @@ def analyze_text(file_entry, entropy_label, progress_bar, results_table):
 
     # Обновление прогресс-бара
     progress_bar['value'] = 100
+
+    # Скрытие индикатора загрузки
+    loading_label.config(text='')
 
 
 def build_histogram(text):

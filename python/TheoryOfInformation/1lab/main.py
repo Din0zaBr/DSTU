@@ -44,13 +44,17 @@ def main():
     results_table.heading('Значение', text='Значение')
     results_table.grid(row=3, column=0, columnspan=2, padx=10, pady=10)
 
+    loading_label = tk.Label(root, text='')
+    loading_label.grid(row=4, column=0, columnspan=2, padx=10, pady=10)
+
     analyze_button = tk.Button(root, text='Анализировать файл', command=lambda: threading.Thread(target=analyze_text,
                                                                                                  args=(file_entry,
                                                                                                        entropy_label,
                                                                                                        progress_bar,
-                                                                                                       results_table))
-                               .start())
-    analyze_button.grid(row=4, column=0, columnspan=2, padx=10, pady=10)
+                                                                                                       results_table,
+                                                                                                       loading_label,
+                                                                                                       root)).start())
+    analyze_button.grid(row=5, column=0, columnspan=2, padx=10, pady=10)
 
     root.mainloop()
 

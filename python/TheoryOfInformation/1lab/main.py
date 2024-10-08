@@ -16,7 +16,7 @@
 Язык: любой, кроме Паскаля, Делфи, Бейсика и подобных
 Интерфейс – нужен, конкретных требований к нему на первой лабе не предъявляю
 """
-from utils import analyze_text
+from grafic import analyze_text
 import tkinter as tk
 from tkinter import ttk
 import threading
@@ -61,4 +61,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 

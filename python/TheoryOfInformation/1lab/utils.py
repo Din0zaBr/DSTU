@@ -20,14 +20,13 @@ def calculate_entropy(text):
     return entropy
 
 
-# "C:\Users\zabol\OneDrive\Рабочий стол\NASL.txt"
-
 def build_histogram(text):
     # Разделение текста на кириллицу, латиницу и символы
     cyrillic_text = ''.join(c for c in text if 'А' <= c <= 'я' or c == 'Ё' or c == 'ё')
     latin_text = ''.join(c for c in text if 'A' <= c <= 'Z' or 'a' <= c <= 'z')
     symbols_text = ''.join(c for c in text if not (
             'А' <= c <= 'я' or c == 'Ё' or c == 'ё' or 'A' <= c <= 'Z' or 'a' <= c <= 'z') and c.isprintable())
+
     # Подсчет частоты каждого символа в каждом тексте
     cyrillic_frequency = collections.Counter(cyrillic_text)
     latin_frequency = collections.Counter(latin_text)
@@ -52,7 +51,7 @@ def build_histogram(text):
     axs[1].set_ylabel('Частота')
 
     axs[2].bar(symbols_frequency.keys(), symbols_frequency.values())
-    axs[2].set_title('Гистограмма появления символов')
+    axs[2].set_title('Гистограмма появления всего остального')
     axs[2].set_xlabel('Символы')
     axs[2].set_ylabel('Частота')
 

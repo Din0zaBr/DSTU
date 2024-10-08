@@ -104,7 +104,7 @@ def build_bit_histogram(data):
 
     # Построение гистограммы
     plt.bar(byte_frequency.keys(), byte_frequency.values())
-    plt.title('Гистограмма появления всех бит')
+    plt.title('Гистограмма появления всех байт')
     plt.xlabel('Байты')
     plt.ylabel('Частота')
     plt.show()

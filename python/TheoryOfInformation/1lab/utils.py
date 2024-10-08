@@ -22,7 +22,7 @@ def analyze_text(file_entry, entropy_label):
     with open(file_path, 'r', encoding='utf-8') as file:
         text = file.read()
 
-    # Удаление специальных символов и символов табуляции
+    # Удаление специальных символов
     special_chars = "@#$^&*{}[]<><=>=/\\|=+"  # добавь пробел, иначе он рушит гистограмму
     trans = str.maketrans('', '', special_chars)
     text = text.translate(trans)

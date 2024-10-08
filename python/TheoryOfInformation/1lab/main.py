@@ -62,7 +62,3 @@ def main():
 if __name__ == "__main__":
     main()
 
-#  C:\Users\zabol\OneDrive\Рабочий стол\NASL.txt
-#  C:\Users\zabol\Downloads\test.txt
-#  C:\Users\zabol\OneDrive\Изображения\t276.jpg
-#  C:\Users\zabol\iCloudDrive\iCloud~md~obsidian\Жизнь\Dancing.md

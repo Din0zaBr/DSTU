@@ -6,7 +6,6 @@ from utils import calculate_entropy, calculate_file_entropy
 
 
 def analyze_text(file_entry, entropy_label, progress_bar, results_table, loading_label, root):
-    global text_entropy
     file_path = file_entry.get()
 
     # Проверка существования файла
@@ -24,7 +23,6 @@ def analyze_text(file_entry, entropy_label, progress_bar, results_table, loading
 
     # Вычисление энтропии файла
     file_entropy = calculate_file_entropy(file_path)
-    entropy_label.config(text=f'Энтропия файла: {file_entropy}')
 
     # Чтение содержимого файла
     with open(file_path, 'rb') as file:
@@ -40,7 +38,6 @@ def analyze_text(file_entry, entropy_label, progress_bar, results_table, loading
 
         # Вычисление энтропии текста
         text_entropy = calculate_entropy(text)
-        entropy_label.config(text=f'Энтропия файла: {file_entropy}\nЭнтропия текста: {text_entropy}')
 
         # Построение гистограммы появления символов
         build_histogram(text)

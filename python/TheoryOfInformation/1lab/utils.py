@@ -6,18 +6,37 @@ import matplotlib.pyplot as plt
 import re
 
 
-def calculate_entropy(text):
-    # Подсчет частоты каждого символа в тексте
-    frequency = collections.Counter(text)
-    total_chars = len(text)
+def analyze_text(file_entry, entropy_label):
+    file_path = file_entry.get()
 
-    # Вычисление энтропии
-    entropy = 0
-    for count in frequency.values():
-        probability = count / total_chars
-        entropy -= probability * math.log2(probability)
+    # Проверка существования файла
+    if not os.path.isfile(file_path):
+        messagebox.showerror('Ошибка', 'Файл не существует')
+        return
 
-    return entropy
+    # Проверка расширения файла
+    if not file_path.endswith('.txt'):
+        messagebox.showerror('Ошибка', 'Пожалуйста, выберите файл с расширением .txt')
+        return
+
+    with open(file_path, 'r', encoding='utf-8') as file:
+        text = file.read()
+
+    # Удаление специальных символов и символов табуляции
+    special_chars = "@#$^&*{}[]<><=>=/\\|=+" # добавь пробел, иначе он рушит гистограмму
+    trans = str.maketrans('', '', special_chars)
+    text = text.translate(trans)
+    text = text.replace('\t', '')  # удаление табуляции
+
+    # Вывод текста после удаления символов (для отладки)
+    print(text)
+
+    # Вычисление энтропии текста
+    entropy = calculate_entropy(text)
+    entropy_label.config(text=f'Энтропия текста: {entropy}')
+
+    # Построение гистограммы появления символов
+    build_histogram(text)
 
 
 def build_histogram(text):
@@ -59,29 +78,15 @@ def build_histogram(text):
     plt.show()
 
 
-def analyze_text(file_entry, entropy_label):
-    file_path = file_entry.get()
+def calculate_entropy(text):
+    # Подсчет частоты каждого символа в тексте
+    frequency = collections.Counter(text)
+    total_chars = len(text)
 
-    # Проверка существования файла
-    if not os.path.isfile(file_path):
-        messagebox.showerror('Ошибка', 'Файл не существует')
-        return
+    # Вычисление энтропии
+    entropy = 0
+    for count in frequency.values():
+        probability = count / total_chars
+        entropy -= probability * math.log2(probability)
 
-    # Проверка расширения файла
-    if not file_path.endswith('.txt'):
-        messagebox.showerror('Ошибка', 'Пожалуйста, выберите файл с расширением .txt')
-        return
-
-    with open(file_path, 'r', encoding='utf-8') as file:
-        text = file.read()
-
-    # Удаление специальных символов и символов табуляции
-    text = re.sub(r'[@#$^&*{}[]< > <= >= / \\ | = +]', '', text)
-    text = text.replace('\t', '')  # удаление табуляции
-
-    # Вычисление энтропии текста
-    entropy = calculate_entropy(text)
-    entropy_label.config(text=f'Энтропия текста: {entropy}')
-
-    # Построение гистограммы появления символов
-    build_histogram(text)
+    return entropy

@@ -44,4 +44,5 @@ def main():
 if __name__ == "__main__":
     print(main())
 
-#  "C:\Users\zabol\OneDrive\Рабочий стол\NASL.txt
+#  C:\Users\zabol\OneDrive\Рабочий стол\NASL.txt
+#  C:\Users\zabol\Downloads\test.txt

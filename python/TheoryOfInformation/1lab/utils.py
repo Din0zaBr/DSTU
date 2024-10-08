@@ -3,7 +3,6 @@ import collections
 import math
 from tkinter import messagebox
 import matplotlib.pyplot as plt
-import re
 
 
 def analyze_text(file_entry, entropy_label):
@@ -14,28 +13,33 @@ def analyze_text(file_entry, entropy_label):
         messagebox.showerror('Ошибка', 'Файл не существует')
         return
 
-    # Проверка расширения файла
-    if not file_path.endswith('.txt'):
-        messagebox.showerror('Ошибка', 'Пожалуйста, выберите файл с расширением .txt')
-        return
+    # Вычисление энтропии файла
+    file_entropy = calculate_file_entropy(file_path)
+    entropy_label.config(text=f'Энтропия файла: {file_entropy}')
 
-    with open(file_path, 'r', encoding='utf-8') as file:
-        text = file.read()
+    # Чтение содержимого файла
+    with open(file_path, 'rb') as file:
+        data = file.read()
 
-    # Удаление специальных символов
-    special_chars = "@#$^&*{}[]<><=>=/\\|=+"  # добавь пробел, иначе он рушит гистограмму
-    trans = str.maketrans('', '', special_chars)
-    text = text.translate(trans)
+    # Проверка, является ли файл текстовым
+    try:
+        text = data.decode('utf-8')
+        # Удаление специальных символов
+        special_chars = "@#$^&*{}[]<><=>=/\\|=+"
+        trans = str.maketrans('', '', special_chars)
+        text = text.translate(trans)
 
-    # Вывод текста после удаления символов (для отладки)
-#    print(text)
+        # Вычисление энтропии текста
+        text_entropy = calculate_entropy(text)
+        entropy_label.config(text=f'Энтропия файла: {file_entropy}\nЭнтропия текста: {text_entropy}')
 
-    # Вычисление энтропии текста
-    entropy = calculate_entropy(text)
-    entropy_label.config(text=f'Энтропия текста: {entropy}')
+        # Построение гистограммы появления символов
+        build_histogram(text)
+    except UnicodeDecodeError:
+        pass
 
-    # Построение гистограммы появления символов
-    build_histogram(text)
+    # Построение гистограммы появления всех бит
+    build_bit_histogram(data)
 
 
 def build_histogram(text):
@@ -77,6 +81,21 @@ def build_histogram(text):
     plt.show()
 
 
+def build_bit_histogram(data):
+    # Преобразование данных в битовую строку
+    bit_string = ''.join(format(byte, '08b') for byte in data)
+
+    # Подсчет частоты каждого бита
+    bit_frequency = collections.Counter(bit_string)
+
+    # Построение гистограммы
+    plt.bar(bit_frequency.keys(), bit_frequency.values())
+    plt.title('Гистограмма появления всех бит')
+    plt.xlabel('Биты')
+    plt.ylabel('Частота')
+    plt.show()
+
+
 def calculate_entropy(text):
     # Подсчет частоты каждого символа в тексте
     frequency = collections.Counter(text)
@@ -86,6 +105,23 @@ def calculate_entropy(text):
     entropy = 0
     for count in frequency.values():
         probability = count / total_chars
+        entropy -= probability * math.log2(probability)
+
+    return entropy
+
+
+def calculate_file_entropy(file_path):
+    with open(file_path, 'rb') as file:
+        data = file.read()
+
+    # Подсчет частоты каждого байта в файле
+    frequency = collections.Counter(data)
+    total_bytes = len(data)
+
+    # Вычисление энтропии
+    entropy = 0
+    for count in frequency.values():
+        probability = count / total_bytes
         entropy -= probability * math.log2(probability)
 
     return entropy

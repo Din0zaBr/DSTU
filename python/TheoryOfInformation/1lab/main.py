@@ -23,7 +23,7 @@ from utils import analyze_text
 def main():
     # Создание графического интерфейса
     root = tk.Tk()
-    root.title('Анализатор текста')
+    root.title('Анализатор файла')
 
     file_label = tk.Label(root, text='Введите путь к файлу:')
     file_label.pack()
@@ -34,15 +34,16 @@ def main():
     entropy_label = tk.Label(root, text='')
     entropy_label.pack()
 
-    analyze_button = tk.Button(root, text='Анализировать текст',
-                               command=lambda: analyze_text(file_entry, entropy_label))
+    analyze_button = tk.Button(root, text='Анализировать файл', command=lambda: analyze_text(file_entry, entropy_label))
     analyze_button.pack()
 
     root.mainloop()
 
 
 if __name__ == "__main__":
-    print(main())
+    main()
 
 #  C:\Users\zabol\OneDrive\Рабочий стол\NASL.txt
 #  C:\Users\zabol\Downloads\test.txt
+#  C:\Users\zabol\OneDrive\Изображения\t276.jpg
+#  C:\Users\zabol\iCloudDrive\iCloud~md~obsidian\Жизнь\Dancing.md

@@ -27,7 +27,6 @@ def analyze_text(file_entry, entropy_label, progress_bar, results_table, loading
     # Чтение содержимого файла
     with open(file_path, 'rb') as file:
         data = file.read()
-
     # Проверка, является ли файл текстовым
     try:
         text = data.decode('utf-8')
@@ -100,15 +99,12 @@ def build_histogram(text):
 
 
 def build_bit_histogram(data):
-    # Преобразование данных в битовую строку
-    bit_string = ''.join(format(byte, '08b') for byte in data)
-
-    # Подсчет частоты каждого бита
-    bit_frequency = collections.Counter(bit_string)
+    # Подсчет частоты каждого байта в файле
+    byte_frequency = collections.Counter(data)
 
     # Построение гистограммы
-    plt.bar(bit_frequency.keys(), bit_frequency.values())
+    plt.bar(byte_frequency.keys(), byte_frequency.values())
     plt.title('Гистограмма появления всех бит')
-    plt.xlabel('Биты')
+    plt.xlabel('Байты')
     plt.ylabel('Частота')
     plt.show()

@@ -23,7 +23,6 @@ def calculate_file_entropy(file_path):
     # Подсчет частоты каждого байта в файле
     frequency = collections.Counter(data)
     total_bytes = len(data)
-
     # Вычисление энтропии
     entropy = 0
     for count in frequency.values():

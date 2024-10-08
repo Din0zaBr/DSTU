@@ -23,13 +23,12 @@ def analyze_text(file_entry, entropy_label):
         text = file.read()
 
     # Удаление специальных символов и символов табуляции
-    special_chars = "@#$^&*{}[]<><=>=/\\|=+" # добавь пробел, иначе он рушит гистограмму
+    special_chars = "@#$^&*{}[]<><=>=/\\|=+"  # добавь пробел, иначе он рушит гистограмму
     trans = str.maketrans('', '', special_chars)
     text = text.translate(trans)
-    text = text.replace('\t', '')  # удаление табуляции
 
     # Вывод текста после удаления символов (для отладки)
-    print(text)
+#    print(text)
 
     # Вычисление энтропии текста
     entropy = calculate_entropy(text)

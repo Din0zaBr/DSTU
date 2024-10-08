@@ -1,5 +1,4 @@
 import os
-
 import collections
 import math
 from tkinter import messagebox
@@ -61,7 +60,7 @@ def build_histogram(text):
     plt.show()
 
 
-def analyze_text():
+def analyze_text(file_entry, entropy_label):
     file_path = file_entry.get()
 
     # Проверка существования файла

@@ -17,27 +17,29 @@
 Интерфейс – нужен, конкретных требований к нему на первой лабе не предъявляю
 """
 import tkinter as tk
+from utils import analyze_text
 
 
+def main():
+    # Создание графического интерфейса
+    root = tk.Tk()
+    root.title('Анализатор текста')
 
+    file_label = tk.Label(root, text='Введите путь к файлу:')
+    file_label.pack()
 
-# Создание графического интерфейса
-root = tk.Tk()
-root.title('Анализатор текста')
+    file_entry = tk.Entry(root, width=50)
+    file_entry.pack()
 
-file_label = tk.Label(root, text='Введите путь к файлу:')
-file_label.pack()
+    entropy_label = tk.Label(root, text='')
+    entropy_label.pack()
 
-file_entry = tk.Entry(root, width=50)
-file_entry.pack()
+    analyze_button = tk.Button(root, text='Анализировать текст',
+                               command=lambda: analyze_text(file_entry, entropy_label))
+    analyze_button.pack()
 
-analyze_button = tk.Button(root, text='Анализировать текст', command=analyze_text)
-analyze_button.pack()
+    root.mainloop()
 
-entropy_label = tk.Label(root, text='')
-entropy_label.pack()
-
-root.mainloop()
 
 if __name__ == "__main__":
     print(main())

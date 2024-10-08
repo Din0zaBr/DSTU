@@ -16,8 +16,10 @@
 Язык: любой, кроме Паскаля, Делфи, Бейсика и подобных
 Интерфейс – нужен, конкретных требований к нему на первой лабе не предъявляю
 """
-import tkinter as tk
 from utils import analyze_text
+import tkinter as tk
+from tkinter import ttk
+import threading
 
 
 def main():
@@ -26,16 +28,29 @@ def main():
     root.title('Анализатор файла')
 
     file_label = tk.Label(root, text='Введите путь к файлу:')
-    file_label.pack()
+    file_label.grid(row=0, column=0, padx=10, pady=10)
 
     file_entry = tk.Entry(root, width=50)
-    file_entry.pack()
+    file_entry.grid(row=0, column=1, padx=10, pady=10)
 
     entropy_label = tk.Label(root, text='')
-    entropy_label.pack()
+    entropy_label.grid(row=1, column=0, columnspan=2, padx=10, pady=10)
 
-    analyze_button = tk.Button(root, text='Анализировать файл', command=lambda: analyze_text(file_entry, entropy_label))
-    analyze_button.pack()
+    progress_bar = ttk.Progressbar(root, orient='horizontal', length=200, mode='determinate')
+    progress_bar.grid(row=2, column=0, columnspan=2, padx=10, pady=10)
+
+    results_table = ttk.Treeview(root, columns=('Параметр', 'Значение'), show='headings')
+    results_table.heading('Параметр', text='Параметр')
+    results_table.heading('Значение', text='Значение')
+    results_table.grid(row=3, column=0, columnspan=2, padx=10, pady=10)
+
+    analyze_button = tk.Button(root, text='Анализировать файл', command=lambda: threading.Thread(target=analyze_text,
+                                                                                                 args=(file_entry,
+                                                                                                       entropy_label,
+                                                                                                       progress_bar,
+                                                                                                       results_table))
+                               .start())
+    analyze_button.grid(row=4, column=0, columnspan=2, padx=10, pady=10)
 
     root.mainloop()
 

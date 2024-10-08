@@ -1,16 +1,20 @@
 import os
 import collections
 import math
-from tkinter import messagebox
 import matplotlib.pyplot as plt
+from tkinter import messagebox
 
 
-def analyze_text(file_entry, entropy_label):
+def analyze_text(file_entry, entropy_label, progress_bar, results_table):
     file_path = file_entry.get()
 
     # Проверка существования файла
     if not os.path.isfile(file_path):
         messagebox.showerror('Ошибка', 'Файл не существует')
+        return
+
+    # Подтверждение операции
+    if not messagebox.askyesno('Подтверждение', 'Вы уверены, что хотите проанализировать этот файл?'):
         return
 
     # Вычисление энтропии файла
@@ -40,6 +44,15 @@ def analyze_text(file_entry, entropy_label):
 
     # Построение гистограммы появления всех бит
     build_bit_histogram(data)
+
+    # Отображение результатов в таблице
+    results_table.delete(*results_table.get_children())
+    results_table.insert('', 'end', values=('Энтропия файла', file_entropy))
+    if 'text_entropy' in locals():
+        results_table.insert('', 'end', values=('Энтропия текста', text_entropy))
+
+    # Обновление прогресс-бара
+    progress_bar['value'] = 100
 
 
 def build_histogram(text):

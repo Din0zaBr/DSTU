@@ -50,12 +50,15 @@ def analyze(file_entry, entropy_label, progress_bar, results_table, loading_labe
     # Проверка, является ли файл текстовым
     try:
         text = try_load_text_file(file_path)
+        if text is None:
+            pass
+        else:
+            # Вычисление энтропии текста
+            text_entropy = calculate_entropy(text)
 
-        # Вычисление энтропии текста
-        text_entropy = calculate_entropy(text)
+            # Построение гистограммы появления символов
+            build_histogram(text)
 
-        # Построение гистограммы появления символов
-        build_histogram(text)
     except UnicodeDecodeError:
         pass
 

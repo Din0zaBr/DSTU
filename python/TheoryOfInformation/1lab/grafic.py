@@ -41,7 +41,7 @@ def build_histogram(text):
     plt.show()
 
 
-def build_bit_histogram(data):
+def build_byte_histogram(data):
     # Подсчет частоты каждого байта в файле
     byte_frequency = collections.Counter(data)
 

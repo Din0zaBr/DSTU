@@ -16,7 +16,7 @@
 Язык: любой, кроме Паскаля, Делфи, Бейсика и подобных
 Интерфейс – нужен, конкретных требований к нему на первой лабе не предъявляю
 """
-from utils import analyze_text
+from utils import analyze
 import tkinter as tk
 from tkinter import ttk
 import threading
@@ -47,7 +47,7 @@ def main():
     loading_label = tk.Label(root, text='')
     loading_label.grid(row=4, column=0, columnspan=2, padx=10, pady=10)
 
-    analyze_button = tk.Button(root, text='Анализировать файл', command=lambda: threading.Thread(target=analyze_text,
+    analyze_button = tk.Button(root, text='Анализировать файл', command=lambda: threading.Thread(target=analyze,
                                                                                                  args=(file_entry,
                                                                                                        entropy_label,
                                                                                                        progress_bar,
@@ -67,3 +67,4 @@ if __name__ == "__main__":
 #  C:\Users\zabol\OneDrive\Изображения\t276.jpg
 #  C:\Users\zabol\Downloads\test.docx
 #  C:\Users\zabol\iCloudDrive\iCloud~md~obsidian\Жизнь\Dancing.md
+#  C:\Users\zabol\Downloads\OpenVPN-2.6.12-I001-amd64.msi

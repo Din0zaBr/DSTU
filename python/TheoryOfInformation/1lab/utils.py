@@ -2,12 +2,30 @@ import collections
 import math
 from tkinter import messagebox
 import os
-from grafic import build_histogram, build_bit_histogram
+from grafic import build_histogram, build_byte_histogram
 import zipfile
 import xml.etree.ElementTree as ET
 
 
-def analyze_text(file_entry, entropy_label, progress_bar, results_table, loading_label, root):
+def try_load_text_file(file_path):
+    if file_path.endswith(".docx"):
+        return load_word_file(file_path)  # Загрузка Word-файла
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except (UnicodeDecodeError, FileNotFoundError):
+        # Если не удается загрузить как текст, возвращаем None
+        return None
+
+
+def delete_symbols(text):
+    special_chars = "@#$^&*{}[]<><=>=/\\|=+"
+    trans = str.maketrans('', '', special_chars)
+    text = text.translate(trans)
+    return text
+
+
+def analyze(file_entry, entropy_label, progress_bar, results_table, loading_label, root):
     file_path = file_entry.get()
 
     # Проверка существования файла
@@ -31,11 +49,7 @@ def analyze_text(file_entry, entropy_label, progress_bar, results_table, loading
         data = file.read()
     # Проверка, является ли файл текстовым
     try:
-        text = data.decode('utf-8')
-        # Удаление специальных символов
-        special_chars = "@#$^&*{}[]<><=>=/\\|=+"
-        trans = str.maketrans('', '', special_chars)
-        text = text.translate(trans)
+        text = try_load_text_file(file_path)
 
         # Вычисление энтропии текста
         text_entropy = calculate_entropy(text)
@@ -43,10 +57,10 @@ def analyze_text(file_entry, entropy_label, progress_bar, results_table, loading
         # Построение гистограммы появления символов
         build_histogram(text)
     except UnicodeDecodeError:
-        print("Ошибка есть")
+        pass
 
     # Построение гистограммы появления всех бит
-    build_bit_histogram(data)
+    build_byte_histogram(data)
 
     # Отображение результатов в таблице
     results_table.delete(*results_table.get_children())
@@ -127,13 +141,6 @@ def calculate_entropy(text):
 
     return entropy
 
-def calculate_entropy(frequencies, total_count):
-    entropy = 0
-    for count in frequencies.values():
-        probability = count / total_count
-        if probability > 0:
-            entropy += -probability * math.log2(probability)
-    return entropy
 
 def calculate_file_entropy(file_path):
     with open(file_path, 'rb') as file:

@@ -18,11 +18,11 @@ def try_load_text_file(file_path):
         return None
 
 
-def delete_symbols(text):
-    special_chars = "@#$^&*{}[]<><=>=/\\|=+"
-    trans = str.maketrans('', '', special_chars)
-    text = text.translate(trans)
-    return text
+# def delete_symbols(text):
+#     special_chars = "@#$^&*{}[]<><=>=/\\|=+"
+#     trans = str.maketrans('', '', special_chars)
+#     text = text.translate(trans)
+#     return text
 
 
 def analyze(file_entry, entropy_label, progress_bar, results_table, loading_label, root):
@@ -75,19 +75,24 @@ def analyze(file_entry, entropy_label, progress_bar, results_table, loading_labe
     loading_label.config(text='')
 
 
-def load_binary_file(file_path):
-    with open(file_path, 'rb') as f:
-        return f.read()
+"""
+Cодержимое файла декодируется в формате UTF-8 с игнорированием ошибок и 
+создается дерево XML с помощью xml.etree.ElementTree.
+Функция использует пространство имен для извлечения текста из элементов дерева и возвращает объединенный текст.
+Если во время выполнения этой функции происходит исключение, 
+функция выводит сообщение об ошибке в консоль и возвращает None.
 
 
-def try_load_text_file(file_path):
-    if file_path.endswith(".docx"):
-        return load_word_file(file_path)
-    try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            return f.read()
-    except (UnicodeDecodeError, FileNotFoundError):
-        return None
+ XML позволяет описывать данные в виде тегов, которые могут быть вложены друг в друга, образуя иерархическую структуру. 
+ Каждый тег может содержать атрибуты, которые описывают свойства тега. 
+ XML используется для обмена данными между различными приложениями и платформами, 
+ а также для хранения данных в различных форматах, таких как веб-сервисы, базы данных и файлы.
+ 
+ В контексте данного кода, XML используется для хранения текста в файле Word (.docx). 
+ Функция load_word_file открывает файл document.xml в файле Word и извлекает текст из тегов w:t, 
+ используя пространство имен w для доступа к этим тегам. 
+ Затем текст объединяется и возвращается в виде строки.
+"""
 
 
 def load_word_file(file_path):
@@ -104,28 +109,6 @@ def load_word_file(file_path):
     except Exception as e:
         print(f"Ошибка при чтении файла Word: {e}")
         return None
-
-
-def count_frequencies(text):
-    frequencies = {}
-    for char in text:
-        if char in frequencies:
-            frequencies[char] += 1
-        else:
-            frequencies[char] = 1
-    return frequencies
-
-
-# Подсчет частоты 8-битных строк (байтов) в файле
-def count_byte_frequencies(binary_data):
-    frequencies = {}
-    for byte in binary_data:
-        byte_str = f'{byte:08b}'  # Преобразуем байт в строку из 8 бит
-        if byte_str in frequencies:
-            frequencies[byte_str] += 1
-        else:
-            frequencies[byte_str] = 1
-    return frequencies
 
 
 def calculate_entropy(text):
@@ -145,7 +128,6 @@ def calculate_entropy(text):
 def calculate_file_entropy(file_path):
     with open(file_path, 'rb') as file:
         data = file.read()
-
     # Подсчет частоты каждого байта в файле
     frequency = collections.Counter(data)
     total_bytes = len(data)

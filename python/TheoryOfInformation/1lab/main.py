@@ -16,7 +16,7 @@
 Язык: любой, кроме Паскаля, Делфи, Бейсика и подобных
 Интерфейс – нужен, конкретных требований к нему на первой лабе не предъявляю
 """
-from grafic import analyze_text
+from utils import analyze_text
 import tkinter as tk
 from tkinter import ttk
 import threading
@@ -65,4 +65,5 @@ if __name__ == "__main__":
 #  C:\Users\zabol\OneDrive\Рабочий стол\NASL.txt
 #  C:\Users\zabol\Downloads\test.txt
 #  C:\Users\zabol\OneDrive\Изображения\t276.jpg
+#  C:\Users\zabol\Downloads\test.docx
 #  C:\Users\zabol\iCloudDrive\iCloud~md~obsidian\Жизнь\Dancing.md

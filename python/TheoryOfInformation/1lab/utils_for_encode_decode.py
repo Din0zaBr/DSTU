@@ -176,7 +176,7 @@ def lzw_encode(file_path):
     with open(file_path, 'r') as file:
         data = file.read()
 
-    data = data.lower()  # Приведение к нижнему регистру
+    data = data.lower()
     sp_zn = []
 
     # Сбор уникальных символов
@@ -206,7 +206,7 @@ def lzw_encode(file_path):
             current = next
             cur_str += next
 
-    sl[cur_str + "@"] = num
+    sl[cur_str + "-"] = num
     it_str += str(sl[cur_str])
 
     # Формирование результата

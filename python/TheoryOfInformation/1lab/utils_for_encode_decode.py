@@ -125,6 +125,7 @@ def huffman_decode(file_path):
 
     except Exception as e:
         print(f"Введён неверный формат зашифрованного текста: {str(e)}")
+        messagebox.showerror('Ошибка', 'В файле неверный формат зашифрованного текста')
         return None
 
 

@@ -121,7 +121,7 @@ def huffman_decode(file_path):
         with open(encoded_file_path, 'w') as file:
             file.write(decoded_text)
 
-        return decoded_text  # Возвращаем результат для дальнейшего использования
+        return decoded_text
 
     except Exception as e:
         print(f"Введён неверный формат зашифрованного текста: {str(e)}")

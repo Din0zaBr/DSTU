@@ -15,6 +15,10 @@ def confirm_operation(operation):
 
 
 def huffman_encode(file_path):
+    if not check_file_existence(file_path):
+        return
+    if not confirm_operation('закодировать'):
+        return
     # Read the file and calculate frequency of each character
     with open(file_path, 'r') as file:
         text = file.read()
@@ -44,8 +48,9 @@ def huffman_encode(file_path):
     for char in text:
         encoded_text += huffman_table[char]
 
-    # Save the encoded text to a file
-    with open(file_path + '.huffman', 'w') as file:
+    # Save the encoded text to a file in the same directory as the input file
+    encoded_file_path = os.path.join(os.path.dirname(file_path), os.path.splitext(os.path.basename(file_path))[0] + '.huffman')
+    with open(encoded_file_path, 'w') as file:
         file.write(encoded_text)
 
     # Print the Huffman coding table
@@ -55,6 +60,10 @@ def huffman_encode(file_path):
 
 
 def huffman_decode(file_path):
+    if not check_file_existence(file_path):
+        return
+    if not confirm_operation('декодировать'):
+        return
     # Read the encoded text from the file
     with open(file_path, 'r') as file:
         encoded_text = file.read()
@@ -75,8 +84,9 @@ def huffman_decode(file_path):
             decoded_text += huffman_table[current_code]
             current_code = ''
 
-    # Save the decoded text to a file
-    with open(os.path.splitext(file_path)[0] + '.decoded', 'w') as file:
+    # Save the decoded text to a file in the same directory as the input file
+    decoded_file_path = os.path.join(os.path.dirname(file_path), os.path.splitext(os.path.basename(file_path))[0] + '.decoded')
+    with open(decoded_file_path, 'w') as file:
         file.write(decoded_text)
 
     # Print the decoded text
@@ -85,8 +95,16 @@ def huffman_decode(file_path):
 
 
 def lz77_encode(file_path):
+    if not check_file_existence(file_path):
+        return
+    if not confirm_operation('закодировать'):
+        return
     pass
 
 
 def lzw_encode(file_path):
+    if not check_file_existence(file_path):
+        return
+    if not confirm_operation('закодировать'):
+        return
     pass

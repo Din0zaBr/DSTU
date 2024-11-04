@@ -1,6 +1,7 @@
-import heapq
 import os
+import ast
 from tkinter import messagebox
+from bisect import bisect_left
 
 
 def check_file_existence(file_path):
@@ -21,34 +22,74 @@ def huffman_encode(file_path):
         return
 
     with open(file_path, 'r') as file:
-        text = file.read()
+        data = file.read()
 
-    frequency = {char: text.count(char) for char in set(text)}
-    heap = [[weight, [char, ""]] for char, weight in frequency.items()]
-    heapq.heapify(heap)
+    try:
+        ver = []
+        sp_zn = []
+        data = data.lower()
 
-    while len(heap) > 1:
-        lo = heapq.heappop(heap)
-        hi = heapq.heappop(heap)
-        for pair in lo[1:]:
-            pair[1] = '0' + pair[1]
-        for pair in hi[1:]:
-            pair[1] = '1' + pair[1]
-        heapq.heappush(heap, [lo[0] + hi[0]] + lo[1:] + hi[1:])
+        # Подсчет частоты символов
+        for i in data:
+            if i not in sp_zn:
+                ver.append(1)
+                sp_zn.append(i)
+            else:
+                ind = sp_zn.index(i)
+                ver[ind] += 1
 
-    huffman_table = dict(heapq.heappop(heap)[1:])
-    encoded_text = ''.join(huffman_table[char] for char in text)
+        dl = len(data)
+        ver = [x / dl for x in ver]
 
-    encoded_file_path = os.path.join(os.path.dirname(file_path),
-                                     os.path.splitext(os.path.basename(file_path))[0] + '_huffman' +
-                                     os.path.splitext(os.path.basename(file_path))[-1])
-    with open(encoded_file_path, 'w') as file:
-        file.write(encoded_text)
+        # Сортировка по убыванию частоты
+        for i in range(len(ver) - 1):
+            for j in range(i + 1, len(sp_zn)):
+                if ver[i] < ver[j]:
+                    ver[i], ver[j] = ver[j], ver[i]
+                    sp_zn[i], sp_zn[j] = sp_zn[j], sp_zn[i]
 
-    print('Huffman coding table:')
-    sorted_huffman_table = sorted(huffman_table.items(), key=lambda x: x[1])
-    for char, code in sorted_huffman_table:
-        print(f'{char}: {code}')
+        k = len(sp_zn)
+        sl = {}
+
+        # Построение кодов Хаффмана
+        for i in range(k - 1):
+            summ = ver[-1] + ver[-2]
+            ver = ver[:(len(ver) - 2)]
+            ver.reverse()
+            ind = bisect_left(ver, summ)
+            ver.insert(ind, summ)
+            ver.reverse()
+
+            for char in sp_zn[-1]:
+                sl[char] = sl.get(char, '') + '0'
+            for char in sp_zn[-2]:
+                sl[char] = sl.get(char, '') + '1'
+
+            st = sp_zn[-1] + sp_zn[-2]
+            sp_zn = sp_zn[:(len(sp_zn) - 2)]
+            sp_zn.reverse()
+            sp_zn.insert(ind, st)
+            sp_zn.reverse()
+
+        # Обратное преобразование кодов
+        for k in sl.keys():
+            sl[k] = sl[k][::-1]
+
+        encoded_text = str(sl) + "n"
+        for i in data:
+            encoded_text += sl[i]
+
+        encoded_file_path = os.path.join(os.path.dirname(file_path),
+                                         os.path.splitext(os.path.basename(file_path))[0] + '_Huffman_encoded' +
+                                         os.path.splitext(os.path.basename(file_path))[-1])
+        with open(encoded_file_path, 'w') as file:
+            file.write(encoded_text)
+
+        return encoded_text  # Возвращаем результат для дальнейшего использования
+
+    except Exception as e:
+        print(f"Произошла ошибка при открытии файла: {str(e)}")
+        return None
 
 
 def huffman_decode(file_path):
@@ -58,33 +99,36 @@ def huffman_decode(file_path):
         return
 
     with open(file_path, 'r') as file:
-        encoded_text = file.read()
+        text = file.read()
 
-    huffman_table = {}
-    with open(os.path.splitext(file_path)[0], 'r') as file:
-        for line in file:
-            char, code = line.strip().split(': ')
-            huffman_table[code] = char
+    try:
+        sl, stroka = text.split('n')
+        sl = ast.literal_eval(sl)
+        sl1 = {value: key for key, value in sl.items()}
+        decoded_text = ''
+        current = ''
 
-    decoded_text = ''
-    current_code = ''
-    for bit in encoded_text:
-        current_code += bit
-        if current_code in huffman_table:
-            decoded_text += huffman_table[current_code]
-            current_code = ''
+        # Декодирование
+        for i in stroka:
+            current += i
+            if current in sl1:
+                decoded_text += sl1[current]
+                current = ''
 
-    decoded_file_path = os.path.join(os.path.dirname(file_path),
-                                     os.path.splitext(os.path.basename(file_path))[0] + 'Huffman_decoded' +
-                                     os.path.splitext(os.path.basename(file_path))[-1])
-    with open(decoded_file_path, 'w') as file:
-        file.write(decoded_text)
+        encoded_file_path = os.path.join(os.path.dirname(file_path),
+                                         os.path.splitext(os.path.basename(file_path))[0] + '_Huffman_decoded' +
+                                         os.path.splitext(os.path.basename(file_path))[-1])
+        with open(encoded_file_path, 'w') as file:
+            file.write(decoded_text)
 
-    print('Decoded text:')
-    print(decoded_text)
+        return decoded_text  # Возвращаем результат для дальнейшего использования
+
+    except Exception as e:
+        print(f"Введён неверный формат зашифрованного текста: {str(e)}")
+        return None
 
 
-def lz77_encode(file_path):
+def lz77_encode(file_path, window_size=20):
     if not check_file_existence(file_path):
         return
     if not confirm_operation('закодировать'):
@@ -92,41 +136,36 @@ def lz77_encode(file_path):
 
     with open(file_path, 'r') as file:
         data = file.read()
-    # window_size = 12
-    # while i < len(data):
-    #     match_length = 0
-    #     match_distance = 0
-    #     next_char = data[i]
-    #
-    #     # Define the search window
-    #     start_window = max(0, i - window_size)
-    #     search_buffer = data[start_window:i]
-    #
-    #     # Try to find the longest match
-    #     for j in range(len(search_buffer)):
-    #         length = 0
-    #         while (length < len(data) - i and
-    #                search_buffer[j:j + length + 1] == data[i:i + length + 1]):
-    #             length += 1
-    #
-    #         # Update the best match if found
-    #         if length >= match_length:
-    #             match_length = length
-    #             match_distance = len(search_buffer) - j
-    #             if i + match_length < len(data):
-    #                 next_char = data[i + match_length]
-    #             else:
-    #                 next_char = ''
-    #
-    #             # Append (distance, length, next character) tuple
-    #     if match_length > 0:
-    #         compressed_data.append((match_distance, match_length, next_char))
-    #         i += match_length + 1
-    #     else:
-    #         compressed_data.append((0, 0, next_char))
-    #         i += 1
-    # print(compressed_data)
-    pass
+    encoded_text = []
+    i = 0
+    while i < len(data):
+        match_length = 0
+        match_offset = 0
+        lookahead_buffer = data[i:i + window_size]  # Окно просмотра вперед
+        search_buffer = data[max(0, i - window_size):i]  # Окно поиска
+        for j in range(len(search_buffer)):
+            length = 0
+            while (length < len(lookahead_buffer) and
+                   j + length < len(search_buffer) and
+                   search_buffer[j + length] == lookahead_buffer[length]):
+                length += 1
+            if length > match_length:
+                match_length = length
+                match_offset = len(search_buffer) - j
+        if match_length > 0:
+            encoded_text.append((match_offset, match_length, lookahead_buffer[match_length]))
+            i += match_length + 1
+        else:
+            encoded_text.append((0, 0, data[i]))
+            i += 1
+
+    encoded_file_path = os.path.join(os.path.dirname(file_path),
+                                     os.path.splitext(os.path.basename(file_path))[0] + '_LZ77_encoded' +
+                                     os.path.splitext(os.path.basename(file_path))[-1])
+    with open(encoded_file_path, 'w') as file:
+        file.write(str(encoded_text))
+    return encoded_text
+
 
 def lzw_encode(file_path):
     if not check_file_existence(file_path):
@@ -179,4 +218,3 @@ def lzw_encode(file_path):
         file.write(encoded_text)
 
     print(encoded_text)
-

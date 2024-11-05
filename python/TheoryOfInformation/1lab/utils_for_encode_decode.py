@@ -246,7 +246,7 @@ def lzw_encode(file_path):
     # Формирование результата
     encoded_text = str(sl) + '\n' + it_str.strip()
     encoded_file_path = os.path.join(os.path.dirname(file_path),
-                                     os.path.splitext(os.path.basename(file_path))[0] + '_LWS_encoded' +
+                                     os.path.splitext(os.path.basename(file_path))[0] + '_LSW_encoded' +
                                      os.path.splitext(os.path.basename(file_path))[-1])
     with open(encoded_file_path, 'w') as file:
         file.write(encoded_text)

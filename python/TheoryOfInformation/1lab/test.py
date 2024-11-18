@@ -6,14 +6,15 @@ for el in txt:
 
 def input_matrix(k, n):
     """
-    Функция для ввода матрицы с заданными количеством строк k и столбцов n.
+    Функция для ввода матрицы с заданными количеством строк k и столбцов n,
+    где каждый элемент должен быть либо 1, либо 0.
 
     :param k: Количество строк матрицы
     :param n: Количество столбцов матрицы
     :return: Введенная матрица
     """
     matrix = []
-    print(f"Введите элементы матрицы {k}x{n}:")
+    print(f"Введите элементы матрицы {k}x{n} (каждый элемент должен быть либо 1, либо 0):")
 
     for i in range(k):
         row = []
@@ -25,11 +26,10 @@ def input_matrix(k, n):
             return None
 
         for elem in row_input:
-            try:
-                row.append(int(elem))
-            except ValueError:
-                print(f"Ошибка: '{elem}' не является числом.")
+            if elem not in ['0', '1']:
+                print(f"Ошибка: '{elem}' не является допустимым значением (должно быть 0 или 1).")
                 return None
+            row.append(int(elem))
 
         matrix.append(row)
 

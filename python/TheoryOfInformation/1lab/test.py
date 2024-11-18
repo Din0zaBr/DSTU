@@ -53,12 +53,78 @@ def input_matrix(k, n):
     return matrix
 
 
+def find_identity_columns(matrix):
+    """
+    Функция для нахождения столбцов, которые образуют единичную квадратную матрицу.
+
+    :param matrix: Введенная матрица
+    :return: Список индексов столбцов, которые образуют единичную квадратную матрицу
+    """
+    k = len(matrix)
+    identity_columns = []
+
+    for i in range(k):
+        for j in range(k):
+            if matrix[i][j] == 1 and j not in identity_columns:
+                identity_columns.append(j)
+                break
+
+    return identity_columns
+
+
+def create_Hsys(matrix):
+    """
+    Функция для создания матрицы Hsys.
+
+    :param matrix: Введенная матрица
+    :return: Матрица Hsys
+    """
+    identity_columns = find_identity_columns(matrix)
+    Hsys = []
+
+    for row in matrix:
+        new_row = [row[i] for i in identity_columns] + row[len(identity_columns):]
+        Hsys.append(new_row)
+
+    return Hsys
+
+
+def create_Gsys(matrix):
+    """
+    Функция для создания матрицы Gsys.
+
+    :param matrix: Введенная матрица
+    :return: Матрица Gsys
+    """
+    identity_columns = find_identity_columns(matrix)
+    Gsys = []
+
+    for row in matrix:
+        new_row = row[:len(identity_columns)] + [row[i] for i in identity_columns]
+        Gsys.append(new_row)
+
+    return Gsys
+
+
 # Пример использования функции
 k = int(input("Введите количество строк (k): "))
 n = int(input("Введите количество столбцов (n): "))
 
+matrix_type = input("Хотите ли вы создать матрицу H или матрицу G? (введите H или G): ").upper()
+
+if matrix_type not in ['H', 'G']:
+    print("Неверный выбор. Пожалуйста, введите H или G.")
+    exit()
+
 matrix = input_matrix(k, n)
 
-print("Введенная матрица:")
-for row in matrix:
-    print(row)
+if matrix_type == 'H':
+    Hsys = create_Hsys(matrix)
+    print("Матрица Hsys:")
+    for row in Hsys:
+        print(row)
+elif matrix_type == 'G':
+    Gsys = create_Gsys(matrix)
+    print("Матрица Gsys:")
+    for row in Gsys:
+        print(row)

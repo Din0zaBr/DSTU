@@ -1,45 +1,48 @@
-import os
+txt, ascii_txt = input(), ''
+for el in txt:
+    ascii_txt += str(bin(ord(el)))[2:]
+    print(ascii_txt)
 
+def input_matrix(k, n):
+    """
+    Функция для ввода матрицы с заданными количеством строк k и столбцов n.
 
-def lzw_encode(data):
-    data = data.lower()
-    sp_zn = []
+    :param k: Количество строк матрицы
+    :param n: Количество столбцов матрицы
+    :return: Введенная матрица
+    """
+    matrix = []
+    print(f"Введите элементы матрицы {k}x{n}:")
 
-    # Сбор уникальных символов
-    for i in data:
-        if i not in sp_zn:
-            sp_zn.append(i)
+    for i in range(k):
+        row = []
+        print(f"Введите элементы {i+1}-й строки (через пробел):")
+        row_input = input().split()
 
-    # Создание словаря для кодирования
-    sl = {x: sp_zn.index(x) for x in sp_zn}
+        if len(row_input) != n:
+            print(f"Ошибка: Введено неверное количество элементов. Ожидалось {n}, получено {len(row_input)}.")
+            return None
 
-    num = len(sl)
-    current = data[0]
-    cur_str = ''
-    it_str = ''
-    cur_str = current
+        for elem in row_input:
+            try:
+                row.append(float(elem))
+            except ValueError:
+                print(f"Ошибка: '{elem}' не является числом.")
+                return None
 
-    # Основная логика алгоритма LZW
-    for i in data[1:]:
-        next = i
-        if (cur_str + next) not in sl:
-            sl[cur_str + next] = num
-            num += 1
-            it_str += str(sl[cur_str]) + ' '
-            current = next
-            cur_str = current
-        else:
-            current = next
-            cur_str += next
+        matrix.append(row)
 
-    sl[cur_str + "-"] = num
-    it_str += str(sl[cur_str])
-
-    # Формирование результата
-    encoded_text = str(sl) + '\n' + it_str.strip()
-
-    print(encoded_text)
-
+    return matrix
 
 # Пример использования функции
-lzw_encode('Мама мыла раму')
+k = int(input("Введите количество строк (k): "))
+n = int(input("Введите количество столбцов (n): "))
+
+matrix = input_matrix(k, n)
+
+if matrix:
+    print("Введенная матрица:")
+    for row in matrix:
+        print(row)
+else:
+    print("Ошибка при вводе матрицы.")

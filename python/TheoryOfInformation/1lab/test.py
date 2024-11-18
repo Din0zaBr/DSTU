@@ -3,6 +3,7 @@ for el in txt:
     ascii_txt += str(bin(ord(el)))[2:]
     print(ascii_txt)
 
+
 def input_matrix(k, n):
     """
     Функция для ввода матрицы с заданными количеством строк k и столбцов n.
@@ -16,7 +17,7 @@ def input_matrix(k, n):
 
     for i in range(k):
         row = []
-        print(f"Введите элементы {i+1}-й строки (через пробел):")
+        print(f"Введите элементы {i + 1}-й строки (через пробел):")
         row_input = input().split()
 
         if len(row_input) != n:
@@ -33,6 +34,7 @@ def input_matrix(k, n):
         matrix.append(row)
 
     return matrix
+
 
 # Пример использования функции
 k = int(input("Введите количество строк (k): "))

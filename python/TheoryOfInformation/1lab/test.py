@@ -26,7 +26,7 @@ def input_matrix(k, n):
 
         for elem in row_input:
             try:
-                row.append(float(elem))
+                row.append(int(elem))
             except ValueError:
                 print(f"Ошибка: '{elem}' не является числом.")
                 return None

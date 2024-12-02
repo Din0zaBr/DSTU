@@ -109,7 +109,7 @@ def get_system(type_matrix, matrix):
     second_matrix_sys = []
 
     if type_matrix == 'G':
-        # Находим индексы столбцов которые имеют 1 еденицу
+        # Находим индексы столбцов которые имеют 1 единицу
         for index_curent_column in range(len(matrix)):
             if sum(matrix[index_curent_column]) == 1:
                 temp_dict_index[matrix[index_curent_column].index(1)] = index_curent_column
@@ -140,7 +140,7 @@ def get_system(type_matrix, matrix):
         sys_matrix = [[temp_sys_matrix[j][i] for j in range(m)] for i in range(l)]
 
     else:
-        # Находим индексы столбцов которые имеют 1 еденицу
+        # Находим индексы столбцов которые имеют 1 единицу
         for index_curent_column in range(len(matrix)):
             if sum(matrix[index_curent_column]) == 1:
                 temp_dict_index[matrix[index_curent_column].index(1)] = index_curent_column
@@ -274,9 +274,7 @@ def gen_e_array():
 
     for el in range(1, 2 ** (n)):
         str_el_bin = str(bin(el)[2:]).zfill(n)
-        # print('test1', str_el_bin, type(str_el_bin))
         if str_el_bin.count('1') < (t + 1):
-            # print('test2', str_el_bin)
             e_array.append([int(el) for el in str_el_bin])
 
     print('e = ')
@@ -382,12 +380,13 @@ def Encoding_and_Decoding_Window():
         window['output'].update(output_text)
 
 
-start_window()
-get_matrix()
-get_sys_matrix()
-gen_array_i()
-gen_array_c_and_dmin_t_p()
-gen_HsysT()
-gen_e_array()
-gen_S_array()
-Encoding_and_Decoding_Window()
+def main_new():
+    start_window()
+    get_matrix()
+    get_sys_matrix()
+    gen_array_i()
+    gen_array_c_and_dmin_t_p()
+    gen_HsysT()
+    gen_e_array()
+    gen_S_array()
+    Encoding_and_Decoding_Window()

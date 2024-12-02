@@ -1,5 +1,6 @@
 from utils_for_analyze import analyze
 from utils_for_encode_decode import huffman_encode, huffman_decode, lz77_encode, lzw_encode
+from utils_for_matrix_representation_of_block_codes import start_window
 import tkinter as tk
 from tkinter import ttk
 import threading
@@ -41,7 +42,8 @@ def main():
 
     encode_decode_button = tk.Button(root, text='Encode/Decode file', command=lambda: open_encode_decode_window(root))
     encode_decode_button.grid(row=6, column=0, columnspan=2, padx=10, pady=10)
-
+    block_codes_button = tk.Button(root, text='Block codes', command=lambda: block_code)
+    block_codes_button.grid(row=7, column=0, columnspan=2, padx=10, pady=10)
     root.mainloop()
 
 
@@ -99,6 +101,10 @@ def decode_file(algorithm, file_entry):
 
     if algorithm == 'Huffman':
         huffman_decode(file_path)
+
+
+def block_code():
+    start_window()
 
 
 if __name__ == "__main__":

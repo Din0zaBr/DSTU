@@ -56,7 +56,7 @@ def get_matrix():
 
     layout.append([Button('Далее')])
     layout.insert(0, [Text('Введите матрицу:')])
-    window = Window('Соколов Ю.Е.', layout)
+    window = Window('', layout)
 
     while True:
         event, values = window.read()

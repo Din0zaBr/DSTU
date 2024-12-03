@@ -295,23 +295,18 @@ def gen_S_array():
 def Encoding_and_Decoding(i_array, c_array, S_array, e_array, function_type, text, k, n, HsysT):
     if function_type == "Encoding":
         bin_str = ''.join(format(el, '08b') for el in bytearray(text, 'utf-8'))
-        print(bin_str)
 
         bin_str = bin_str.zfill(len(bin_str) + k - (len(bin_str) % k))
-        print(bin_str)
 
         encoding_array = []
 
         for i in range(0, len(bin_str), k):
             encoding_array.append(bin_str[i:i + k])
-            print(bin_str[i:i + k])
 
-        print(len(encoding_array))
         output_text = ''
         for el in encoding_array:
             index_c = i_array.index([int(i) for i in el])
             output_text += ''.join([str(i) for i in c_array[index_c]])
-            print(f'el {el} c {c_array[index_c]}, i {i_array[index_c]}')
 
     else:
         print('=' * 10)
@@ -336,14 +331,10 @@ def Encoding_and_Decoding(i_array, c_array, S_array, e_array, function_type, tex
             else:
                 index_i = c_array.index(el)
                 output_text_temp += ''.join([str(i) for i in i_array[index_i]])
-                print(f'el {el} c {c_array[index_i]}, i {i_array[index_i]}')
 
-        print(output_text_temp)
         binary_word = ''.join(map(str, output_text_temp))
-        print(binary_word)
 
         bity_chunks = [binary_word[i:i + 8] for i in range(len(binary_word) % 8, len(binary_word), 8)]
-        print(bity_chunks)
 
         byte_array = bytearray(int(byte, 2) for byte in bity_chunks)
 

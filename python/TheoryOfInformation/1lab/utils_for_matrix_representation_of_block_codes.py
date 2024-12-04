@@ -73,18 +73,16 @@ def get_matrix():
         elif event == 'Далее':
             if type_matrix == 'G':
                 matrix = [[int(values[f'el_{i}_{j}']) for j in range(l)] for i in range(m)]
-                print('G=')
+
                 matrix_true = [[matrix[j][i] for j in range(m)] for i in range(l)]
-                print(*matrix_true, sep='\n')
-                print('============================')
+
                 window.close()
                 return
             else:
                 matrix = [[int(values[f'el_{i}_{j}']) for j in range(l)] for i in range(m)]
-                print('H=')
+
                 matrix_true = [[matrix[j][i] for j in range(m)] for i in range(l)]
-                print(*matrix_true, sep='\n')
-                print('============================')
+
                 window.close()
                 return
 
@@ -167,9 +165,6 @@ def get_system(type_matrix, matrix):
         matrix.reverse()
 
         second_matrix_sys = [[matrix[i][j] for j in range(len(matrix[0]))] for i in range(len(matrix))]
-        print('===============')
-        print(*second_matrix_sys, sep='\n')
-        print('===============')
 
         temp_add_matrix = gen_once_matrix(len(matrix))
 
@@ -195,20 +190,8 @@ def get_sys_matrix():
 
     if type_matrix == 'G':
         Gsys, Hsys, n, k = get_system(type_matrix, matrix)
-        print('Gsys=')
-        print(*Gsys, sep='\n')
-        print('Hsys=')
-        print(*Hsys, sep='\n')
-        print('k=', k)
-        print('n=', n)
     else:
         Hsys, Gsys, n, k = get_system(type_matrix, matrix)
-        print('Hsys=')
-        print(*Hsys, sep='\n')
-        print('Gsys=')
-        print(*Gsys, sep='\n')
-        print('k=', k)
-        print('n=', n)
 
 
 def mul_matrix(matrix, vector):
@@ -236,23 +219,17 @@ def gen_array_i():
 
     temp_array_i = [el.zfill(k) for el in temp_array_i]
     vector_array_i = [[int(i) for i in vector] for vector in temp_array_i]
-    print('i = ')
-    print(*vector_array_i, sep='\n')
-    print('=' * 10)
 
 
 def gen_array_c_and_dmin_t_p():
     global vector_array_c, dmin, t, p
 
     vector_array_c = [mul_matrix(Gsys, i) for i in vector_array_i]
-    print('c = ')
-    print(*vector_array_c, sep='\n')
-    print('=' * 10)
+
     wh_array = [str(vector_array_c[inde]).count('1') for inde in range(1, len(vector_array_c))]
     dmin = min(wh_array)
     p = dmin - 1
     t = p // 2
-    print(f'p {p} t {t}')
 
 
 def gen_HsysT():
@@ -263,8 +240,6 @@ def gen_HsysT():
     for i in range(len(Hsys)):
         for j in range(len(Hsys[0])):
             HsysT[j][i] = Hsys[i][j]
-    print('HsysT=')
-    print(*HsysT, sep='\n')
 
 
 def gen_e_array():
@@ -274,12 +249,9 @@ def gen_e_array():
 
     for el in range(1, 2 ** (n)):
         str_el_bin = str(bin(el)[2:]).zfill(n)
+
         if str_el_bin.count('1') < (t + 1):
             e_array.append([int(el) for el in str_el_bin])
-
-    print('e = ')
-    print(*e_array, sep='\n')
-    print('=' * 10)
 
 
 def gen_S_array():
@@ -287,19 +259,18 @@ def gen_S_array():
 
     S_array = [mul_matrix(HsysT, el_e_array) for el_e_array in e_array]
 
-    print('S = ')
-    print(*S_array, sep='\n')
-    print('=' * 10)
-
 
 def Encoding_and_Decoding(i_array, c_array, S_array, e_array, function_type, text, k, n, HsysT):
     if function_type == "Encoding":
+        # Преобразуем текст в бинарную строку
         bin_str = ''.join(format(el, '08b') for el in bytearray(text, 'utf-8'))
 
+        # Дополняем бинарную строку нулями до кратности k
         bin_str = bin_str.zfill(len(bin_str) + k - (len(bin_str) % k))
 
         encoding_array = []
 
+        # Разбиваем бинарную строку на блоки по k бит
         for i in range(0, len(bin_str), k):
             encoding_array.append(bin_str[i:i + k])
 
@@ -308,13 +279,15 @@ def Encoding_and_Decoding(i_array, c_array, S_array, e_array, function_type, tex
             index_c = i_array.index([int(i) for i in el])
             output_text += ''.join([str(i) for i in c_array[index_c]])
 
+        print("Encoded output text:", output_text)
+        return output_text
+
     else:
-        print('=' * 10)
+
         bin_array = []
         for i in range(0, len(text), n):
             bin_array.append([int(el) for el in text[i:i + n]])
 
-        output_text = ''
         output_text_temp = ''
 
         for el in bin_array:
@@ -322,17 +295,16 @@ def Encoding_and_Decoding(i_array, c_array, S_array, e_array, function_type, tex
             if S_temp in S_array:
                 S_temp_index = S_array.index(S_temp)
                 e_temp = e_array[S_temp_index]
-
                 for index_el in range(len(el)):
                     el[index_el] = el[index_el] ^ e_temp[index_el]
-
                 index_i = c_array.index([int(i) for i in el])
-                output_text += chr(int(''.join([str(i) for i in i_array[index_i]])))
+                output_text_temp += ''.join([str(i) for i in i_array[index_i]])
+
             else:
                 index_i = c_array.index(el)
                 output_text_temp += ''.join([str(i) for i in i_array[index_i]])
 
-        binary_word = ''.join(map(str, output_text_temp))
+        binary_word = ''.join(map(str, [int(i) for i in output_text_temp]))
 
         bity_chunks = [binary_word[i:i + 8] for i in range(len(binary_word) % 8, len(binary_word), 8)]
 
@@ -343,12 +315,80 @@ def Encoding_and_Decoding(i_array, c_array, S_array, e_array, function_type, tex
     return output_text
 
 
+def output_matrix():
+    layout_matrix = [[Text('Gsys='), Text('Hsys=')],
+                     [Table(values=Gsys, headings=[' ' + str(i) + ' ' for i in range(len(Gsys[0]))], max_col_width=20,
+                            # background_color='light blue',
+                            col_widths=20,
+                            justification='center',
+                            key='-TABLE-',
+                            row_height=25),
+                      Table(values=Hsys, headings=[' ' + str(i) + ' ' for i in range(len(Hsys[0]))], max_col_width=20,
+                            # background_color='light blue',
+                            col_widths=20,
+                            justification='center',
+                            key='-TABLE-',
+                            row_height=25)],
+                     [Text('HsysT=')],
+                     [Table(values=HsysT, headings=[' ' + str(i) + ' ' for i in range(len(HsysT[0]))], max_col_width=20,
+                            # background_color='light blue',
+                            col_widths=20,
+                            justification='center',
+                            key='-TABLE-',
+                            row_height=25)],
+                     [Button('Назад')]]
+    window_matrix = Window('Лабораторная работа №4', layout_matrix)
+
+    while True:
+        event, values = window_matrix.read()
+        if event in (WIN_CLOSED, 'Назад'):
+            window_matrix.close()
+            break
+
+
+def output_table():
+    layout_table = [
+        [Table(values=[[vector_array_i[ind], vector_array_c[ind]] for ind in range(len(vector_array_c))],
+               headings=['i', 'c'], max_col_width=20,
+               # background_color='light blue',
+               col_widths=20,
+               justification='center',
+               key='-TABLE-',
+               row_height=25)],
+        [Table(values=[[S_array[ind], e_array[ind]] for ind in range(len(e_array))],
+               headings=['S', 'e'], max_col_width=20,
+               # background_color='light blue',
+               col_widths=20,
+               justification='center',
+               key='-TABLE-',
+               row_height=25)],
+        [Button('Назад')]]
+    window_table = Window('Лабораторная работа №4', layout_table)
+    while True:
+        event, values = window_table.read()
+        if event in (WIN_CLOSED, 'Назад'):
+            window_table.close()
+            break
+
+
+def output_const():
+    layout_const = [[Text(f'k = {k}, n = {n}, p = {p}, t = {t}, dmin = {dmin}')],
+                    [Button('Назад')]]
+    window_const = Window('Лабораторная работа №4', layout_const)
+
+    while True:
+        event, values = window_const.read()
+        if event in (WIN_CLOSED, 'Назад'):
+            window_const.close()
+            break
+
+
 def Encoding_and_Decoding_Window():
     layout = [[Text('Текст', size=(8, 1)), Input(key='text')],
               [Text('Результат:', size=(8, 1)), Input(key='output')],
               [Radio('Кодирование', 'RADIO1', key='Encoding'),
                Radio('Декодирование', 'RADIO1', key='Decoding')],
-              [Button('Далее')]]
+              [Button('Далее'), Button('Матрицы'), Button('Таблицы'), Button('Константы')]]
     window = Window('Лабораторная работа №4', layout)
 
     while True:
@@ -366,9 +406,19 @@ def Encoding_and_Decoding_Window():
             else:
                 popup_error('Проверьте данные.')
 
-        output_text = Encoding_and_Decoding(vector_array_i, vector_array_c, S_array, e_array, function_type, text, k, n,
-                                            HsysT)
-        window['output'].update(output_text)
+            output_text = Encoding_and_Decoding(vector_array_i, vector_array_c, S_array, e_array, function_type, text,
+                                                k, n,
+                                                HsysT)
+            window['output'].update(output_text)
+
+        if event == 'Матрицы':
+            output_matrix()
+
+        if event == 'Таблицы':
+            output_table()
+
+        if event == 'Константы':
+            output_const()
 
 
 def main_new():

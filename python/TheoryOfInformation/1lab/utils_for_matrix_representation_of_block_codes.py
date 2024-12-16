@@ -527,7 +527,7 @@ def puncture_matrix(matrix, rows, cols):
 
 def extend_matrix(matrix):
     """
-    Расширяет матрицу, добавляя строку сверху и столбец слева.
+    Расширяет матрицу, добавляя строку сверху и после столбец слева.
     """
     new_row = [1] * len(matrix[0])
     new_matrix = [new_row] + matrix

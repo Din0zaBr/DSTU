@@ -211,19 +211,19 @@ def get_system_new(matrix, kolvo_str, kolvo_stl):
     second_matrix_sys = [[matrix[i][j] for j in range(len(matrix[0]))] for i in range(len(matrix))]
 
     temp_add_matrix = gen_once_matrix(len(matrix))
-
+    for row in temp_add_matrix:
+        print(*row)
+    print()
+    for row in temp_add_matrix:
+        print(*row)
     for i in range(len(matrix)):
         second_matrix_sys[i] = temp_add_matrix[i] + second_matrix_sys[i]
-
-    temp_sys_matrix.reverse()
-
-    # Обновляем количество строк и столбцов после перфорации
     kolvo_str = len(temp_sys_matrix)
     kolvo_stl = len(temp_sys_matrix[0])
+    temp_sys_matrix.reverse()
 
     sys_matrix = [[temp_sys_matrix[j][i] for j in range(kolvo_stl)] for i in range(kolvo_str)]
     return sys_matrix
-
 
 
 def get_sys_matrix():

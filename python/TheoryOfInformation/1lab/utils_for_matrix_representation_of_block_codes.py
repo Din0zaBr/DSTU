@@ -181,9 +181,58 @@ def get_system(type_matrix, matrix):
     return sys_matrix, second_matrix_sys, n, k
 
 
+def get_system_new(matrix, kolvo_str, kolvo_stl):
+    temp_dict_index = {}
+    second_matrix_sys = []
+
+    matrix_true = [[matrix[i][j] for i in range(len(matrix))] for j in range(len(matrix[0]))]
+
+    # Находим индексы столбцов которые имеют 1 единицу
+    for index_curent_column in range(len(matrix_true)):
+        if sum(matrix_true[index_curent_column]) == 1:
+            temp_dict_index[matrix_true[index_curent_column].index(1)] = index_curent_column
+
+    temp_sys_matrix = [[] for _ in range(kolvo_str)]
+    for key in sorted(temp_dict_index):
+        temp_sys_matrix[key] = matrix_true[temp_dict_index[key]]
+        matrix_true[temp_dict_index[key]] = []  # Заменяем строку пустым списком вместо удаления
+
+    temp_sys_matrix.reverse()
+
+    # Удаляем пустые строки из матрицы
+    matrix_true = [row for row in matrix_true if row]
+
+    for column in matrix_true:
+        temp_sys_matrix.append(column)
+
+    second_matrix_sys = [[matrix_true[i][j] for i in range(len(matrix_true))] for j in range(len(matrix_true[0]))]
+
+    temp_add_matrix = gen_once_matrix(len(second_matrix_sys))
+
+    temp_sys_matrix = []
+    for i in range(len(second_matrix_sys)):
+        temp_sys_matrix.append(second_matrix_sys[i] + temp_add_matrix[i])
+
+    sys_matrix = [[temp_sys_matrix[j][i] for i in range(kolvo_str)] for j in range(kolvo_stl)]
+    return sys_matrix
+
+
 def get_sys_matrix():
     """
-    Преобразует матарицу в системуную и находит вторую системную
+    Преобразует матрицу в системную и находит вторую системную
+    :return:
+    """
+    global Gsys, Hsys, n, k
+
+    if type_matrix == 'G':
+        Gsys, Hsys, n, k = get_system(type_matrix, matrix)
+    else:
+        Hsys, Gsys, n, k = get_system(type_matrix, matrix)
+
+
+def get_sys_matrix_new(type_matrix, matrix):
+    """
+    Преобразует матрицу в системную и находит вторую системную
     :return:
     """
     global Gsys, Hsys, n, k
@@ -196,7 +245,6 @@ def get_sys_matrix():
 
 def mul_matrix(matrix, vector):
     temp_result = []
-
     for i in range(len(vector)):
         if vector[i] == 1:
             temp_result.append(matrix[i])
@@ -206,7 +254,6 @@ def mul_matrix(matrix, vector):
     for i in range(len(temp_result)):
         for j in range(len(temp_result[i])):
             result[j] = result[j] ^ temp_result[i][j]
-
     return result
 
 
@@ -219,6 +266,16 @@ def gen_array_i():
 
     temp_array_i = [el.zfill(k) for el in temp_array_i]
     vector_array_i = [[int(i) for i in vector] for vector in temp_array_i]
+
+
+def gen_array_i_new(k):
+    temp_array_i = []
+    for i in range(2 ** k):
+        temp_array_i.append(str(bin(i)[2:]))
+
+    temp_array_i = [el.zfill(k) for el in temp_array_i]
+    vector_array_i = [[int(i) for i in vector] for vector in temp_array_i]
+    return vector_array_i
 
 
 def gen_array_c_and_dmin_t_p():
@@ -346,6 +403,28 @@ def output_matrix():
             break
 
 
+def output_modified_matrix(title, matrix, n=None, k=None, dmin=None, t=None):
+    layout = [[Text(title)]]
+    if n is not None and k is not None:
+        layout.append([Text(f'n = {n}, k = {k}')])
+    if dmin is not None and t is not None:
+        layout.append([Text(f'dmin = {dmin}, t = {t}')])
+    layout.append([Table(values=matrix, headings=[' ' + str(i) + ' ' for i in range(len(matrix[0]))], max_col_width=20,
+                         # background_color='light blue',
+                         col_widths=20,
+                         justification='center',
+                         key='-TABLE-',
+                         row_height=25)])
+    layout.append([Button('Назад')])
+    window_matrix = Window('Модифицированные матрицы', layout)
+
+    while True:
+        event, values = window_matrix.read()
+        if event in (WIN_CLOSED, 'Назад'):
+            window_matrix.close()
+            break
+
+
 def output_table():
     layout_table = [
         [Table(values=[[vector_array_i[ind], vector_array_c[ind]] for ind in range(len(vector_array_c))],
@@ -388,7 +467,7 @@ def Encoding_and_Decoding_Window():
               [Text('Результат:', size=(8, 1)), Input(key='output')],
               [Radio('Кодирование', 'RADIO1', key='Encoding'),
                Radio('Декодирование', 'RADIO1', key='Decoding')],
-              [Button('Далее'), Button('Матрицы'), Button('Таблицы'), Button('Константы')]]
+              [Button('Далее'), Button('Матрицы'), Button('Таблицы'), Button('Константы'), Button('Модификации')]]
     window = Window('Лабораторная работа №4', layout)
 
     while True:
@@ -419,6 +498,130 @@ def Encoding_and_Decoding_Window():
 
         if event == 'Константы':
             output_const()
+
+        if event == 'Модификации':
+            modify_matrix_window()
+
+
+def shorten_matrix(matrix, rows, cols):
+    """
+    Укорачивает матрицу, удаляя строки и столбцы с заданными индексами.
+    """
+    for row in sorted(rows, reverse=True):
+        matrix = [matrix[i] for i in range(len(matrix)) if i != row]
+    for col in sorted(cols, reverse=True):
+        matrix = [[matrix[i][j] for j in range(len(matrix[i])) if j != col] for i in range(len(matrix))]
+    return matrix
+
+
+def puncture_matrix(matrix, rows, cols):
+    """
+    Перфорирует матрицу, удаляя строки и столбцы с заданными индексами.
+    """
+    for row in sorted(rows, reverse=True):
+        matrix = [matrix[i] for i in range(len(matrix)) if i != row]
+    for col in sorted(cols, reverse=True):
+        matrix = [[matrix[i][j] for j in range(len(matrix[i])) if j != col] for i in range(len(matrix))]
+    return matrix
+
+
+def extend_matrix(matrix):
+    """
+    Расширяет матрицу, добавляя строку сверху и столбец слева.
+    """
+    new_row = [1] * len(matrix[0])
+    new_matrix = [new_row] + matrix
+    for i in range(len(new_matrix)):
+        new_matrix[i] = [sum(new_matrix[i]) % 2] + new_matrix[i]
+    return new_matrix
+
+
+def augment_matrix(matrix):
+    """
+    Пополняет матрицу, добавляя строку сверху.
+    """
+    new_row = [1] * len(matrix[0])
+    new_matrix = [new_row] + matrix
+    return new_matrix
+
+
+def modify_matrix_window():
+    layout = [
+        [Text('Введите индексы строк для удаления (через пробел):', size=(40, 1)), Input(key='rows')],
+        [Text('Введите индексы столбцов для удаления (через пробел):', size=(40, 1)), Input(key='cols')],
+        [Button('Укорочение'), Button('Перфорация'), Button('Расширение'), Button('Пополнение')]
+    ]
+    window = Window('Модификация матрицы', layout)
+
+    while True:
+        event, values = window.read()
+        if event in (WIN_CLOSED, 'Выход'):
+            window.close()
+            break
+        if event == 'Укорочение':
+            try:
+                rows = list(map(int, values['rows'].split()))
+                cols = list(map(int, values['cols'].split()))
+                if len(rows) != len(cols):
+                    popup_error('Количество строк и столбцов для удаления должно быть одинаковым.')
+                elif len(rows) == len(Gsys) or len(cols) == len(Gsys[0]):
+                    popup_error('Матрица не может содержать ни строк, ни столбцов после удаления.')
+                else:
+                    modified_Gsys = shorten_matrix(Gsys.copy(), rows, cols)
+                    n = len(modified_Gsys[0])
+                    k = len(modified_Gsys)
+                    dmin, t = calculate_dmin_t(modified_Gsys)
+                    window.close()
+                    output_modified_matrix('Gsys_yk =', modified_Gsys, n, k, dmin, t)
+                    break
+            except ValueError:
+                popup_error('Введите корректные значения для строк и столбцов.')
+        elif event == 'Перфорация':
+            try:
+                rows = list(map(int, values['rows'].split()))
+                cols = list(map(int, values['cols'].split()))
+                if len(rows) != len(cols):
+                    popup_error('Количество строк и столбцов для удаления должно быть одинаковым.')
+                elif len(rows) == len(Hsys) or len(cols) == len(Hsys[0]):
+                    popup_error('Матрица не может содержать ни строк, ни столбцов после удаления.')
+                else:
+                    modified_Hsys = puncture_matrix(Hsys.copy(), rows, cols)
+                    n = len(modified_Hsys[0])
+                    k = len(modified_Hsys)
+                    modified_Hsys_to_Gsys = get_system_new(modified_Hsys, n, k)
+                    dmin, t = calculate_dmin_t(modified_Hsys_to_Gsys)
+                    window.close()
+                    output_modified_matrix('Hsys_pr =', modified_Hsys_to_Gsys, n, k, dmin, t)
+                    break
+            except ValueError:
+                popup_error('Введите корректные значения для строк и столбцов.')
+        elif event == 'Расширение':
+            modified_Hsys = extend_matrix(Hsys.copy())
+            n = len(modified_Hsys[0])
+            k = len(modified_Hsys)
+            window.close()
+            output_modified_matrix('Hext =', modified_Hsys, n, k)
+            break
+        elif event == 'Пополнение':
+            modified_Gsys = augment_matrix(Gsys.copy())
+            n = len(modified_Gsys[0])
+            k = len(modified_Gsys)
+            window.close()
+            output_modified_matrix('Gext =', modified_Gsys, n, k)
+            break
+
+
+def calculate_dmin_t(matrix):
+    """
+    Вычисляет dmin и t для матрицы.
+    """
+    k = len(matrix)
+    gen_array_i()
+    vector_array_c = [mul_matrix(matrix, i) for i in gen_array_i_new(k)]
+    wh_array = [str(vector_array_c[inde]).count('1') for inde in range(1, len(vector_array_c))]
+    dmin = min(wh_array)
+    t = (dmin - 1) // 2
+    return dmin, t
 
 
 def main_new():

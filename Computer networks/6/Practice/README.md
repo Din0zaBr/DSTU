@@ -1,4 +1,5 @@
 Использовался n.docx, n.txt, n.pdf и https://www.drawio.com/
+
 В:
 - n.pdf - условия практических работ;
 - n.docx - отчёты

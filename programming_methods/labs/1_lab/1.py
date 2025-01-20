@@ -29,13 +29,20 @@ def process_queue(actions: Sequence[Sequence[str]]) -> Iterable[str]:
     results: List[str] = []
 
     for action in actions:
+        # print(q1)
+        # print(q2)
+        # print(results)
         if action[0] == '+':
             q2.append(action[1])
         elif action[0] == '*':
             q2.appendleft(action[1])
         else:
             results.append(q1.popleft())
-
+        # print(q1)
+        # print(q2)
+        # print(results)
+        # print(len(q1) < len(q2))
+        # print('*' * 10)
         if len(q1) < len(q2):
             q1.append(q2.popleft())
 

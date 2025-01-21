@@ -28,11 +28,10 @@ def decrypt_message(encrypted_message: AnyStr) -> AnyStr:
     :param encrypted_message: Сообщение, которое мы хотим расшифровать по условию задания.
     :returns: Расшифрованное сообщение
     """
-    symbols: List[AnyStr] = list()
+    symbols: List[AnyStr] = list(encrypted_message)
     n: int = len(encrypted_message) // 2
     for i in range(n):
-        symbols += encrypted_message[i + n], encrypted_message[i]
-        # symbols[2 * i: 2 * i + 2] = encrypted_message[i + n], encrypted_message[i]
+        symbols[2 * i: 2 * i + 2] = encrypted_message[i + n], encrypted_message[i]
     return ''.join(symbols)
 
 

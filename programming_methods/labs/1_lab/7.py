@@ -42,13 +42,13 @@ def calculate_exit_times(arrival_times: Iterable[Iterable[int, int]]) -> Iterabl
     exit_times: deque[Tuple[int, int]] = deque()
 
     for hours, minutes in arrival_times:
-        arrival_minutes = hours * 60 + minutes
+        arrival_time_in_minutes = hours * 60 + minutes
         # Находим мастера, который свободен раньше всего
         next_worker_index = workers_time.index(min(workers_time))
 
         # Если мастер свободен до прихода клиента, обновляем его время
-        if workers_time[next_worker_index] <= arrival_minutes:
-            workers_time[next_worker_index] = arrival_minutes + 30
+        if workers_time[next_worker_index] <= arrival_time_in_minutes:
+            workers_time[next_worker_index] = arrival_time_in_minutes + 30
         else:
             workers_time[next_worker_index] += 30  # Мастер начинает работать сразу после завершения
 

@@ -30,8 +30,13 @@ def is_balanced(sequence: str) -> bool:
         if char in matching_brackets.values():
             stack.append(char)
         elif char in matching_brackets:
+            # matching_brackets[char] дает нам соответствующую открывающую скобку для текущей закрывающей.
+            # stack[-1] == matching_brackets[char] сравнивает верхний элемент стека с этой открывающей скобкой.
+            # not (stack and stack[-1] == ...) означает, что если стек пуст
+            # или его верхний элемент не соответствует ожидаемой открывающей скобке, это условие вернет False.
             if not (stack and stack[-1] == matching_brackets[char]):
                 return False
+            # Если предыдущее условие вернуло True, мы удаляем верхнюю (открывающую) скобку из стека.
             stack.pop()
 
     return not bool(stack)

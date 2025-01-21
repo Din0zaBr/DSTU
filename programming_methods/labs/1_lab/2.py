@@ -44,7 +44,7 @@ def process_docks(cells: int, max_len: int, actions: Iterable[Action]) -> int:
 
     :param cells: Количество отсеков.
     :param max_len: Ограничение на количество бочек на барже.
-    :param actions: все операции, которые даны по условию. Например, "+ 1 1".
+    :param actions: Все операции, которые даны по условию. Например, "+ 1 1".
 
     :returns: Максимальное количество бочек, которые одновременно пребывали на барже.
      Если количество -1, то будет выведена ошибка.
@@ -54,10 +54,14 @@ def process_docks(cells: int, max_len: int, actions: Iterable[Action]) -> int:
     error: bool = False
 
     cell: List[Deque[str]] = [deque() for _ in range(cells)]
-
+    # print(cell)
     for action in actions:
         if action.operation == "+":
             # Загрузка бочки
+            # При загрузке мы добавляем бочку в нужный отсек и увеличиваем счетчик бочек.
+            # Преобразует индекс отсека из действия в правильный формат для использования в списке (деке)
+            # Индексы обычно начинаются с нуля в Python, но в условии задачи они начинаются с 1.
+            # Мы должны использовать корректный индекс для доступа к элементам списка (дека).
             cell_index: int = action.cell_index - 1
             cell[cell_index].append(action.fuel_type)
             current_tanks += 1
@@ -69,7 +73,11 @@ def process_docks(cells: int, max_len: int, actions: Iterable[Action]) -> int:
         else:
             # Выгрузка бочки
             cell_index: int = action.cell_index - 1
-
+            # Есть бочка в нужном отсеке и она соответствует типу топлива, который нужно выгрузить
+            # cell[cell_index]: Это обращение к деку (стеку) конкретного отсека на барже.
+            # pop(): Это метод деки, который удаляет и возвращает верхний элемент
+            # (в данном случае, последнюю добавленную бочку).
+            # != action.fuel_type: Это сравнение результата выгрузки с ожидаемым типом топлива из действия
             if not cell[cell_index] or cell[cell_index].pop() != action.fuel_type:
                 error = True
                 break
@@ -89,9 +97,9 @@ def main() -> None:
         action_data: List[str] = input().split()
         action = Action(operation=action_data[0], cell_index=int(action_data[1]), fuel_type=action_data[2])
         actions.append(action)
-
+    # print(actions)
+    # print()
     result: int = process_docks(cells, max_len, actions)
-
     print("Error" if result == -1 else result)
 
 

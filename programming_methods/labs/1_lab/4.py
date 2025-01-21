@@ -58,3 +58,17 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+"""?
+rows, cols = map(int, input().split())
+matrix, el = [[0 for _ in range(cols)] for _ in range(rows)], 0
+for q in range(rows * cols):
+    for i in range(rows):
+        for j in range(cols):
+            if i + j == q:
+                el += 1
+                matrix[i][j] = el
+
+for row in matrix:
+    print(*row)
+"""

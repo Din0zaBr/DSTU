@@ -40,7 +40,12 @@ def find_best_broadcast(n: int, k: int, times: Sequence[int]) -> int:
     maximum_number_of_people: int = max(times)
     indexes_of_moments_when_maximum_number_of_people: Set[int] = {index for index, value in enumerate(times)
                                                                   if value == maximum_number_of_people}
-
+    # combinations([0, 3, 4], 2) ->
+    # (0, 3)
+    # (0, 4)
+    # (3, 4)
+    for i, j in combinations(indexes_of_moments_when_maximum_number_of_people, 2):
+        print(i, j)
     # Проверяем, можно ли транслировать два ролика в максимальные моменты
     for i, j in combinations(indexes_of_moments_when_maximum_number_of_people, 2):
         if abs(i - j) > k - 1:
@@ -56,11 +61,13 @@ def find_best_broadcast(n: int, k: int, times: Sequence[int]) -> int:
         map(
             lambda index_pair: times[index_pair[1]],
             filter(
+                # Первые элементы пары отличаются (не выбрано максимальное число дважды)
+                # Расстояние между этими моментами больше k-1
                 lambda index_pair: index_pair[0] != index_pair[1] and abs(index_pair[0] - index_pair[1]) > k - 1,
                 all_possible_pairs_with_a_maximum
             )
         ),
-        default=0
+        default=0 # если максимальное значение равно 0, то установится 0.
     )
 
     if pre_max_number_of_people > 0:

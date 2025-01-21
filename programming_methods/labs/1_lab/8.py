@@ -24,16 +24,15 @@ def decrypt_message(encrypted_message: AnyStr) -> AnyStr:
 
     Из условия задачи известно, что сначала в закодированном стоят четные, а потом уже нечетные.
     Получается сосед текущей буквы будет через половину длины от сообщения.
-    Представьте, что Коля брал буквы и последовательно раскидывал на левую и на правую часть.
-    Для понимания формулы поставьте просто print в коде и все.
 
     :param encrypted_message: Сообщение, которое мы хотим расшифровать по условию задания.
     :returns: Расшифрованное сообщение
     """
-    symbols: List[AnyStr] = list(encrypted_message)
+    symbols: List[AnyStr] = list()
     n: int = len(encrypted_message) // 2
     for i in range(n):
-        symbols[2 * i: 2 * i + 2] = encrypted_message[i + n], encrypted_message[i]
+        symbols += encrypted_message[i + n], encrypted_message[i]
+        # symbols[2 * i: 2 * i + 2] = encrypted_message[i + n], encrypted_message[i]
     return ''.join(symbols)
 
 

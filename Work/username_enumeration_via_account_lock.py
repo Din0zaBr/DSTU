@@ -11,8 +11,8 @@ import time
 import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-proxies = {}  # Отключение прокси
-# хотя можно {'http': 'http://127.0.0.1:8080', 'https': 'http://127.0.0.1:8080'}
+proxies = {}  # Disabling proxies, although you can leave them on
+#  proxies = {'http': 'http://127.0.0.1:8080', 'https': 'http://127.0.0.1:8080'}
 
 
 def send_login(host, username, password, allow_redirects=False):

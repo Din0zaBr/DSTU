@@ -5,10 +5,12 @@ import p1.q2.Deque;
 class DequeStack<T> implements StackOperations<T> {
     private final Deque<T> deque;
 
+    // Инициализирует стек с заданным максимальным размером.
     public DequeStack(int size) {
         deque = new Deque<>(size);
     }
 
+    //  Вставляет элемент на вершину стека.
     @Override
     public void push(T j) {
         if (isFull()) {
@@ -17,6 +19,7 @@ class DequeStack<T> implements StackOperations<T> {
         deque.insertRight(j);
     }
 
+    // Удаляет элемент с вершины стека.
     @Override
     public T pop() {
         if (!isEmpty()) {
@@ -25,6 +28,7 @@ class DequeStack<T> implements StackOperations<T> {
         throw new IllegalStateException("Стек пуст. Невозможно выполнить операцию pop.");
     }
 
+    // Возвращает верхний элемент стека без его удаления.
     @Override
     public T peek() {
         if (!isEmpty()) {

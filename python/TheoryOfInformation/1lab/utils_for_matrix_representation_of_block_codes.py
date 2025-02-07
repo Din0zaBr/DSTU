@@ -536,8 +536,8 @@ def augment_matrix(matrix):
 
 def modify_matrix_window():
     layout = [
-        [Text('Введите индексы строк для удаления (через пробел):', size=(40, 1)), Input(key='rows')],
-        [Text('Введите индексы столбцов для удаления (через пробел):', size=(40, 1)), Input(key='cols')],
+        [Text('Введите индексы строк для удаления (через пробел):', size=(55, 1)), Input(key='rows')],
+        [Text('Введите индексы столбцов для удаления (через пробел):', size=(55, 1)), Input(key='cols')],
         [Button('Укорочение'), Button('Перфорация'), Button('Расширение'), Button('Пополнение')]
     ]
     window = Window('Модификация матрицы', layout)

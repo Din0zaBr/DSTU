@@ -1,4 +1,3 @@
-package ZeroLaboratory;
 
 public class Jedi {
     public static void main(String[] args) {

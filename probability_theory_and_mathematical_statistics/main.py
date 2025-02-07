@@ -1,11 +1,11 @@
-from python.probability_theory_and_mathematical_statistics.home import (count_seconds_from_file, compute_average,
-                                                                        filter_data,
-                                                                        compute_variance,
-                                                                        adjust_variance,
-                                                                        compute_std_dev,
-                                                                        get_variation_range, plot_histogram,
-                                                                        plot_frequency_polygon,
-                                                                        calculate_length)
+from probability_theory_and_mathematical_statistics.home import (count_seconds_from_file, compute_average,
+                                                                 filter_data,
+                                                                 compute_variance,
+                                                                 adjust_variance,
+                                                                 compute_std_dev,
+                                                                 get_variation_range, plot_histogram,
+                                                                 plot_frequency_polygon,
+                                                                 calculate_length)
 
 general_data = count_seconds_from_file()
 selected_data = filter_data(general_data)

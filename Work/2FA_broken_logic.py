@@ -25,8 +25,8 @@ async def main():
     try:
         host = sys.argv[1].strip().rstrip('/')
     except IndexError:
-        print(f'Usage: {sys.argv[0]} <HOST>')
-        print(f'Example: {sys.argv[0]} http://www.example.com')
+        print(f'Usage: python {sys.argv[0]} <HOST>')
+        print(f'Example: python {sys.argv[0]} http://www.example.com')
         sys.exit(-1)
 
     async with aiohttp.ClientSession() as session:

@@ -72,7 +72,7 @@ public class Deque<T> {
         }
         T temp = dequeArray[rear];
         rear = (rear - 1 + maxSize) % maxSize;
-        nItems--; // -1
+        nItems--;
         return temp;
     }
 

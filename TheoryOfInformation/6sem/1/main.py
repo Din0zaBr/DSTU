@@ -2,20 +2,16 @@ import PySimpleGUI as sg
 import re
 
 
+# 6*98+36-73*84*105-77/32+330-101*56 : 107 : 93
+# 1/7*37+521*313-45*9+87z : 97 : 22
+
 def is_prime(num):
-    """
-    Сразу фильтрует чётные числа (кроме 2)
-    Проверяет только нечётные делители
-    Останавливается при достижении квадратного корня из числа
-    :param num:
-    :return:
-    """
-    if num % 2 == 0:  # Проверяем, является ли число чётным
-        return num == 2  # Если да, то оно простое только если равно 2
-    d = 3  # Начинаем проверку с 3
-    while d * d <= num and num % d != 0:  # Проверяем нечётные делители + : 3
-        d += 2  # Переходим к следующему нечётному числу
-    return d * d > num  # Если не нашли делитель, число простое
+    if num % 2 == 0:
+        return num == 2
+    d = 3
+    while d * d <= num and num % d != 0:
+        d += 2
+    return d * d > num
 
 
 def extended_gcd(a, b):
@@ -44,7 +40,7 @@ def evaluate_expression(expression, mod):
 
     # Заменяем возведение в степень на умножение
     expression = re.sub(r'(\d+)\^(\d+)', lambda m: '*'.join([m.group(1)] * int(m.group(2))), expression)
-
+    
     # Заменяем деление на умножение на обратный элемент
     expression = re.sub(r'(\d+)\/(\d+)', lambda m: f"{m.group(1)}*{mod_inverse(int(m.group(2)), mod)}", expression)
 

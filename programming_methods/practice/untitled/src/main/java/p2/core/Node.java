@@ -1,3 +1,10 @@
+/**
+ * Класс, представляющий узел дерева.
+ * Реализует интерфейс Comparable для сравнения узлов
+ * Использует аннотации Lombok (@Data, @NoArgsConstructor, @AllArgsConstructor)
+ * для автоматической генерации геттеров, сеттеров и конструкторов
+ */
+
 package p2.core;
 
 
@@ -13,6 +20,10 @@ public class Node<T extends Comparable<T>> implements Comparable<Node<T>> {
     private Node<T> leftChild;
     private Node<T> rightChild;
 
+    /**
+     * Поле data для хранения значения узла
+     * Ссылки на левого (leftChild) и правого (rightChild) потомка
+     */
     public Node(T data) {
         this(data, null, null);
     }

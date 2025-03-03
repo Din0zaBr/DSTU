@@ -514,17 +514,6 @@ def shorten_matrix(matrix, rows, cols):
     return matrix
 
 
-def puncture_matrix(matrix, rows, cols):
-    """
-    Перфорирует матрицу, удаляя строки и столбцы с заданными индексами.
-    """
-    for row in sorted(rows, reverse=True):
-        matrix = [matrix[i] for i in range(len(matrix)) if i != row]
-    for col in sorted(cols, reverse=True):
-        matrix = [[matrix[i][j] for j in range(len(matrix[i])) if j != col] for i in range(len(matrix))]
-    return matrix
-
-
 def extend_matrix(matrix):
     """
     Расширяет матрицу, добавляя строку сверху и после столбец слева.
@@ -547,8 +536,8 @@ def augment_matrix(matrix):
 
 def modify_matrix_window():
     layout = [
-        [Text('Введите индексы строк для удаления (через пробел):', size=(40, 1)), Input(key='rows')],
-        [Text('Введите индексы столбцов для удаления (через пробел):', size=(40, 1)), Input(key='cols')],
+        [Text('Введите индексы строк для удаления (через пробел):', size=(55, 1)), Input(key='rows')],
+        [Text('Введите индексы столбцов для удаления (через пробел):', size=(55, 1)), Input(key='cols')],
         [Button('Укорочение'), Button('Перфорация'), Button('Расширение'), Button('Пополнение')]
     ]
     window = Window('Модификация матрицы', layout)
@@ -585,7 +574,7 @@ def modify_matrix_window():
                 elif len(rows) == len(Hsys) or len(cols) == len(Hsys[0]):
                     popup_error('Матрица не может содержать ни строк, ни столбцов после удаления.')
                 else:
-                    modified_Hsys = puncture_matrix(Hsys.copy(), rows, cols)
+                    modified_Hsys = shorten_matrix(Hsys.copy(), rows, cols)
                     n = len(modified_Hsys[0])
                     k = len(modified_Hsys)
                     modified_Hsys_to_Gsys = get_system_new(modified_Hsys, n, k)

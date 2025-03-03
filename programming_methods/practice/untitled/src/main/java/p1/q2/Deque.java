@@ -13,11 +13,6 @@ public class Deque<T> {
     private int rear;
     private int nItems;
 
-    // Массив (Array): Используется для хранения элементов дека.
-    //Front: Индекс, указывающий на начало дека.
-    //Rear: Индекс, указывающий на конец дека.
-    //nItems: Количество элементов в деке.
-    //maxSize: Максимальный размер дека.
     @SuppressWarnings("unchecked")
     public Deque(int s) {
         maxSize = s;
@@ -72,7 +67,7 @@ public class Deque<T> {
         }
         T temp = dequeArray[rear];
         rear = (rear - 1 + maxSize) % maxSize;
-        nItems--; // -1
+        nItems--;
         return temp;
     }
 

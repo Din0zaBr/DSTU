@@ -33,13 +33,18 @@ public class BalancedTree<T extends Comparable<T>> extends AbstractTree<T> {
         var forest = input.stream().map(Node::new).collect(Collectors.toList());
 
         while (forest.size() > 1) {
+            // Создается новый список newForest для хранения промежуточных узлов дерева
             var newForest = new LinkedList<Node<T>>();
+            // Для каждой пары узлов в forest создается новый узел со значением + и двумя потомками (leftChild и rightChild).
             for (int i = 0; i < forest.size(); i += 2) {
                 var leftChild = forest.get(i);
                 var rightChild = i + 1 < forest.size() ? forest.get(i + 1) : null;
                 var value = (T) Character.valueOf('+');
+                // Новый узел добавляется в newForest.
                 newForest.add(new Node<>(value, leftChild, rightChild));
             }
+            // forest обновляется, чтобы содержать только новые узлы из newForest.
+            // При этом newForest очищается.
             forest = newForest;
         }
 

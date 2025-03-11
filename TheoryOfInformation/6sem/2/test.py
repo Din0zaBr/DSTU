@@ -234,4 +234,3 @@ def viterbi_decode(encoded_bits, polynomials):
 if __name__ == "__main__":
     app = ConvCodecApp()
     app.mainloop()
-

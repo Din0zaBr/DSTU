@@ -1,5 +1,6 @@
 import PySimpleGUI as sg
 from typing import List, Tuple
+import re
 
 
 def text_to_binary(text: str) -> str:
@@ -83,7 +84,7 @@ def viterbi_decode(encoded_bits: str, polynomials: List[Tuple[int, ...]]) -> str
 
     final_state: int = min(path_metrics, key=path_metrics.get)
     result = ''.join(paths[final_state])
-    return result
+    return result[:len(encoded_bits) // len(polynomials)]
 
 
 def create_layout():
@@ -121,7 +122,7 @@ def main():
 
                 sequence: str = values['sequence']
 
-                if all(c in '01' for c in sequence):
+                if re.fullmatch(r'[01]+', sequence):
                     binary_data: str = sequence
                 else:
                     binary_data: str = text_to_binary(sequence)
@@ -146,8 +147,10 @@ def main():
                 encoded_sequence: str = values['sequence']
 
                 decoded_data: str = viterbi_decode(encoded_sequence, summators)
+                print(f"Декодированные данные (в бинарном виде): {decoded_data}")
                 decoded_text: str = binary_to_text(decoded_data)
-                print(f"Декодированные данные: {decoded_text}")
+                print(f"Декодированные данные (не в бинарном виде): {decoded_text}")
+                print()
             except Exception as e:
                 sg.popup_error(f'Ошибка при декодировании: {e}')
 

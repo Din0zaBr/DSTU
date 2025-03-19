@@ -1,30 +1,35 @@
+import PySimpleGUI as sg
+
+
 def text_to_binary(text):
     """Переводит текст в двоичную строку (ASCII)"""
     return ''.join(f"{ord(c):08b}" for c in text)
+
+
+def binary_to_text(binary_str):
+    """Переводит двоичную строку обратно в текст (ASCII)"""
+    chars = []
+    for i in range(0, len(binary_str), 8):
+        byte = binary_str[i:i + 8]
+        chars.append(chr(int(byte, 2)))
+    return ''.join(chars)
 
 
 def convolutional_encode(input_bits, polynomials) -> str:
     """Сверточное кодирование"""
     if not input_bits:
         return ''
-    # print(input_bits)
 
-    max_register: int = max(max(tup) for tup in polynomials)
-    switch: list = [0] * (max_register + 1)
-    # print(switch)
-    encoded_data: list = []
+    max_register = max(max(tup) for tup in polynomials)
+    shift_register = [0] * (max_register + 1)
+    encoded_data = []
 
-    # реализация движения по коммутатору
     for bit in input_bits:
-        switch.insert(0, int(bit))
-        switch.pop()
-        # print(switch)
+        shift_register.insert(0, int(bit))
+        shift_register.pop()
 
-        # реализация xor по каждому полиному
         for tup in polynomials:
-            # print(tup)
-            # print(switch)
-            xor = sum(switch[index] for index in tup) % 2
+            xor = sum(shift_register[index] for index in tup) % 2
             encoded_data.append(str(xor))
 
     return ''.join(encoded_data)
@@ -34,122 +39,118 @@ def viterbi_decode(encoded_bits, polynomials) -> str:
     """Алгоритм Витерби"""
     if not encoded_bits:
         return ''
-    # Количество выходных битов за один такт равно количеству полиномов, используемых в свёрточном кодере.
-    # Другими словами, результат битов от каждого сумматора
-    bit_outputs: int = len(polynomials)
 
-    max_register: int = max(max(tup) for tup in polynomials)
+    bit_outputs = len(polynomials)
+    max_register = max(max(tup) for tup in polynomials)
+    count_bit_states = 2 ** max_register
+    states = [format(i, f'0{max_register}b') for i in range(count_bit_states)]
 
-    # Определяем количество состояний (count_bit_states), которое равно 2^max_register
-    #  , где max_register — это максимальная длина регистра, используемого в полиномах.
-    count_bit_states: int = 2 ** max_register
-
-    # Например, если у нас есть 2 регистра, то возможные состояния могут быть представлены как: 00, 01, 10, 11
-    # число i должно быть представлено в двоичном виде (b) с дополнением нулями до длины max_register.
-    states: list = [format(i, f'0{max_register}b') for i in range(count_bit_states)]
-
-    # Создаем словарь path_metrics, который хранит метрики путей для каждого состояния.
-    path_metrics: dict = {s: float('inf') for s in states}
+    path_metrics = {s: float('inf') for s in states}
     path_metrics['0' * max_register] = 0
+    paths = {s: [] for s in states}
 
-    # Словарь paths хранит пути (последовательности битов), которые ведут к каждому состоянию.
-    # Эти пути представляют собой последовательности входных битов, которые привели к текущему состоянию кодера.
-    # В конце алгоритма Витерби мы используем этот словарь,
-    # чтобы восстановить наиболее вероятную последовательность исходных битов.
-    paths: dict = {s: [] for s in states}
-
-    # Закодированные данные: 11010100
-    # bit_outputs 2
-    # max_register 2
-    # bit_states 4
-    # states ['00', '01', '10', '11']
-    # path_metrics {'00': 0, '01': inf, '10': inf, '11': inf}
-    # paths {'00': [], '01': [], '10': [], '11': []}
-
-    # на блоки
     for step in range(0, len(encoded_bits) // bit_outputs):
+        current_bits = encoded_bits[step * bit_outputs: (step + 1) * bit_outputs]
+        new_metrics = {s: float('inf') for s in states}
+        new_paths = {s: [] for s in states}
 
-        current_bits: list = encoded_bits[step * bit_outputs: (step + 1) * bit_outputs]
-        print()
-        print(f'------------------- current_bits:', current_bits, '-------------------')
-        print()
-
-        # Создаем новые словари new_metrics и new_paths для хранения обновленных метрик и путей.
-        new_metrics: dict = {s: float('inf') for s in states}
-        print(f'new_metrics', new_metrics)
-        new_paths: dict = {s: [] for s in states}
-        print(f'new_paths', new_paths)
-
-        # Для каждого состояния (state) и каждого возможного входного бита (input_bit):
-        print(f'path_metrics', path_metrics)
         for state in states:
             if path_metrics[state] == float('inf'):
                 continue
-            print(f'!!!state!!!', state)
             for input_bit in ['0', '1']:
+                next_state = (input_bit + state)[:-1]
+                switch = list(map(int, input_bit + state))
 
-                # вычисляем следующее состояние, добавляя входной бит к текущему состоянию и удаляя последний бит.
-                next_state: str = (input_bit + state)[:-1]
-                print()
-                print(f'next_state', next_state)
-                switch: list = list(map(int, input_bit + state))
-                print(f'switch', switch)
-
-                # Вычисляем ожидаемые выходные биты (expected_bits_list) для текущего состояния и входного бита.
-                expected_bits_list: list = []
+                expected_bits_list = []
                 for tup in polynomials:
-                    print(f'tup', tup)
                     xor = sum(switch[index] for index in tup) % 2
                     expected_bits_list.append(str(xor))
                 expected_str = ''.join(expected_bits_list)
-                print(f'expected_str {expected_str} ({current_bits})')
 
-                # Вычисляем метрику Хэмминга (hammings_weight) между ожидаемыми и фактическими битами.
-                hammings_weight: int = sum(
+                hammings_weight = sum(
                     1
                     for bit_in_current_bits, bit_in_expected_str in zip(current_bits, expected_str)
                     if bit_in_current_bits != bit_in_expected_str
                 )
-                print(f'hammings_weight', hammings_weight)
-                # Обновляем метрику пути (total_hammings_weight) как сумму текущей метрики пути и метрики Хэмминга.
-                total_hammings_weight: int = path_metrics[state] + hammings_weight
-                print(f'total_hammings_weight', total_hammings_weight)
-                # Если новая метрика меньше текущей метрики для следующего состояния, обновляем метрику и путь.
+                total_hammings_weight = path_metrics[state] + hammings_weight
+
                 if total_hammings_weight < new_metrics[next_state]:
                     new_metrics[next_state] = total_hammings_weight
                     new_paths[next_state] = paths[state] + [input_bit]
 
-        # Обновляем path_metrics и paths новыми значениями
         path_metrics, paths = new_metrics, new_paths
-        print()
-        print(f'path_metrics', path_metrics)
-        print(f'paths', paths)
-        print("Обновили", step)
 
-    # Находим состояние с минимальной метрикой).
-    final_state: int = min(path_metrics, key=path_metrics.get)
-
-    # Восстанавливаем последовательность исходных битов (result) из пути, ведущего к этому состоянию.
+    final_state = min(path_metrics, key=path_metrics.get)
     result = ''.join(paths[final_state])
-    print(result)
     return result[:len(encoded_bits) // len(polynomials)]
 
 
+def create_layout():
+    layout = [
+        [sg.Text('Регистры для каждого сумматора (через запятую, разделенные новой строкой):')],
+        [sg.Multiline(size=(40, 10), key='summators')],
+        [sg.Text('Последовательность для кодирования:'), sg.InputText(key='sequence')],
+        [sg.Button('Кодировать'), sg.Button('Декодировать')],
+        [sg.Text('Результат:')],
+        [sg.Output(size=(80, 20))]
+    ]
+    return layout
+
+
 def main():
-    raw_data: str = input("Введите текст или двоичную строку для кодирования: ")
-    polynom: tuple = ((0, 2, 3), (1, 2), (0, 3))
+    layout = create_layout()
 
-    # Определение типа входных данных
-    if all(c in '01' for c in raw_data):
-        binary_data = raw_data
-    else:
-        binary_data = text_to_binary(raw_data)
+    window = sg.Window('Сверточное кодирование и декодирование', layout)
 
-    encoded_data: str = convolutional_encode(binary_data, polynom)
-    print(f"Закодированные данные: {encoded_data}")
+    while True:
+        event, values = window.read()
+        if event == sg.WINDOW_CLOSED:
+            break
+        if event == 'Кодировать':
+            try:
+                summators_input = values['summators'].strip().split('\n')
 
-    decoded_data: str = viterbi_decode(encoded_data, polynom)
-    print(f"Декодированные данные: {decoded_data}")
+                summators = [tuple(map(int, line.split(','))) for line in summators_input]
+
+                # Проверка на уникальность сумматоров (независимо от порядка)
+                # unique_summators = set(frozenset(s) for s in summators)
+                # if len(unique_summators) != len(summators):
+                #     sg.popup_error('Сумматоры должны быть уникальными (независимо от порядка регистров).')
+                #     continue
+
+                sequence = values['sequence']
+
+                if all(c in '01' for c in sequence):
+                    binary_data = sequence
+                else:
+                    binary_data = text_to_binary(sequence)
+
+                encoded_data = convolutional_encode(binary_data, summators)
+                print(f"Закодированные данные: {encoded_data}")
+            except Exception as e:
+                sg.popup_error(f'Ошибка при кодировании: {e}')
+
+        if event == 'Декодировать':
+            try:
+                summators_input = values['summators'].strip().split('\n')
+
+                summators = [tuple(map(int, line.split(','))) for line in summators_input]
+
+                # Проверка на уникальность сумматоров (независимо от порядка)
+                # unique_summators = set(frozenset(s) for s in summators)
+                # if len(unique_summators) != len(summators):
+                #     sg.popup_error('Сумматоры должны быть уникальными (независимо от порядка регистров).')
+                #     continue
+
+                encoded_sequence = values['sequence']
+
+                decoded_data = viterbi_decode(encoded_sequence, summators)
+                decoded_text = binary_to_text(decoded_data)
+                print(f"Декодированные данные: {decoded_text}")
+            except Exception as e:
+                sg.popup_error(f'Ошибка при декодировании: {e}')
+
+    window.close()
 
 
 if __name__ == "__main__":

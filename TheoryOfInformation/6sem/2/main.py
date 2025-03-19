@@ -88,7 +88,7 @@ def viterbi_decode(encoded_bits, polynomials) -> str:
 def create_layout():
     layout = [
         [sg.Text('Регистры для каждого сумматора (через запятую, разделенные новой строкой):')],
-        [sg.Multiline(size=(40, 10), key='summators')],
+        [sg.Multiline(size=(80, 10), key='summators')],
         [sg.Text('Последовательность для кодирования:'), sg.InputText(key='sequence')],
         [sg.Button('Кодировать'), sg.Button('Декодировать')],
         [sg.Text('Результат:')],

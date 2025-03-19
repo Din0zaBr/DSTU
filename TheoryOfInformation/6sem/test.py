@@ -1,8 +1,10 @@
 import PySimpleGUI as sg
 
+
 def text_to_binary(text):
     """Переводит текст в двоичную строку (ASCII)"""
     return ''.join(f"{ord(c):08b}" for c in text)
+
 
 def binary_to_text(binary_str):
     """Переводит двоичную строку обратно в текст (ASCII)"""
@@ -11,6 +13,7 @@ def binary_to_text(binary_str):
         byte = binary_str[i:i + 8]
         chars.append(chr(int(byte, 2)))
     return ''.join(chars)
+
 
 def convolutional_encode(input_bits, polynomials) -> str:
     """Сверточное кодирование"""
@@ -30,6 +33,7 @@ def convolutional_encode(input_bits, polynomials) -> str:
             encoded_data.append(str(xor))
 
     return ''.join(encoded_data)
+
 
 def viterbi_decode(encoded_bits, polynomials) -> str:
     """Алгоритм Витерби"""
@@ -80,9 +84,9 @@ def viterbi_decode(encoded_bits, polynomials) -> str:
     result = ''.join(paths[final_state])
     return result[:len(encoded_bits) // len(polynomials)]
 
+
 def create_layout():
     layout = [
-        [sg.Text('Количество сумматоров:'), sg.InputText(key='num_summators')],
         [sg.Text('Регистры для каждого сумматора (через запятую, разделенные новой строкой):')],
         [sg.Multiline(size=(40, 10), key='summators')],
         [sg.Text('Последовательность для кодирования:'), sg.InputText(key='sequence')],
@@ -92,8 +96,8 @@ def create_layout():
     ]
     return layout
 
+
 def main():
-    max_summators = 10
     layout = create_layout()
 
     window = sg.Window('Сверточное кодирование и декодирование', layout)
@@ -104,16 +108,7 @@ def main():
             break
         if event == 'Кодировать':
             try:
-                num_summators = int(values['num_summators'])
-                if num_summators > max_summators:
-                    sg.popup_error(f'Максимальное количество сумматоров: {max_summators}')
-                    continue
-
                 summators_input = values['summators'].strip().split('\n')
-                if len(summators_input) != num_summators:
-                    sg.popup_error(
-                        f'Количество введенных сумматоров ({len(summators_input)}) не совпадает с указанным количеством ({num_summators}).')
-                    continue
 
                 summators = [tuple(map(int, line.split(','))) for line in summators_input]
 
@@ -137,17 +132,7 @@ def main():
 
         if event == 'Декодировать':
             try:
-                num_summators = int(values['num_summators'])
-                if num_summators > max_summators:
-                    sg.popup_error(f'Максимальное количество сумматоров: {max_summators}')
-                    continue
-
                 summators_input = values['summators'].strip().split('\n')
-                if len(summators_input) != num_summators:
-                    sg.popup_error(
-                        f'Количество введенных сумматоров ({len(summators_input)}) не совпадает с указанным '
-                        f'количеством ({num_summators}).')
-                    continue
 
                 summators = [tuple(map(int, line.split(','))) for line in summators_input]
 
@@ -166,6 +151,7 @@ def main():
                 sg.popup_error(f'Ошибка при декодировании: {e}')
 
     window.close()
+
 
 if __name__ == "__main__":
     main()

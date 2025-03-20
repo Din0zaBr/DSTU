@@ -17,7 +17,7 @@ def binary_to_text(binary_string: str) -> str:
     :param binary_string: двоичная строка
     :return: текст
     """
-    byte_array = bytearray(int(binary_string[i:i+8], 2) for i in range(0, len(binary_string), 8))
+    byte_array = bytearray(int(binary_string[i:i + 8], 2) for i in range(0, len(binary_string), 8))
     return byte_array.decode('utf-8', errors='ignore')  # Пропускает ошибки
 
 
@@ -104,34 +104,107 @@ def viterbi_decode(encoded_bits: str, polynomials: List[Tuple[int, ...]]) -> str
 def create_layout():
     """
     Создает графический интерфейс
-    :param summators: список сумматоров (через запятую, разделенные новой строкой)
     :return:
     """
     layout = [
         [sg.Text('Регистры для каждого сумматора (через запятую, разделенные новой строкой):')],
         [sg.Multiline(size=(80, 10), key='summators')],
         [sg.Text('Последовательность для кодирования:'), sg.InputText(key='sequence')],
-        [sg.Button('Кодировать'), sg.Button('Декодировать')],
+        [sg.Button('Кодировать'), sg.Button('Декодировать'), sg.Button('Пример')],
         [sg.Text('Результат:')],
         [sg.Output(size=(80, 20))]
     ]
     return layout
 
 
+def validate_input(values):
+    """
+    Проверка корректности входных данных
+    """
+    errors = []
+
+    # Проверка длины строки
+    sequence = values['sequence'].strip()
+    if not sequence:
+        errors.append("Строка не может быть пустой!")
+    if len(sequence) > 100:
+        errors.append("Строка слишком длинная! Максимальная длина 100 символов.")
+
+    # Проверка сумматоров
+    summators_input = values['summators'].strip().split('\n')
+    if not summators_input:
+        errors.append("Необходимо указать хотя бы один сумматор!")
+
+    for i, sum_line in enumerate(summators_input, 1):
+        sum_line = sum_line.strip()
+        if not sum_line:
+            continue
+        try:
+            numbers = [int(x) for x in sum_line.split(',')]
+            if not numbers:
+                errors.append(f"Сумматор {i}: пустая строка!")
+            if any(n < 0 for n in numbers):
+                errors.append(f"Сумматор {i}: числа не могут быть отрицательными!")
+            if len(numbers) > 10:
+                errors.append(f"Сумматор {i}: слишком много регистров!")
+        except ValueError:
+            errors.append(f"Сумматор {i}: некорректный формат! Используйте числа через запятую.")
+
+    return errors
+
+
+def show_example(window):
+    """
+    Показывает пример использования программы
+    """
+    example_text = "Привет123@#$%HelloWelt!456"
+    summators = [
+        "1,0",
+        "1,1",
+        "1,2"
+    ]
+
+    window['sequence'].update(example_text)
+    window['summators'].update('\n'.join(summators))
+
+    # Демонстрация кодирования
+    print("=== Пример кодирования ===")
+    print(f"Входная строка: {example_text}")
+    print("\nСумматоры:")
+    for i, sum in enumerate(summators, 1):
+        print(f"Сумматор {i}: {sum}")
+
+    binary_data = text_to_binary(example_text)
+    print(f"\nДвоичный формат: {binary_data}")
+
+    # Демонстрация декодирования
+    print("\n=== Пример декодирования ===")
+    encoded_data = convolutional_encode(binary_data, [tuple(map(int, s.split(','))) for s in summators])
+    print(f"Закодированные данные: {encoded_data}")
+
+    decoded_data = viterbi_decode(encoded_data, [tuple(map(int, s.split(','))) for s in summators])
+    print(f"Декодированные данные (бинарный вид): {decoded_data}")
+    print(f"Декодированные данные (текст): {binary_to_text(decoded_data)}")
+
+
 def main():
     sg.theme('DarkAmber')
     layout = create_layout()
-
     window = sg.Window('Сверточное кодирование и декодирование', layout)
 
     while True:
         event, values = window.read()
         if event == sg.WINDOW_CLOSED:
             break
+
         if event == 'Кодировать':
+            errors = validate_input(values)
+            if errors:
+                sg.popup_error('\n'.join(errors), title='Ошибка!')
+                continue
+
             try:
                 summators_input: str = values['summators'].strip().split('\n')
-
                 summators: list = [tuple(map(int, line.split(','))) for line in summators_input]
 
                 # Проверка на уникальность сумматоров (независимо от порядка)
@@ -152,10 +225,14 @@ def main():
             except Exception as e:
                 sg.popup_error(f'Ошибка при кодировании: {e}')
 
-        if event == 'Декодировать':
+        elif event == 'Декодировать':
+            errors = validate_input(values)
+            if errors:
+                sg.popup_error('\n'.join(errors), title='Ошибка!')
+                continue
+
             try:
                 summators_input: str = values['summators'].strip().split('\n')
-
                 summators: list = [tuple(map(int, line.split(','))) for line in summators_input]
 
                 # Проверка на уникальность сумматоров (независимо от порядка)
@@ -167,12 +244,15 @@ def main():
                 encoded_sequence: str = values['sequence']
 
                 decoded_data: str = viterbi_decode(encoded_sequence, summators)
-                print(f"Декодированные данные (в бинарном виде): {decoded_data}")
+                print(f"Декодированные данные (бинарный вид): {decoded_data}")
                 decoded_text: str = binary_to_text(decoded_data)
                 print(f"Декодированные данные (UTF-8): {decoded_text}")
                 print()
             except Exception as e:
                 sg.popup_error(f'Ошибка при декодировании: {e}')
+
+        elif event == 'Пример':
+            show_example(window)
 
     window.close()
 

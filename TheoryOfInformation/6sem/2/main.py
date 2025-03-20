@@ -4,21 +4,30 @@ import re
 
 
 def text_to_binary(text: str) -> str:
-    """Переводит текст в двоичную строку (ASCII)"""
-    return ''.join(f"{ord(c):08b}" for c in text)
+    """
+    Переводит текст в двоичную строку (UTF-8)
+    :param text: текст
+    :return: двоичная строка"""
+    return ''.join(f"{byte:08b}" for byte in text.encode('utf-8'))
 
 
 def binary_to_text(binary_string: str) -> str:
-    """Переводит двоичную строку обратно в текст (ASCII)"""
-    chars: list = []
-    for i in range(0, len(binary_string), 8):
-        byte: str = binary_string[i:i + 8]
-        chars.append(chr(int(byte, 2)))
-    return ''.join(chars)
+    """
+    Переводит двоичную строку обратно в текст (UTF-8)
+    :param binary_string: двоичная строка
+    :return: текст
+    """
+    byte_array = bytearray(int(binary_string[i:i+8], 2) for i in range(0, len(binary_string), 8))
+    return byte_array.decode('utf-8', errors='ignore')  # Пропускает ошибки
 
 
 def convolutional_encode(input_bits: str, polynomials: List[Tuple[int, ...]]) -> str:
-    """Свёрточное кодирование"""
+    """
+    Свёрточное кодирование
+    :param input_bits: входящие биты
+    :param polynomials: полиномы
+    :return: закодированные биты
+    """
     if not input_bits:
         return ''
 
@@ -38,7 +47,12 @@ def convolutional_encode(input_bits: str, polynomials: List[Tuple[int, ...]]) ->
 
 
 def viterbi_decode(encoded_bits: str, polynomials: List[Tuple[int, ...]]) -> str:
-    """Алгоритм Витерби"""
+    """
+    Алгоритм Витерби
+    :param encoded_bits: закодированные биты
+    :param polynomials: полиномы
+    :return: декодированные биты
+    """
     if not encoded_bits:
         return ''
 
@@ -88,6 +102,11 @@ def viterbi_decode(encoded_bits: str, polynomials: List[Tuple[int, ...]]) -> str
 
 
 def create_layout():
+    """
+    Создает графический интерфейс
+    :param summators: список сумматоров (через запятую, разделенные новой строкой)
+    :return:
+    """
     layout = [
         [sg.Text('Регистры для каждого сумматора (через запятую, разделенные новой строкой):')],
         [sg.Multiline(size=(80, 10), key='summators')],
@@ -100,6 +119,7 @@ def create_layout():
 
 
 def main():
+    sg.theme('DarkAmber')
     layout = create_layout()
 
     window = sg.Window('Сверточное кодирование и декодирование', layout)
@@ -122,7 +142,7 @@ def main():
 
                 sequence: str = values['sequence']
 
-                if re.fullmatch(r'[01]+', sequence):
+                if re.fullmatch(r'[01]+', sequence): # проверка на ввод бинарной строки
                     binary_data: str = sequence
                 else:
                     binary_data: str = text_to_binary(sequence)
@@ -149,7 +169,7 @@ def main():
                 decoded_data: str = viterbi_decode(encoded_sequence, summators)
                 print(f"Декодированные данные (в бинарном виде): {decoded_data}")
                 decoded_text: str = binary_to_text(decoded_data)
-                print(f"Декодированные данные (не в бинарном виде): {decoded_text}")
+                print(f"Декодированные данные (UTF-8): {decoded_text}")
                 print()
             except Exception as e:
                 sg.popup_error(f'Ошибка при декодировании: {e}')

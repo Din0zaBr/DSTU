@@ -127,8 +127,8 @@ def validate_input(values):
     sequence = values['sequence'].strip()
     if not sequence:
         errors.append("Строка не может быть пустой!")
-    if len(sequence) > 100:
-        errors.append("Строка слишком длинная! Максимальная длина 100 символов.")
+    if len(sequence) > 1000:
+        errors.append("Строка слишком длинная! Максимальная длина 1000 символов.")
 
     # Проверка сумматоров
     summators_input = values['summators'].strip().split('\n')

@@ -87,10 +87,10 @@ def viterbi_decode(encoded_bits, polynomials) -> str:
                 continue
             print(f'!!!state!!!', state)
             for input_bit in ['0', '1']:
-
+                print()
+                print("for input_bit", input_bit)
                 # вычисляем следующее состояние, добавляя входной бит к текущему состоянию и удаляя последний бит.
                 next_state: str = (input_bit + state)[:-1]
-                print()
                 print(f'next_state', next_state)
                 switch: list = list(map(int, input_bit + state))
                 print(f'switch', switch)
@@ -137,7 +137,7 @@ def viterbi_decode(encoded_bits, polynomials) -> str:
 
 def main():
     raw_data: str = input("Введите текст или двоичную строку для кодирования: ")
-    polynom: tuple = ((0, 2, 3), (1, 2), (0, 3))
+    polynom: tuple = ((1, 2), (0, 2))
 
     # Определение типа входных данных
     if all(c in '01' for c in raw_data):

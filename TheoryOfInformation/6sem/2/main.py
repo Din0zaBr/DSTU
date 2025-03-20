@@ -123,7 +123,7 @@ def validate_input(values):
     """
     errors = []
 
-    # Проверка длины строки
+    # Проверка содержимого + длины строки
     sequence = values['sequence'].strip()
     if not sequence:
         errors.append("Строка не может быть пустой!")
@@ -132,23 +132,28 @@ def validate_input(values):
 
     # Проверка сумматоров
     summators_input = values['summators'].strip().split('\n')
-    if not summators_input:
-        errors.append("Необходимо указать хотя бы один сумматор!")
 
+    # Проверка формата строки сумматоров
     for i, sum_line in enumerate(summators_input, 1):
         sum_line = sum_line.strip()
         if not sum_line:
             continue
+
+        # Проверка формата строки с помощью регулярного выражения
+        if not re.match(r'^\d+(,\s*\d+)+$', sum_line):
+            errors.append(f"Сумматор {i}: некорректный формат! Используйте числа через запятую.")
+            continue
+
         try:
-            numbers = [int(x) for x in sum_line.split(',')]
+            numbers = [int(x.strip()) for x in sum_line.split(',')]
             if not numbers:
                 errors.append(f"Сумматор {i}: пустая строка!")
-            if any(n < 0 for n in numbers):
-                errors.append(f"Сумматор {i}: числа не могут быть отрицательными!")
+            if any((number < 0 or number > 15) for number in numbers):
+                errors.append(f"Сумматор {i}: числа не могут быть отрицательными, а также больше 15!")
             if len(numbers) > 10:
-                errors.append(f"Сумматор {i}: слишком много регистров!")
+                errors.append(f"Сумматор {i}: слишком много регистров! Максимальное число регистров 10!")
         except ValueError:
-            errors.append(f"Сумматор {i}: некорректный формат! Используйте числа через запятую.")
+            errors.append(f"Сумматор {i}: некорректные значения!")
 
     return errors
 
@@ -204,8 +209,9 @@ def main():
                 continue
 
             try:
-                summators_input: str = values['summators'].strip().split('\n')
-                summators: list = [tuple(map(int, line.split(','))) for line in summators_input]
+                summators_input: list = [line.replace('\n', '').strip()
+                                         for line in values['summators'].strip().split('\n')]
+                summators: list = [tuple(map(int, line.split(','))) for line in summators_input if line]
 
                 # Проверка на уникальность сумматоров (независимо от порядка)
                 # unique_summators = set(frozenset(s) for s in summators)
@@ -215,7 +221,7 @@ def main():
 
                 sequence: str = values['sequence']
 
-                if re.fullmatch(r'[01]+', sequence): # проверка на ввод бинарной строки
+                if re.fullmatch(r'[01]+', sequence):  # проверка на ввод бинарной строки
                     binary_data: str = sequence
                 else:
                     binary_data: str = text_to_binary(sequence)
@@ -232,8 +238,9 @@ def main():
                 continue
 
             try:
-                summators_input: str = values['summators'].strip().split('\n')
-                summators: list = [tuple(map(int, line.split(','))) for line in summators_input]
+                summators_input: list = [line.replace('\n', '').strip()
+                                         for line in values['summators'].strip().split('\n')]
+                summators: list = [tuple(map(int, line.split(','))) for line in summators_input if line]
 
                 # Проверка на уникальность сумматоров (независимо от порядка)
                 # unique_summators = set(frozenset(s) for s in summators)

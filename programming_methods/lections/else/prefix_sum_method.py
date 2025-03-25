@@ -7,9 +7,11 @@ class PrefixSum:
     def query(self, left, right):
         return self.prefix[right + 1] - self.prefix[left]
 
+
 # Пример использования
 array = [1, 2, 3, 4, 5]
 prefix_sum = PrefixSum(array)
+print(prefix_sum.prefix)
 
 # Сумма на отрезке от индекса 1 до 3 (включительно)
 result = prefix_sum.query(1, 3)

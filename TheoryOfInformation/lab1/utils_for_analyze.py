@@ -2,7 +2,7 @@ import collections
 import math
 from tkinter import messagebox
 import os
-from grafic import build_histogram, build_byte_histogram
+from TheoryOfInformation.lab1.grafic import build_histogram, build_byte_histogram
 import zipfile
 import xml.etree.ElementTree as ET
 

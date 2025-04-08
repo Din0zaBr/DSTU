@@ -3,22 +3,22 @@ from typing import List, Tuple
 import re
 
 
-def text_to_binary(text: str) -> str:
-    """
-    Переводит текст в двоичную строку (UTF-8)
-    :param text: текст
-    :return: двоичная строка"""
-    return ''.join(f"{byte:08b}" for byte in text.encode('utf-8'))
-
-
-def binary_to_text(binary_string: str) -> str:
-    """
-    Переводит двоичную строку обратно в текст (UTF-8)
-    :param binary_string: двоичная строка
-    :return: текст
-    """
-    byte_array = bytearray(int(binary_string[i:i + 8], 2) for i in range(0, len(binary_string), 8))
-    return byte_array.decode('utf-8', errors='ignore')  # Пропускает ошибки
+# def text_to_binary(text: str) -> str:
+#     """
+#     Переводит текст в двоичную строку (UTF-8)
+#     :param text: текст
+#     :return: двоичная строка"""
+#     return ''.join(f"{byte:08b}" for byte in text.encode('utf-8'))
+#
+#
+# def binary_to_text(binary_string: str) -> str:
+#     """
+#     Переводит двоичную строку обратно в текст (UTF-8)
+#     :param binary_string: двоичная строка
+#     :return: текст
+#     """
+#     byte_array = bytearray(int(binary_string[i:i + 8], 2) for i in range(0, len(binary_string), 8))
+#     return byte_array.decode('utf-8', errors='ignore')  # Пропускает ошибки
 
 
 def convolutional_encode(input_bits: str, polynomials: List[Tuple[int, ...]]) -> str:
@@ -127,7 +127,7 @@ def validate_input(values):
     sequence = values['sequence'].strip()
     if not sequence:
         errors.append("Строка не может быть пустой!")
-    if len(sequence) > 1000:
+    if len(sequence) > 10000:
         errors.append("Строка слишком длинная! Максимальная длина 1000 символов.")
 
     # Проверка сумматоров
@@ -179,17 +179,16 @@ def show_example(window):
     for i, sum in enumerate(summators, 1):
         print(f"Сумматор {i}: {sum}")
 
-    binary_data = text_to_binary(example_text)
-    print(f"\nДвоичный формат: {binary_data}")
+    # binary_data = text_to_binary(example_text)
+    # print(f"\nДвоичный формат: {binary_data}")
 
     # Демонстрация декодирования
     print("\n=== Пример декодирования ===")
-    encoded_data = convolutional_encode(binary_data, [tuple(map(int, s.split(','))) for s in summators])
+    encoded_data = convolutional_encode(example_text, [tuple(map(int, s.split(','))) for s in summators])
     print(f"Закодированные данные: {encoded_data}")
 
     decoded_data = viterbi_decode(encoded_data, [tuple(map(int, s.split(','))) for s in summators])
     print(f"Декодированные данные (бинарный вид): {decoded_data}")
-    print(f"Декодированные данные (текст): {binary_to_text(decoded_data)}")
 
 
 def main():
@@ -224,7 +223,7 @@ def main():
                 if re.fullmatch(r'[01]+', sequence):  # проверка на ввод бинарной строки
                     binary_data: str = sequence
                 else:
-                    binary_data: str = text_to_binary(sequence)
+                    binary_data: str = sequence
 
                 encoded_data: str = convolutional_encode(binary_data, summators)
                 print(f"Закодированные данные: {encoded_data}")
@@ -252,8 +251,7 @@ def main():
 
                 decoded_data: str = viterbi_decode(encoded_sequence, summators)
                 print(f"Декодированные данные (бинарный вид): {decoded_data}")
-                decoded_text: str = binary_to_text(decoded_data)
-                print(f"Декодированные данные (UTF-8): {decoded_text}")
+                decoded_text: str = decoded_data
                 print()
             except Exception as e:
                 sg.popup_error(f'Ошибка при декодировании: {e}')

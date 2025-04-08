@@ -331,13 +331,13 @@ def Encoding_and_Decoding(i_array, c_array, S_array, e_array, function_type, tex
         for i in range(0, len(bin_str), k):
             encoding_array.append(bin_str[i:i + k])
 
-        # output_text = ''
+        output_text_real = ''
         output_text = []
         for el in encoding_array:
             index_c = i_array.index([int(i) for i in el])
-            # output_text += ''.join([str(i) for i in c_array[index_c]])
+            output_text_real += ''.join([str(i) for i in c_array[index_c]])
             output_text.append(''.join([str(i) for i in c_array[index_c]]))
-        print("Encoded output text:", output_text)
+        # print("Encoded output text:", output_text)
         return output_text
 
     else:
@@ -474,7 +474,7 @@ def Encoding_and_Decoding_Window():
     while True:
         event, values = window.read()
         if event in (WIN_CLOSED, 'Выход'):
-            exit()
+            break
         if event == 'Далее':
             if values['text']:
                 if values['Encoding']:
@@ -490,6 +490,9 @@ def Encoding_and_Decoding_Window():
                                                 k, n,
                                                 HsysT)
             window['output'].update(output_text)
+            with open('output.txt', 'w') as file:
+                file.write(str(output_text))
+
 
         if event == 'Матрицы':
             output_matrix()

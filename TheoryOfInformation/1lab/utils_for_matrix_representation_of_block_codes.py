@@ -331,11 +331,12 @@ def Encoding_and_Decoding(i_array, c_array, S_array, e_array, function_type, tex
         for i in range(0, len(bin_str), k):
             encoding_array.append(bin_str[i:i + k])
 
-        output_text = ''
+        # output_text = ''
+        output_text = []
         for el in encoding_array:
             index_c = i_array.index([int(i) for i in el])
-            output_text += ''.join([str(i) for i in c_array[index_c]])
-
+            # output_text += ''.join([str(i) for i in c_array[index_c]])
+            output_text.append(''.join([str(i) for i in c_array[index_c]]))
         print("Encoded output text:", output_text)
         return output_text
 

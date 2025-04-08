@@ -52,6 +52,8 @@ public class Tree<T extends Comparable<T>> extends AbstractTree<T> {
             var rightChild = forest.removeFirst();
             var value = (T) Character.valueOf('+');
             newForest.add(new Node<>(value, leftChild, rightChild));
+//            System.out.println(newForest);
+
         }
 
         return newForest.getFirst();

@@ -30,23 +30,31 @@ def image_to_binary(image_path):
     """
     # Open the image
     image = Image.open(image_path).convert("RGB")
-    print(image)
+    # print(image)
     # Convert the image to a numpy array of pixels
     pixel_array = np.array(image)
-    print()
-    print(pixel_array)
+    # print()
+    # print(pixel_array)
     # Convert pixel values to binary (8 bits)
     binary_array = np.unpackbits(np.array(pixel_array, dtype=np.uint8), axis=-1)
-    print()
-    print(binary_array)
+    # print()
+    # print(binary_array)
     # Reshape binary array to have 8-bit chunks
     binary_string = ''.join(''.join(map(str, array)) for chunk in binary_array for array in chunk)
-    print()
-    print(binary_string)
+    # print()
+    # print(binary_string)
+    return binary_array.shape
 
 
-def binary_to_image(binary_array):
-    pass
+def binary_to_image(binary_string, image_path):
+    shape = image_to_binary(image_path)
+    # Convert binary string to binary array
+    binary_array = np.array(list(binary_string), dtype=int).reshape(shape)
+    # Pack binary array back to 8-bit values
+    pixel_array = np.packbits(binary_array, axis=-1)
+    # Convert pixel array to image
+    image = Image.fromarray(pixel_array.astype(np.uint8), mode="RGB")
+    image.save("Result.png")
 
 
 def main1():
@@ -411,19 +419,18 @@ def Encoding_and_Decoding(i_array, c_array, S_array, e_array, function_type, tex
         for i in range(0, len(bin_str), k):
             encoding_array.append(bin_str[i:i + k])
 
-        # output_text_real = ''
+        output_text_real = ''
         output_text = []
         for el in encoding_array:
             index_c = i_array.index([int(i) for i in el])
-            # output_text_real += ''.join([str(i) for i in c_array[index_c]])
+            output_text_real += ''.join([str(i) for i in c_array[index_c]])
             output_text.append(''.join([str(i) for i in c_array[index_c]]))
         # print("Encoded output text:", output_text)
         output_text = np.array(output_text)
         output_text.transpose()
-        print(output_text)
-        print()
-        print(''.join(output_text))
-
+        # print(output_text)
+        # print()
+        return ''.join(output_text)
 
     else:
 
@@ -554,7 +561,7 @@ def Encoding_and_Decoding_Window():
               [Radio('Кодирование', 'RADIO1', key='Encoding'),
                Radio('Декодирование', 'RADIO1', key='Decoding')],
               [Button('Далее'), Button('Матрицы'), Button('Таблицы'), Button('Константы'), Button('Модификации'),
-               Button('Витерби')]]
+               Button('Витерби'), Button('binary_to_picture')]]
     window = Window('Лабораторная работа №4', layout)
 
     while True:
@@ -592,7 +599,7 @@ def Encoding_and_Decoding_Window():
         if event == "Витерби":
             main3()
 
-        if event == 'to_picture':
+        if event == 'binary_to_picture':
             main4()
 
 
@@ -984,6 +991,7 @@ def create_layout_main4():
     """
     layout = [
         [Text('Бинарная строка:', size=(15, 1)), Input(key='binary')],
+        [Text('Путь к картинке:', size=(15, 1)), Input(key='path_to_picture')],
         [Button('Преобразовать'), Button('Выход')]
     ]
     return layout
@@ -1001,6 +1009,8 @@ def main4():
 
         if event == 'Преобразовать':
             binary_data = values['binary']
+            path_to_picture = values['path_to_picture']
+            binary_to_image(binary_data, path_to_picture)
             #
             # # Open the image
             # image = Image.open(image_path)
@@ -1011,12 +1021,6 @@ def main4():
             # # Reshape binary array to have 8-bit chunks
             # binary_string = ''.join(''.join(map(str, array)) for chunk in binary_array for array in chunk)
             # print(binary_string)
-            my_ls = [[] for _ in range(0, len(binary_data), 8)]
-            for i in range(0, len(binary_data), 8):
-                binary = list(binary_data[i:i + 8])
-                my_ls[i].append(binary)
-            print(my_ls)
-
         elif event == 'Выход':
             exit()
 

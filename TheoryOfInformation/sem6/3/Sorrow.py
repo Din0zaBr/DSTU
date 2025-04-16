@@ -412,11 +412,14 @@ def Encoding_and_Decoding(i_array, c_array, S_array, e_array, function_type, tex
     global transposed_matrix_shape
 
     if function_type == "Encoding":
+        print()
+        print(text)
         # Преобразуем текст в бинарную строку
         bin_str = ''.join(format(el, '08b') for el in bytearray(text, 'utf-8'))
-
+        print(bin_str)
         # Дополняем бинарную строку нулями до кратности k
         bin_str = bin_str.zfill(len(bin_str) + k - (len(bin_str) % k))
+        print()
 
         encoding_array = []
 

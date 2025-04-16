@@ -7,7 +7,6 @@ from typing import List, Tuple
 import re
 
 
-# C:\Users\ivanz\PycharmProjects\DSTU\TheoryOfInformation\sem6\3\abcd.pn
 transposed_matrix_shape = None
 
 def check_file_existence(file_path):
@@ -425,6 +424,8 @@ def Encoding_and_Decoding(i_array, c_array, S_array, e_array, function_type, tex
         for i in range(0, len(bin_str), k):
             encoding_array.append(bin_str[i:i + k])
 
+        print(encoding_array)
+        print()
         # output_text_real = ''
         output_text = []
         for el in encoding_array:
@@ -434,16 +435,18 @@ def Encoding_and_Decoding(i_array, c_array, S_array, e_array, function_type, tex
         # print("Encoded output text:", output_text_real)
         output_text = np.array(output_text)
         # print(output_text)
-        # print()
+        print()
         result = np.array([list(x) for x in output_text])
-        # print(result)
+        print(result)
+        print(result.shape)
         transposed_matrix = result.transpose()
         transposed_matrix_shape = transposed_matrix.shape
-        # print()
-        # print(transposed_matrix)
+        print()
+        print(transposed_matrix)
+        print(transposed_matrix_shape)
         # print(output_text)
-        # print()
-        # print("".join("".join(x) for x in transposed_matrix))
+        print()
+        print("".join("".join(x) for x in transposed_matrix))
         return "".join("".join(x) for x in transposed_matrix)
 
     else:
@@ -874,8 +877,8 @@ def validate_input(values):
     sequence = values['sequence'].strip()
     if not sequence:
         errors.append("Строка не может быть пустой!")
-    if len(sequence) > 10000:
-        errors.append("Строка слишком длинная! Максимальная длина 1000 символов.")
+    if len(sequence) > 1000000:
+        errors.append("Строка слишком длинная! Максимальная длина 1000000 символов.")
 
     # Проверка сумматоров
     summators_input = values['summators'].strip().split('\n')

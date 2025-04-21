@@ -3,6 +3,7 @@ import psycopg2
 from tkinter import *
 from tkinter import messagebox, ttk
 
+
 # Подключение к базе данных
 def connect_to_db():
     try:
@@ -16,6 +17,7 @@ def connect_to_db():
     except Exception as e:
         messagebox.showerror("Ошибка", f"Не удалось подключиться к базе данных: {e}")
         return None
+
 
 # Проверка аутентификации
 def authenticate(username, password):
@@ -34,6 +36,7 @@ def authenticate(username, password):
         finally:
             conn.close()
     return None
+
 
 # Получение списка таблиц (кроме users)
 def get_tables():
@@ -55,6 +58,7 @@ def get_tables():
             conn.close()
     return []
 
+
 # Получение данных из таблицы
 def get_table_data(table_name):
     conn = connect_to_db()
@@ -70,6 +74,7 @@ def get_table_data(table_name):
         finally:
             conn.close()
     return [], []
+
 
 # Интерфейс для обычного пользователя
 def user_interface():
@@ -105,6 +110,7 @@ def user_interface():
     tree.pack(fill="both", expand=True, padx=10, pady=10)
 
     root.mainloop()
+
 
 # Интерфейс для администратора
 def admin_interface():
@@ -172,6 +178,7 @@ def admin_interface():
 
     root.mainloop()
 
+
 # Главное окно аутентификации
 def main():
     def login():
@@ -200,6 +207,7 @@ def main():
     Button(root, text="Войти", command=login).grid(row=2, column=1, pady=10)
 
     root.mainloop()
+
 
 if __name__ == "__main__":
     main()

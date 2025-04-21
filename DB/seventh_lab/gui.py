@@ -30,7 +30,7 @@ def authenticate(username, password):
     if conn:
         try:
             cursor = conn.cursor()
-            cursor.execute("SELECT role FROM users WHERE username = %s AND password = %s", ("user1", "user123"))
+            cursor.execute("SELECT role FROM users WHERE username = %s AND password = %s", (username, password))
             result = cursor.fetchone()
             print(result)
             if result:
@@ -51,9 +51,9 @@ def get_tables():
         try:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT table_name 
-                FROM information_schema.tables 
-                WHERE table_schema = 'public' 
+                SELECT table_name
+                FROM information_schema.tables
+                WHERE table_schema = 'public'
                 AND table_name != 'users'
                 AND table_name != 'my_object'
             """)
@@ -139,13 +139,17 @@ def user_interface():
 
     root = Tk()
     root.title("Интерфейс пользователя")
+    root.geometry("800x600")
+
+    table_buttons_frame = Frame(root)
+    table_buttons_frame.pack(fill=X, padx=10, pady=10)
 
     tables = get_tables()
     for table in tables:
-        Button(root, text=table, command=lambda t=table: show_table_data(t)).pack()
+        Button(table_buttons_frame, text=table, command=lambda t=table: show_table_data(t)).pack(side=LEFT, padx=5)
 
     tree = ttk.Treeview(root, show="headings")
-    tree.pack(fill="both", expand=True)
+    tree.pack(fill="both", expand=True, padx=10, pady=10)
 
     root.mainloop()
 
@@ -176,6 +180,7 @@ def admin_interface():
 
             history_window = Toplevel(root)
             history_window.title(f"История объекта {obj_id}")
+            history_window.geometry("800x600")
 
             columns, history = get_object_history(table_name, obj_id)
 
@@ -188,7 +193,7 @@ def admin_interface():
             for row in history:
                 history_tree.insert("", "end", values=row)
 
-            history_tree.pack(fill="both", expand=True)
+            history_tree.pack(fill="both", expand=True, padx=10, pady=10)
 
             def restore_selected_version():
                 selected_history = history_tree.selection()
@@ -199,7 +204,7 @@ def admin_interface():
                         show_table_data(table_name)
                         history_window.destroy()
 
-            Button(history_window, text="Восстановить эту версию", command=restore_selected_version).pack()
+            Button(history_window, text="Восстановить эту версию", command=restore_selected_version).pack(pady=10)
 
     def execute_sql():
         sql = sql_entry.get("1.0", "end-1c").strip()
@@ -242,10 +247,11 @@ def admin_interface():
         tables = get_tables()
         for table in tables:
             Button(table_buttons_frame, text=table,
-                   command=lambda t=table: show_table_data(t)).pack()
+                   command=lambda t=table: show_table_data(t)).pack(side=LEFT, padx=5)
 
     root = Tk()
     root.title("Интерфейс администратора")
+    root.geometry("800x600")
 
     # Переменные для хранения состояния
     table_var = StringVar()
@@ -253,31 +259,32 @@ def admin_interface():
 
     # Фрейм для кнопок таблиц
     table_buttons_frame = Frame(root)
-    table_buttons_frame.pack()
+    table_buttons_frame.pack(fill=X, padx=10, pady=10)
 
     # Обновление списка таблиц
     refresh_tables()
 
     # Treeview для отображения данных
     tree = ttk.Treeview(root, show="headings")
-    tree.pack(fill="both", expand=True)
+    tree.pack(fill="both", expand=True, padx=10, pady=10)
 
     # Кнопки для работы с историей
-    Button(root, text="Показать историю выбранного объекта", command=show_object_history).pack()
+    Button(root, text="Показать историю выбранного объекта", command=show_object_history).pack(side=LEFT, padx=5,
+                                                                                               pady=10)
     Button(root, text="Показать всю историю таблицы",
-           command=lambda: show_table_data(table_var.get(), True)).pack()
+           command=lambda: show_table_data(table_var.get(), True)).pack(side=LEFT, padx=5, pady=10)
     Button(root, text="Показать текущие данные",
-           command=lambda: show_table_data(table_var.get())).pack()
+           command=lambda: show_table_data(table_var.get())).pack(side=LEFT, padx=5, pady=10)
 
     # Поле для ввода SQL-запросов
     sql_entry = Text(root, height=5, width=50)
-    sql_entry.pack()
+    sql_entry.pack(padx=10, pady=10)
 
     # Кнопка для выполнения SQL-запросов
-    Button(root, text="Выполнить SQL", command=execute_sql).pack()
+    Button(root, text="Выполнить SQL", command=execute_sql).pack(side=LEFT, padx=5, pady=10)
 
     # Кнопка для обновления таблиц
-    Button(root, text="Обновить таблицы", command=refresh_tables).pack()
+    Button(root, text="Обновить таблицы", command=refresh_tables).pack(side=LEFT, padx=5, pady=10)
 
     root.mainloop()
 
@@ -286,11 +293,8 @@ def admin_interface():
 def main():
     def login():
         username = entry_username.get()
-        print(username)
         password = entry_password.get()
-        print(password)
         role = authenticate(username, password)
-        print(role)
         if role == "user":
             user_interface()
         elif role == "admin":
@@ -300,18 +304,20 @@ def main():
 
     root = Tk()
     root.title("Аутентификация")
+    root.geometry("300x200")
 
-    Label(root, text="Имя пользователя").grid(row=0, column=0)
+    Label(root, text="Имя пользователя").grid(row=0, column=0, padx=10, pady=10)
     entry_username = Entry(root)
-    entry_username.grid(row=0, column=1)
+    entry_username.grid(row=0, column=1, padx=10, pady=10)
 
-    Label(root, text="Пароль").grid(row=1, column=0)
+    Label(root, text="Пароль").grid(row=1, column=0, padx=10, pady=10)
     entry_password = Entry(root, show="*")
-    entry_password.grid(row=1, column=1)
+    entry_password.grid(row=1, column=1, padx=10, pady=10)
 
-    Button(root, text="Войти", command=login).grid(row=2, column=1)
+    Button(root, text="Войти", command=login).grid(row=2, column=1, pady=10)
 
     root.mainloop()
+
 
 def test_connection():
     conn = connect_to_db()
@@ -320,6 +326,7 @@ def test_connection():
         conn.close()
     else:
         print("Не удалось подключиться к базе данных.")
+
 
 if __name__ == "__main__":
     test_connection()

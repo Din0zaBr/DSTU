@@ -1,84 +1,131 @@
 import numpy as np
 
-def input_text():
-    return input("Введите текст для кодирования: ")
 
-def input_polynomial():
-    poly = input("Введите полином (например, x^3 + x + 1): ")
-    n = int(input("Введите параметр n: "))
-    return poly, n
+def polynomial_to_matrix(polynomial, n):
+    """
+    Преобразует полином в порождающую матрицу.
+    :param polynomial: строка, представляющая полином (например, "1+x+x^3")
+    :param n: длина кодового слова
+    :return: порождающая матрица
+    """
+    # Создаем список коэффициентов полинома
+    coefficients = [0] * n
+    terms = polynomial.split('+')
+    for term in terms:
+        if 'x' not in term:
+            coefficients[0] = int(term)
+        elif '^' in term:
+            power = int(term.split('^')[1])
+            coefficients[power] = 1
+        else:
+            coefficients[1] = 1
 
-def input_matrix():
-    rows = int(input("Введите количество строк матрицы: "))
-    cols = int(input("Введите количество столбцов матрицы: "))
+    # Формируем порождающую матрицу
     matrix = []
-    print("Введите элементы матрицы по строкам:")
-    for i in range(rows):
-        row = list(map(int, input().split()))
+    for i in range(n - len(coefficients) + 1):
+        row = [0] * n
+        for j in range(len(coefficients)):
+            row[i + j] = coefficients[j]
         matrix.append(row)
+
     return np.array(matrix)
 
-def polynomial_to_matrix(poly, n):
-    # Преобразование полинома в матрицу
-    # Пример: x^3 + x + 1 -> [[1, 0, 0, 1], [1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0]]
-    coeffs = [1 if 'x^' + str(i) in poly or ('x' in poly and i == 1) or (i == 0 and '1' in poly) else 0 for i in range(n)]
-    matrix = np.zeros((n, n), dtype=int)
-    for i in range(n):
-        matrix[i][:len(coeffs)] = coeffs
-        coeffs = [0] + coeffs[:-1]
-    return matrix
 
 def matrix_to_polynomial(matrix):
-    # Преобразование матрицы в полином
-    # Пример: [[1, 0, 0, 1], [1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0]] -> x^3 + x + 1
-    n = matrix.shape[0]
-    coeffs = matrix[0]
-    poly = ' + '.join([f"x^{i}" if coeffs[i] == 1 else '' for i in range(n) if coeffs[i] == 1])
-    if '1' in poly.split(' + '):
-        poly += ' + 1'
-    return poly.strip(' + ')
+    """
+    Преобразует порождающую матрицу в полином.
+    :param matrix: порождающая матрица
+    :return: строка, представляющая полином
+    """
+    # Берем первую строку матрицы как коэффициенты полинома
+    coefficients = matrix[0]
+    polynomial = ""
+    for i, coeff in enumerate(coefficients):
+        if coeff == 1:
+            if i == 0:
+                polynomial += "1+"
+            elif i == 1:
+                polynomial += "x+"
+            else:
+                polynomial += f"x^{i}+"
+    return polynomial.rstrip('+')
 
-def encode_text_with_polynomial(text, poly, n):
-    # Кодирование текста с использованием полинома
-    encoded = []
-    for char in text:
-        encoded.append(ord(char))
-    return encoded
 
-def encode_text_with_matrix(text, matrix):
-    # Кодирование текста с использованием матрицы
-    encoded = []
-    for char in text:
-        encoded.append(ord(char))
-    return encoded
+def encode_text(text, method, param):
+    """
+    Кодирует текст с использованием выбранного метода.
+    :param text: входной текст
+    :param method: метод кодирования ('polynomial' или 'matrix')
+    :param param: параметр для метода (полином или матрица)
+    :return: закодированная последовательность
+    """
+    # Преобразуем текст в битовую последовательность
+    binary_sequence = ''.join(format(ord(char), '08b') for char in text)
+
+    if method == 'polynomial':
+        # Кодирование с использованием полинома
+        n = len(param)  # Длина кодового слова
+        encoded_sequence = ''
+        for bit in binary_sequence:
+            encoded_sequence += bit  # Просто добавляем биты (можно усложнить)
+    elif method == 'matrix':
+        # Кодирование с использованием матрицы
+        encoded_sequence = np.dot(binary_sequence, param) % 2  # Упрощенная логика
+
+    return encoded_sequence
+
 
 def main():
-    print("Выберите способ ввода:")
-    print("1. Ввести полином")
-    print("2. Ввести матрицу")
-    choice = int(input("Введите номер выбора: "))
+    print("Выберите источник текста:")
+    print("1. Ввод с клавиатуры")
+    print("2. Загрузка из файла")
+    choice = input("Введите номер: ")
 
-    if choice == 1:
-        poly, n = input_polynomial()
-        matrix = polynomial_to_matrix(poly, n)
-        print(f"Полином: {poly}")
-        print(f"Матрица: \n{matrix}")
-    elif choice == 2:
-        matrix = input_matrix()
-        poly = matrix_to_polynomial(matrix)
-        n = matrix.shape[0]
-        print(f"Матрица: \n{matrix}")
-        print(f"Полином: {poly}")
+    if choice == '1':
+        text = input("Введите текст: ")
+    elif choice == '2':
+        filename = input("Введите имя файла: ")
+        with open(filename, 'r') as file:
+            text = file.read()
     else:
-        print("Неверный выбор")
+        print("Неверный выбор.")
         return
 
-    text = input_text()
-    encoded_poly = encode_text_with_polynomial(text, poly, n)
-    encoded_matrix = encode_text_with_matrix(text, matrix)
+    print("\nВыберите способ ввода кода:")
+    print("1. Полином")
+    print("2. Матрица")
+    code_choice = input("Введите номер: ")
 
-    print(f"Закодированная последовательность (полином): {encoded_poly}")
-    print(f"Закодированная последовательность (матрица): {encoded_matrix}")
+    if code_choice == '1':
+        polynomial = input("Введите полином (например, '1+x+x^3'): ")
+        n = int(input("Введите длину кодового слова (n): "))
+        matrix = polynomial_to_matrix(polynomial, n)
+        print("\nПолином:", polynomial)
+        print("Матрица:")
+        print(matrix)
+    elif code_choice == '2':
+        rows = int(input("Введите количество строк матрицы: "))
+        cols = int(input("Введите количество столбцов матрицы: "))
+        print("Введите элементы матрицы построчно:")
+        matrix = []
+        for _ in range(rows):
+            row = list(map(int, input().split()))
+            matrix.append(row)
+        matrix = np.array(matrix)
+        polynomial = matrix_to_polynomial(matrix)
+        print("\nМатрица:")
+        print(matrix)
+        print("Полином:", polynomial)
+    else:
+        print("Неверный выбор.")
+        return
+
+    # Выбираем метод кодирования
+    method = 'polynomial' if code_choice == '1' else 'matrix'
+    encoded_sequence = encode_text(text, method, matrix)
+    print("\nЗакодированная последовательность:")
+    print(encoded_sequence)
+
 
 if __name__ == "__main__":
     main()

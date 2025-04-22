@@ -2,29 +2,47 @@ import numpy as np
 
 
 def polynomial_to_matrix_or_G(poly, n, k):
-    # Преобразование полинома в матрицу
-    matrix = np.zeros((k, n), dtype=int)
+    """
+    Преобразует полином в порождающую матрицу G размера (k, n) с циклическим сдвигом.
+
+    :param poly: строка, представляющая полином (например, "1101")
+    :param n: количество столбцов (длина кодового слова)
+    :param k: количество строк (количество информационных битов)
+    :return: порождающая матрица G размера (k, n)
+    """
+    # Создаем пустую матрицу размера (k, n)
+    G = np.zeros((k, n), dtype=int)
+
+    # Преобразуем полином в список целых чисел
+    poly_bits = list(map(int, poly))
+
+    # Заполняем матрицу G
     for i in range(k):
-        for j in range(n):
-            matrix[i,j] = []
-    return matrix
+        # Сдвигаем полином на i позиций вправо
+        shifted_poly = [0] * i + poly_bits
 
+        # Обрезаем или дополняем до длины n
+        if len(shifted_poly) > n:
+            shifted_poly = shifted_poly[:n]
+        else:
+            shifted_poly += [0] * (n - len(shifted_poly))
 
-def matrix_to_polynomial(matrix):
-    # Преобразование матрицы в полином
-    poly = matrix[0, :]
-    return poly
+        # Записываем сдвинутый полином в i-ю строку матрицы
+        G[i] = shifted_poly
+
+    return G
 
 
 # Пример использования
-infor_message = '1101'
+infor_message = '0010'
 poly = infor_message
-m = poly.rindex('1')
-print(poly)
-n = int(input("Введите длину кода: "))
-k = n - m
-print(k)
+m = poly.rindex('1')  # Находим степень полинома (индекс последней единицы)
+print("Полином:", poly)
 
-matrix = polynomial_to_matrix(poly, n, k)
-print("Матрица:")
-print(matrix)
+n = int(input("Введите длину кода (n): "))
+k = n - m  # Количество строк (информационных битов)
+print("Количество строк (k):", k)
+
+G = polynomial_to_matrix_or_G(poly, n, k)
+print("Матрица G:")
+print(G)

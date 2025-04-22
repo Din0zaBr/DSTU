@@ -1,131 +1,167 @@
 import numpy as np
 
 
-def polynomial_to_matrix(polynomial, n):
+def is_valid_cyclic_matrix(G):
     """
-    Преобразует полином в порождающую матрицу.
-    :param polynomial: строка, представляющая полином (например, "1+x+x^3")
-    :param n: длина кодового слова
-    :return: порождающая матрица
+    Проверяет, является ли матрица G корректной порождающей матрицей циклического кода.
+
+    :param G: матрица (numpy array)
+    :return: True, если матрица корректна, иначе False
     """
-    # Создаем список коэффициентов полинома
-    coefficients = [0] * n
-    terms = polynomial.split('+')
-    for term in terms:
-        if 'x' not in term:
-            coefficients[0] = int(term)
-        elif '^' in term:
-            power = int(term.split('^')[1])
-            coefficients[power] = 1
+    k, n = G.shape  # Размеры матрицы
+    # if k > n:
+    #     print("Ошибка: Количество строк (k) больше, чем количество столбцов (n).")
+    #     return False
+    # Проверяем, что все элементы матрицы бинарные
+    if not np.all((G == 0) | (G == 1)):
+        print("Ошибка: Матрица содержит недопустимые значения (не 0 или 1).")
+        return False
+
+    # Проверяем, что каждая строка является циклическим сдвигом предыдущей строки
+    for i in range(1, k):
+        # Циклический сдвиг предыдущей строки
+        cyclic_shift = np.roll(G[i - 1], 1)
+
+        # Сравниваем текущую строку с циклическим сдвигом
+        if not np.array_equal(G[i], cyclic_shift):
+            print(f"Ошибка: Строка {i + 1} не является циклическим сдвигом строки {i}.")
+            return False
+
+    # Если все проверки пройдены
+    return True
+
+
+def input_matrix():
+    """
+    Позволяет пользователю ввести матрицу G.
+
+    :return: матрица G (numpy array)
+    """
+    print("Введите матрицу G построчно.")
+    rows = int(input("Введите количество строк (k): "))
+    cols = int(input("Введите количество столбцов (n): "))
+
+    G = []
+    for i in range(rows):
+        row = list(map(int, input(f"Введите элементы строки {i + 1} через пробел: ").split()))
+        if len(row) != cols:
+            print(f"Ошибка: В строке {i + 1} должно быть {cols} элементов.")
+            return None
+        G.append(row)
+
+    return np.array(G)
+
+
+def polynomial_to_matrix_or_G(poly, n, k):
+    """
+    Преобразует полином в порождающую матрицу G размера (k, n) с циклическим сдвигом.
+
+    :param poly: строка, представляющая полином (например, "1101")
+    :param n: количество столбцов (длина кодового слова)
+    :param k: количество строк (количество информационных битов)
+    :return: порождающая матрица G размера (k, n)
+    """
+    # Создаем пустую матрицу размера (k, n)
+    G = np.zeros((k, n), dtype=int)
+
+    # Преобразуем полином в список целых чисел
+    poly_bits = list(map(int, poly))
+
+    # Заполняем матрицу G
+    for i in range(k):
+        # Сдвигаем полином на i позиций вправо
+        shifted_poly = [0] * i + poly_bits
+
+        # Обрезаем или дополняем до длины n
+        if len(shifted_poly) > n:
+            shifted_poly = shifted_poly[:n]
         else:
-            coefficients[1] = 1
+            shifted_poly += [0] * (n - len(shifted_poly))
 
-    # Формируем порождающую матрицу
-    matrix = []
-    for i in range(n - len(coefficients) + 1):
-        row = [0] * n
-        for j in range(len(coefficients)):
-            row[i + j] = coefficients[j]
-        matrix.append(row)
+        # Записываем сдвинутый полином в i-ю строку матрицы
+        G[i] = shifted_poly
 
-    return np.array(matrix)
+    return G
 
 
 def matrix_to_polynomial(matrix):
     """
-    Преобразует порождающую матрицу в полином.
-    :param matrix: порождающая матрица
-    :return: строка, представляющая полином
+    Преобразует первую строку матрицы G в полином.
+
+    :param matrix: порождающая матрица G (numpy array)
+    :return: кортеж из двух строк: бинарного представления и алгебраического представления полинома
     """
-    # Берем первую строку матрицы как коэффициенты полинома
-    coefficients = matrix[0]
-    polynomial = ""
-    for i, coeff in enumerate(coefficients):
+    # Берем первую строку матрицы
+    first_row = matrix[0]
+
+    # Преобразуем в бинарное представление
+    binary_representation = ''.join(map(str, first_row))
+
+    # Преобразуем в алгебраическое представление
+    algebraic_representation = ""
+    for i, coeff in enumerate(first_row):
         if coeff == 1:
             if i == 0:
-                polynomial += "1+"
+                algebraic_representation += "1+"
             elif i == 1:
-                polynomial += "x+"
+                algebraic_representation += "x+"
             else:
-                polynomial += f"x^{i}+"
-    return polynomial.rstrip('+')
+                algebraic_representation += f"x^{i}+"
 
+    # Убираем последний символ "+"
+    algebraic_representation = algebraic_representation.rstrip('+')
 
-def encode_text(text, method, param):
-    """
-    Кодирует текст с использованием выбранного метода.
-    :param text: входной текст
-    :param method: метод кодирования ('polynomial' или 'matrix')
-    :param param: параметр для метода (полином или матрица)
-    :return: закодированная последовательность
-    """
-    # Преобразуем текст в битовую последовательность
-    binary_sequence = ''.join(format(ord(char), '08b') for char in text)
-
-    if method == 'polynomial':
-        # Кодирование с использованием полинома
-        n = len(param)  # Длина кодового слова
-        encoded_sequence = ''
-        for bit in binary_sequence:
-            encoded_sequence += bit  # Просто добавляем биты (можно усложнить)
-    elif method == 'matrix':
-        # Кодирование с использованием матрицы
-        encoded_sequence = np.dot(binary_sequence, param) % 2  # Упрощенная логика
-
-    return encoded_sequence
-
-
-def main():
-    print("Выберите источник текста:")
-    print("1. Ввод с клавиатуры")
-    print("2. Загрузка из файла")
-    choice = input("Введите номер: ")
-
-    if choice == '1':
-        text = input("Введите текст: ")
-    elif choice == '2':
-        filename = input("Введите имя файла: ")
-        with open(filename, 'r') as file:
-            text = file.read()
-    else:
-        print("Неверный выбор.")
-        return
-
-    print("\nВыберите способ ввода кода:")
-    print("1. Полином")
-    print("2. Матрица")
-    code_choice = input("Введите номер: ")
-
-    if code_choice == '1':
-        polynomial = input("Введите полином (например, '1+x+x^3'): ")
-        n = int(input("Введите длину кодового слова (n): "))
-        matrix = polynomial_to_matrix(polynomial, n)
-        print("\nПолином:", polynomial)
-        print("Матрица:")
-        print(matrix)
-    elif code_choice == '2':
-        rows = int(input("Введите количество строк матрицы: "))
-        cols = int(input("Введите количество столбцов матрицы: "))
-        print("Введите элементы матрицы построчно:")
-        matrix = []
-        for _ in range(rows):
-            row = list(map(int, input().split()))
-            matrix.append(row)
-        matrix = np.array(matrix)
-        polynomial = matrix_to_polynomial(matrix)
-        print("\nМатрица:")
-        print(matrix)
-        print("Полином:", polynomial)
-    else:
-        print("Неверный выбор.")
-        return
-
-    # Выбираем метод кодирования
-    method = 'polynomial' if code_choice == '1' else 'matrix'
-    encoded_sequence = encode_text(text, method, matrix)
-    print("\nЗакодированная последовательность:")
-    print(encoded_sequence)
+    return binary_representation, algebraic_representation
 
 
 if __name__ == "__main__":
-    main()
+    # Пример использования
+    print("Выберите режим работы:")
+    print("1. Ввод матрицы G")
+    print("2. Ввод полинома")
+
+    mode = int(input("Введите номер режима: "))
+
+    if mode == 1:
+        # Ввод матрицы G
+        G = input_matrix()
+
+        if G is not None:
+            print("\nВведенная матрица G:")
+            print(G)
+
+            # Проверка корректности матрицы
+            if is_valid_cyclic_matrix(G):
+                print("Матрица G построена верно!")
+            else:
+                print("Матрица G построена неверно.")
+            print("\nВведенная матрица G:")
+            print(G)
+
+            # Вычисляем полином
+            binary_poly, algebraic_poly = matrix_to_polynomial(G)
+
+            # Выводим результаты
+            print("Бинарное представление полинома:", binary_poly)
+            print("Алгебраическое представление полинома:", algebraic_poly)
+            i = input("Введите информационное слово (например, '1101'): ")
+
+
+    elif mode == 2:
+        # Ввод полинома
+        i = input("Введите информационное слово (например, '1101'): ")
+        poly = input("Введите полином (например, '1101'): ")
+        m = poly.rindex('1')  # Находим макс. степень полинома
+        print("Полином:", poly)
+
+        n = int(input("Введите длину кода (n): "))
+        k = n - m  # Количество строк (информационных битов)
+        print("Количество строк (k):", k)
+
+        G = polynomial_to_matrix_or_G(poly, n, k)
+        print("Матрица G:")
+        print(G)
+
+
+    else:
+        print("Неверный режим. Пожалуйста, выберите 1, 2 или 3.")

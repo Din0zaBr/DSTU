@@ -7,7 +7,7 @@ def start():
     Основная функция
     :return:
     """
-    global type
+    global type_of
     layout = [[Radio('Порождающая матрица (G)', 'RADIO1', key='G'),
                Radio('Полином', 'RADIO1', key='pol')],
               [Button('Далее')]]
@@ -21,12 +21,12 @@ def start():
             elif event == 'Далее':
                 if values['G']:
                     window.close()
-                    type = 'G'
+                    type_of = 'G'
                     start_window_G()
                     return
                 elif values['pol']:
                     window.close()
-                    type = 'pol'
+                    type_of = 'pol'
                     start_window_pol()
                     return
                 else:
@@ -148,6 +148,9 @@ def matrix_to_polynomial(matrix):
 
     # Убираем последний символ "+"
     algebraic_representation = algebraic_representation.rstrip('+')
+    print(algebraic_representation)
+    print()
+    print(binary_representation)
 
     return binary_representation, algebraic_representation
 
@@ -191,7 +194,7 @@ def get_matrix_or_G():
     """
     global k, n, G, real_g_x_in_algebraic, real_g_x_in_binary
 
-    if type == 'G':
+    if type_of == 'G':
         layout = [[Input(size=(3, 2), key=f'el_{j}_{i}', enable_events=True) for j in range(n)] for i in range(k)]
     else:
         layout = [[Input(size=(3, 2), key=f'el_{i}_{j}', enable_events=True) for j in range(n)] for i in range(1)]
@@ -213,7 +216,7 @@ def get_matrix_or_G():
                 window[event].update('')
                 popup_error('Вводите только 0 или 1.')
         elif event == 'Далее':
-            if type == 'G':
+            if type_of == 'G':
                 matrix = [[int(values[f'el_{i}_{j}']) for j in range(k)] for i in range(n)]
                 matrix_true = [[matrix[j][i] for j in range(n)] for i in range(k)]
                 if is_valid_cyclic_matrix(np.array(matrix_true)):
@@ -301,32 +304,55 @@ def gen_e_array():
 
 
 
-def polynomial_division(dividend, divisor):
+def gf2_polynomial_division(
+        dividend,
+        divisor
+):
     """
-    Делит один многочлен на другой в поле GF(2).
+    Делит полином dividend на divisor в поле GF(2).
 
-    :param dividend: делимое (список коэффициентов)
-    :param divisor: делитель (список коэффициентов)
-    :return: остаток от деления (список коэффициентов)
+    Параметры
+    ----------
+    dividend : Sequence[int]
+        Список бит полинома от старшей степени к младшей (len = n).
+    divisor : Sequence[int]
+        Список бит порождающего полинома от старшей степени к младшей (len = m+1).
+
+    Возвращает
+    -------
+    quotient : List[int]
+        Коэффициенты частного (len = n-m+1).
+    remainder : List[int]
+        Остаток степени < m (len = m).
     """
-    dividend = dividend[:]
-    divisor_len = len(divisor)
+    while divisor[-1] == 0:
+        divisor.pop()
+    divisor = divisor[::-1]
 
-    for i in range(len(dividend) - (divisor_len - 1)):
-        if dividend[i] == 1:  # если текущий коэффициент делимого равен 1
-            for j in range(divisor_len):
-                dividend[i + j] ^= divisor[j]  # выполняем XOR (сложение в GF(2))
+    a = list(dividend)
+    n, m = len(a), len(divisor)
+    if n < m:
+        return [0], a.copy()
 
-    # Остаток - это последние (divisor_len - 1) элементов делимого
-    remainder = dividend[-(divisor_len - 1):]
-    return remainder
+    quotient = [0] * (n - m + 1)
+    for i in range(n - m + 1):
+        if a[i]:
+            quotient[i] = 1
+            # вычитание в GF(2) = XOR
+            for j in range(m):
+                a[i + j] ^= divisor[j]
+    # остаток — последние m бит
+    remainder = a[-m:] if m > 0 else []
+    return quotient, remainder
 
 def gen_S_array():
-    global S_array, e_array, G, el_s_x_array, el_e_array
+    global S_array
 
     # Преобразуем g(x) в список коэффициентов
-    g_x = G[0]  # первая строка матрицы G - это g(x)
+    g_x = list(G[0]) # первая строка матрицы G - это g(x)
+    g_x = [int(i) for i in g_x]
     print(g_x)
+
 
     S_array = []
 
@@ -335,7 +361,7 @@ def gen_S_array():
         c_x = el_e_array
 
         # Вычисляем s(x) = c(x) mod g(x)
-        s_x = polynomial_division(c_x, g_x)
+        _, s_x = gf2_polynomial_division(c_x, g_x)
 
         # Добавляем результат в S_array
         S_array.append(s_x)

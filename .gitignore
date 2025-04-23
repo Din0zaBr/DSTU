@@ -143,10 +143,10 @@ venv.bak/
 .dmypy.json
 dmypy.json
 
-# Pyre type checker
+# Pyre type_of checker
 .pyre/
 
-# pytype static type analyzer
+# pytype static type_of analyzer
 .pytype/
 
 # Cython debug symbols
@@ -353,7 +353,7 @@ Temporary Items
 bin/
 gen/
 out/
-#  Uncomment the following line in case you need and you don't have the release build type files in your app
+#  Uncomment the following line in case you need and you don't have the release build type_of files in your app
 # release/
 
 # Gradle files

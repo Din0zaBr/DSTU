@@ -369,13 +369,16 @@ def gen_S_array():
 
 
 
-def Encoding_and_Decoding(i_array, c_array, S_array, e_array, function_type, text, k, n, G):
+
+def Encoding_and_Decoding(i_array, c_array, S_array, e_array, function_type, text, k, n, g):
     if function_type == "Encoding":
         # Преобразуем текст в бинарную строку
         bin_str = ''.join(format(el, '08b') for el in bytearray(text, 'utf-8'))
 
         # Дополняем бинарную строку нулями до кратности k
         bin_str = bin_str.zfill(len(bin_str) + k - (len(bin_str) % k))
+        print(bin_str)
+        print()
 
         encoding_array = []
 
@@ -383,21 +386,26 @@ def Encoding_and_Decoding(i_array, c_array, S_array, e_array, function_type, tex
         for i in range(0, len(bin_str), k):
             encoding_array.append(bin_str[i:i + k])
 
+        print(encoding_array)
+        print()
+
         output_text_real = ''
-        output_text = []
+        # output_text = []
         for el in encoding_array:
             index_c = i_array.index([int(i) for i in el])
             output_text_real += ''.join([str(i) for i in c_array[index_c]])
-            output_text.append(''.join([str(i) for i in c_array[index_c]]))
-        # print("Encoded output text:", output_text)
-        return output_text
-
+            # output_text.append(''.join([str(i) for i in c_array[index_c]]))
+        print("Encoded output text:", output_text_real)
+        return output_text_real
+# 000000000101110001101001011100011010010111000000000101110001101
+# 000000000101110001101001011100011010010111000000000101110001101
     else:
+        g_x = list(G[0])  # первая строка матрицы G - это g(x)
+        g_x = [int(i) for i in g_x]
 
         bin_array = []
         for i in range(0, len(text), n):
-            bin_array.append([int(el) for el in text[i:i + n]])
-
+            bin_array.append([int(el) for el in text[i:i + n]]) # c-шечки все
         output_text_temp = ''
 
         for el in bin_array:
@@ -504,11 +512,10 @@ def Encoding_and_Decoding_Window():
                 popup_error('Проверьте данные.')
 
             output_text = Encoding_and_Decoding(vector_array_i, vector_array_c, S_array, e_array, function_type, text,
-                                                k, n,
-                                                HsysT)
+                                                k, n, G[0]
+                                                )
+
             window['output'].update(output_text)
-            with open('output.txt', 'w') as file:
-                file.write(str(output_text))
 
         if event == 'Матрицы':
             output_matrix()

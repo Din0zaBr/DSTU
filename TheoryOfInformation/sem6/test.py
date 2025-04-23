@@ -287,9 +287,6 @@ def gen_array_c():
     global vector_array_c
 
     vector_array_c = [mul_matrix(G, i) for i in vector_array_i]
-    print()
-    for i in range(len(vector_array_c)):
-        print(vector_array_c[i])
 
 def gen_e_array():
     global e_array
@@ -300,12 +297,50 @@ def gen_e_array():
         str_el_bin = str(bin(el)[2:]).zfill(n)
         if str_el_bin.count('1') == 1:
             e_array.append([int(el) for el in str_el_bin])
+    print(e_array)
 
+
+
+def polynomial_division(dividend, divisor):
+    """
+    Делит один многочлен на другой в поле GF(2).
+
+    :param dividend: делимое (список коэффициентов)
+    :param divisor: делитель (список коэффициентов)
+    :return: остаток от деления (список коэффициентов)
+    """
+    dividend = dividend[:]
+    divisor_len = len(divisor)
+
+    for i in range(len(dividend) - (divisor_len - 1)):
+        if dividend[i] == 1:  # если текущий коэффициент делимого равен 1
+            for j in range(divisor_len):
+                dividend[i + j] ^= divisor[j]  # выполняем XOR (сложение в GF(2))
+
+    # Остаток - это последние (divisor_len - 1) элементов делимого
+    remainder = dividend[-(divisor_len - 1):]
+    return remainder
 
 def gen_S_array():
-    global S_array
+    global S_array, e_array, G, el_s_x_array, el_e_array
 
-    S_array = [mul_matrix(HsysT, el_e_array) for el_e_array in e_array]
+    # Преобразуем g(x) в список коэффициентов
+    g_x = G[0]  # первая строка матрицы G - это g(x)
+    print(g_x)
+
+    S_array = []
+
+    for el_e_array in e_array:
+        # Преобразуем c(x) в список коэффициентов
+        c_x = el_e_array
+
+        # Вычисляем s(x) = c(x) mod g(x)
+        s_x = polynomial_division(c_x, g_x)
+
+        # Добавляем результат в S_array
+        S_array.append(s_x)
+    print(S_array)
+
 
 
 def Encoding_and_Decoding(i_array, c_array, S_array, e_array, function_type, text, k, n, G):
@@ -365,21 +400,8 @@ def Encoding_and_Decoding(i_array, c_array, S_array, e_array, function_type, tex
 
 
 def output_matrix():
-    layout_matrix = [[Text('Gsys='), Text('Hsys=')],
-                     [Table(values=Gsys, headings=[' ' + str(i) + ' ' for i in range(len(Gsys[0]))], max_col_width=20,
-                            # background_color='light blue',
-                            col_widths=20,
-                            justification='center',
-                            key='-TABLE-',
-                            row_height=25),
-                      Table(values=Hsys, headings=[' ' + str(i) + ' ' for i in range(len(Hsys[0]))], max_col_width=20,
-                            # background_color='light blue',
-                            col_widths=20,
-                            justification='center',
-                            key='-TABLE-',
-                            row_height=25)],
-                     [Text('HsysT=')],
-                     [Table(values=HsysT, headings=[' ' + str(i) + ' ' for i in range(len(HsysT[0]))], max_col_width=20,
+    layout_matrix = [[Text('G=')],
+                     [Table(values=G, headings=[' ' + str(i) + ' ' for i in range(len(G[0]))], max_col_width=20,
                             # background_color='light blue',
                             col_widths=20,
                             justification='center',
@@ -437,7 +459,7 @@ def Encoding_and_Decoding_Window():
               [Text('Результат:', size=(8, 1)), Input(key='output')],
               [Radio('Кодирование', 'RADIO1', key='Encoding'),
                Radio('Декодирование', 'RADIO1', key='Decoding')],
-              [Button('Далее'), Button('Матрицы'), Button('Таблицы'), Button('Константы'), Button('Модификации')]]
+              [Button('Далее'), Button('Матрицы'), Button('Таблицы'), Button('Константы')]]
     window = Window('Лабораторная работа №4', layout)
 
     while True:

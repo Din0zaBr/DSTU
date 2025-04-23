@@ -1,48 +1,39 @@
-import numpy as np
-
-
-def polynomial_to_matrix_or_G(poly, n, k):
+def polynomial_division(dividend, divisor):
     """
-    Преобразует полином в порождающую матрицу G размера (k, n) с циклическим сдвигом.
+    Делит один многочлен на другой в поле GF(2).
 
-    :param poly: строка, представляющая полином (например, "1101")
-    :param n: количество столбцов (длина кодового слова)
-    :param k: количество строк (количество информационных битов)
-    :return: порождающая матрица G размера (k, n)
+    :param dividend: делимое (список коэффициентов)
+    :param divisor: делитель (список коэффициентов)
+    :return: остаток от деления (список коэффициентов)
     """
-    # Создаем пустую матрицу размера (k, n)
-    G = np.zeros((k, n), dtype=int)
+    dividend = dividend[:]
+    divisor_len = len(divisor)
 
-    # Преобразуем полином в список целых чисел
-    poly_bits = list(map(int, poly))
+    for i in range(len(dividend) - (divisor_len - 1)):
+        if dividend[i] == 1:  # если текущий коэффициент делимого равен 1
+            for j in range(divisor_len):
+                dividend[i + j] ^= divisor[j]  # выполняем XOR (сложение в GF(2))
 
-    # Заполняем матрицу G
-    for i in range(k):
-        # Сдвигаем полином на i позиций вправо
-        shifted_poly = [0] * i + poly_bits
+    # Остаток - это последние (divisor_len - 1) элементов делимого
+    remainder = dividend[-(divisor_len - 1):]
+    return remainder
 
-        # Обрезаем или дополняем до длины n
-        if len(shifted_poly) > n:
-            shifted_poly = shifted_poly[:n]
-        else:
-            shifted_poly += [0] * (n - len(shifted_poly))
+def gen_S_array():
+    # Преобразуем g(x) в список коэффициентов
+    g_x = [1, 1, 0, 1, 0, 0, 0]  # первая строка матрицы G - это g(x)
 
-        # Записываем сдвинутый полином в i-ю строку матрицы
-        G[i] = shifted_poly
+    S_array = []
+    e_array = [[0, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 1, 0, 0], [0, 0, 0, 1, 0, 0, 0], [0, 0, 1, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0, 0]]
+    for el_e_array in e_array:
+        # Преобразуем c(x) в список коэффициентов
+        c_x = el_e_array
 
-    return G
+        # Вычисляем s(x) = c(x) mod g(x)
+        s_x = polynomial_division(c_x, g_x)
+
+        # Добавляем результат в S_array
+        S_array.append(s_x)
+    print(S_array)
 
 
-# Пример использования
-infor_message = '0010'
-poly = infor_message
-m = poly.rindex('1')  # Находим степень полинома (индекс последней единицы)
-print("Полином:", poly)
-
-n = int(input("Введите длину кода (n): "))
-k = n - m  # Количество строк (информационных битов)
-print("Количество строк (k):", k)
-
-G = polynomial_to_matrix_or_G(poly, n, k)
-print("Матрица G:")
-print(G)
+gen_S_array()

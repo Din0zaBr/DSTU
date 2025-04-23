@@ -397,7 +397,7 @@ print("\n".join(f"{i[0]} -> {' '.join(i[1])}" for i in rooles1))
 # print("\n".join(f"{i[0]} -> {' '.join(i[1])}" for i in rooles1))
 #
 # rooles1 = left_factorize({item[0]: item[1] for item in rooles})
-# print(type_of(rooles1))
+# print(type(rooles1))
 # print("\n".join(f"{key} -> {value}" for key, value in rooles1.items()))
 #
 # grammar = {item[0]: item[1] for item in rooles}

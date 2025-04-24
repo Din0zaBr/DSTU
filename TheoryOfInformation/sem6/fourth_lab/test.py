@@ -1,30 +1,18 @@
-import numpy as np
+def matrix_to_polynomial():
+    """
+    Преобразует первую строку матрицы G в полином.
 
+    :param matrix: порождающая матрица G (numpy array)
+    :return: кортеж из двух строк: бинарного представления и алгебраического представления полинома
+    """
+    # Берем первую строку матрицы
+    first_row = [1, 1, 0]
+    print(first_row[-1])
 
-def polynomial_to_matrix_or_G(poly, n, k):
-    # Преобразование полинома в матрицу
-    matrix = np.zeros((k, n), dtype=int)
-    for i in range(k):
-        for j in range(n):
-            matrix[i,j] = []
-    return matrix
+    # Удаляем ведущие нули с конца списка
+    while first_row and first_row[-1] == 0:
+        first_row.pop()
 
+    print(first_row)
 
-def matrix_to_polynomial(matrix):
-    # Преобразование матрицы в полином
-    poly = matrix[0, :]
-    return poly
-
-
-# Пример использования
-infor_message = '1101'
-poly = infor_message
-m = poly.rindex('1')
-print(poly)
-n = int(input("Введите длину кода: "))
-k = n - m
-print(k)
-
-matrix = polynomial_to_matrix(poly, n, k)
-print("Матрица:")
-print(matrix)
+matrix_to_polynomial()

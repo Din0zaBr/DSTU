@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 import psycopg2
-from psycopg2 import sql
 from psycopg2.extras import Json
 import json
 import tkinter as tk
-from tkinter import ttk, messagebox, simpledialog
+from tkinter import ttk, messagebox, simpledialog, filedialog
 
 
 class DocumentDBApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Document Database Client")
+        self.root.geometry("800x600")
+        self.root.configure(bg="#f0f0f0")
 
         # Параметры подключения к БД
         self.db_params = {
@@ -35,21 +36,32 @@ class DocumentDBApp:
 
     def setup_ui(self):
         # Основной фрейм
-        main_frame = ttk.Frame(self.root, padding="10")
+        main_frame = ttk.Frame(self.root, padding="10", style="Main.TFrame")
         main_frame.pack(fill=tk.BOTH, expand=True)
 
         # Панель действий
-        action_frame = ttk.LabelFrame(main_frame, text="Actions", padding="10")
+        action_frame = ttk.LabelFrame(main_frame, text="Actions", padding="10", style="Action.TFrame")
         action_frame.pack(fill=tk.X, pady=5)
 
-        ttk.Button(action_frame, text="Create Document", command=self.create_document).pack(side=tk.LEFT, padx=5)
-        ttk.Button(action_frame, text="Search by Type", command=self.search_documents).pack(side=tk.LEFT, padx=5)
-        ttk.Button(action_frame, text="Update Document", command=self.update_document).pack(side=tk.LEFT, padx=5)
-        ttk.Button(action_frame, text="Delete Document", command=self.delete_document).pack(side=tk.LEFT, padx=5)
-        ttk.Button(action_frame, text="Show All", command=self.load_documents).pack(side=tk.LEFT, padx=5)
+        style = ttk.Style()
+        style.configure("Action.TButton", background="#4CAF50", foreground="white", font=("Arial", 10, "bold"))
+        style.configure("Export.TButton", background="#03A9F4", foreground="white", font=("Arial", 10, "bold"))
+
+        ttk.Button(action_frame, text="Create Document", command=self.create_document, style="Action.TButton").pack(
+            side=tk.LEFT, padx=5)
+        ttk.Button(action_frame, text="Search by Type", command=self.search_documents, style="Action.TButton").pack(
+            side=tk.LEFT, padx=5)
+        ttk.Button(action_frame, text="Update Document", command=self.update_document, style="Action.TButton").pack(
+            side=tk.LEFT, padx=5)
+        ttk.Button(action_frame, text="Delete Document", command=self.delete_document, style="Action.TButton").pack(
+            side=tk.LEFT, padx=5)
+        ttk.Button(action_frame, text="Show All", command=self.load_documents, style="Action.TButton").pack(
+            side=tk.LEFT, padx=5)
+        ttk.Button(action_frame, text="Export to JSON", command=self.export_to_json, style="Export.TButton").pack(
+            side=tk.LEFT, padx=5)
 
         # Панель просмотра
-        view_frame = ttk.LabelFrame(main_frame, text="Documents", padding="10")
+        view_frame = ttk.LabelFrame(main_frame, text="Documents", padding="10", style="View.TFrame")
         view_frame.pack(fill=tk.BOTH, expand=True)
 
         # Таблица для отображения документов
@@ -61,10 +73,10 @@ class DocumentDBApp:
         self.tree.pack(fill=tk.BOTH, expand=True)
 
         # Детали документа
-        detail_frame = ttk.LabelFrame(main_frame, text="Document Details", padding="10")
+        detail_frame = ttk.LabelFrame(main_frame, text="Document Details", padding="10", style="Detail.TFrame")
         detail_frame.pack(fill=tk.BOTH, pady=5)
 
-        self.detail_text = tk.Text(detail_frame, height=10)
+        self.detail_text = tk.Text(detail_frame, height=10, bg="#f9f9f9", fg="#333")
         self.detail_text.pack(fill=tk.BOTH, expand=True)
 
         # Привязка события выбора документа
@@ -227,6 +239,39 @@ class DocumentDBApp:
                 self.load_documents()
         except Exception as e:
             messagebox.showerror("Error", f"Failed to delete document: {e}")
+
+    def export_to_json(self):
+        try:
+            with self.conn.cursor() as cur:
+                # Явно указываем все поля, включая tags
+                cur.execute("""
+                    SELECT id, doc_type, data, created_at, updated_at, tags 
+                    FROM documents 
+                    ORDER BY id
+                """)
+                rows = cur.fetchall()
+
+                # Формируем JSON
+                documents = []
+                for row in rows:
+                    doc_id, doc_type, data, created_at, updated_at, tags = row  # Распаковываем все поля
+                    documents.append({
+                        "id": doc_id,
+                        "type": doc_type,
+                        "data": data,
+                        "created_at": str(created_at),
+                        "updated_at": str(updated_at),
+                        "tags": tags  # Добавляем поле tags в JSON
+                    })
+
+                # Сохраняем JSON в файл
+                file_path = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON files", "*.json")])
+                if file_path:
+                    with open(file_path, "w", encoding="utf-8") as f:
+                        json.dump(documents, f, indent=4)
+                    messagebox.showinfo("Success", f"Documents exported to {file_path}")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to export documents: {e}")
 
     def __del__(self):
         if self.conn:

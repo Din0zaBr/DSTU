@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.DEBUG)
 def connect_to_db():
     try:
         conn = psycopg2.connect(
-            dbname="TemporalDB",
+            dbname="Temporal_DB",
             user="postgres",
             password="superuser",
             host="localhost"

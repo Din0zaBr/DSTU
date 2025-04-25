@@ -1,6 +1,6 @@
-from utils_for_analyze import analyze
-from utils_for_encode_decode import huffman_encode, huffman_decode, lz77_encode, lzw_encode
-from utils_for_matrix_representation_of_block_codes import main_new
+from TheoryOfInformation.lab1.utils_for_analyze import analyze
+from TheoryOfInformation.lab1.utils_for_encode_decode import huffman_encode, huffman_decode, lz77_encode, lzw_encode
+from TheoryOfInformation.lab1.utils_for_matrix_representation_of_block_codes import main_new
 import tkinter as tk
 from tkinter import ttk
 import threading

@@ -11,7 +11,7 @@ class DocumentDBApp:
         self.root = root
         self.root.title("Document Database Client")
         self.root.geometry("800x600")
-        self.root.configure(bg="#f0f0f0")
+        self.root.configure(bg="#2c3e50")  # Темно-синий фон окна
 
         # Параметры подключения к БД
         self.db_params = {
@@ -25,7 +25,30 @@ class DocumentDBApp:
         self.conn = None
         self.connect_to_db()
 
+        # Настройка стилей
+        self.setup_styles()
+
         self.setup_ui()
+
+    def setup_styles(self):
+        style = ttk.Style()
+
+        # Общий стиль фреймов
+        style.configure("Main.TFrame", background="#34495e")  # Темно-серый фон
+        style.configure("Action.TFrame", background="#34495e")
+        style.configure("View.TFrame", background="#34495e")
+        style.configure("Detail.TFrame", background="#34495e")
+
+        # Стиль кнопок
+        style.configure("Action.TButton", background="#1abc9c", foreground="black", font=("Arial", 10, "bold"))
+        style.configure("Export.TButton", background="#e74c3c", foreground="black", font=("Arial", 10, "bold"))
+
+        # Стиль текстового поля
+        style.configure("Detail.TText", background="#ecf0f1", foreground="#2c3e50", font=("Arial", 10))
+
+        # Стиль таблицы
+        style.configure("Treeview", background="#ecf0f1", foreground="#2c3e50", rowheight=25, fieldbackground="#ecf0f1")
+        style.map("Treeview", background=[("selected", "#1abc9c")])  # Цвет выделенной строки
 
     def connect_to_db(self):
         try:
@@ -42,10 +65,6 @@ class DocumentDBApp:
         # Панель действий
         action_frame = ttk.LabelFrame(main_frame, text="Actions", padding="10", style="Action.TFrame")
         action_frame.pack(fill=tk.X, pady=5)
-
-        style = ttk.Style()
-        style.configure("Action.TButton", background="#4CAF50", foreground="white", font=("Arial", 10, "bold"))
-        style.configure("Export.TButton", background="#03A9F4", foreground="white", font=("Arial", 10, "bold"))
 
         ttk.Button(action_frame, text="Create Document", command=self.create_document, style="Action.TButton").pack(
             side=tk.LEFT, padx=5)
@@ -76,7 +95,7 @@ class DocumentDBApp:
         detail_frame = ttk.LabelFrame(main_frame, text="Document Details", padding="10", style="Detail.TFrame")
         detail_frame.pack(fill=tk.BOTH, pady=5)
 
-        self.detail_text = tk.Text(detail_frame, height=10, bg="#f9f9f9", fg="#333")
+        self.detail_text = tk.Text(detail_frame, height=10, bg="#ecf0f1", fg="#2c3e50", font=("Arial", 10))
         self.detail_text.pack(fill=tk.BOTH, expand=True)
 
         # Привязка события выбора документа
@@ -243,7 +262,6 @@ class DocumentDBApp:
     def export_to_json(self):
         try:
             with self.conn.cursor() as cur:
-                # Явно указываем все поля, включая tags
                 cur.execute("""
                     SELECT id, doc_type, data, created_at, updated_at, tags 
                     FROM documents 
@@ -254,14 +272,14 @@ class DocumentDBApp:
                 # Формируем JSON
                 documents = []
                 for row in rows:
-                    doc_id, doc_type, data, created_at, updated_at, tags = row  # Распаковываем все поля
+                    doc_id, doc_type, data, created_at, updated_at, tags = row
                     documents.append({
                         "id": doc_id,
                         "type": doc_type,
                         "data": data,
                         "created_at": str(created_at),
                         "updated_at": str(updated_at),
-                        "tags": tags  # Добавляем поле tags в JSON
+                        "tags": tags
                     })
 
                 # Сохраняем JSON в файл

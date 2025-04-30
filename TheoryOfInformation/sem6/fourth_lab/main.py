@@ -232,28 +232,29 @@ class CyclicCodeApp:
         :return:
         """
         m = len(g) - 1
-        # print(n, k, m)
         if n - k != m:
             raise ValueError("Несоответствие параметров n, k и степени полинома")
 
         blocks = [data[i:i + k] for i in range(0, len(data), k)]
         encoded_blocks = []
 
+        # Генерируем порождающую матрицу G
+        G = self.poly_to_matrix(g, n, k)
+        # print(G)
+
         for block in blocks:
             block = block.zfill(k)
-            extended = block + '0' * m
-            remainder = self.polynomial_division(extended, g)
+            block_vector = [int(bit) for bit in block]
+            # print(block_vector)
+            codeword = [0] * n
 
-            extended_list = [int(bit) for bit in extended]
-            remainder_list = [int(bit) for bit in remainder.zfill(n)]
-            # print(extended_list)
-            # print(remainder_list)
-            # print()
-            codeword_list = [extended_list[i] ^ remainder_list[i] for i in range(len(extended_list))]
+            for i in range(n):
+                for j in range(k):
+                    codeword[i] += block_vector[j] * G[j][i]
+                codeword[i] %= 2
+            # print(codeword)
 
-            codeword = ''.join(map(str, codeword_list))
-
-            encoded_blocks.append(codeword)
+            encoded_blocks.append(''.join(map(str, codeword)))
 
         return ''.join(encoded_blocks)
 
@@ -425,22 +426,12 @@ class CyclicCodeApp:
             sg.popup_error(f"Ошибка декодирования: {str(e)}")
 
     def megitt_decode(self, encoded_data, g, n, k):
-        """
-        Декодирует данные с использованием алгоритма Меггита.
-        Вносит ошибки в закодированную последовательность, строит таблицу синдромов, исправляет ошибки
-        и возвращает декодированную последовательность и промежуточные результаты.
-        :param encoded_data:
-        :param g:
-        :param n:
-        :param k:
-        :return:
-        """
-        m = len(g) - 1  # степень порождающего полинома
+        m = len(g) - 1
         steps = ""
         blocks = [encoded_data[i:i + n] for i in range(0, len(encoded_data), n)]
         decoded_blocks = []
 
-        # Строим таблицу синдромов для всех возможных ошибок
+        # Построение таблицы синдромов
         error_patterns = {}
         for i in range(n):
             error = [0] * n
@@ -496,11 +487,18 @@ class CyclicCodeApp:
                         syndrome[i] ^= g[i + 1]
 
                 steps += f"После сдвига: синдром = {''.join(map(str, syndrome))}\n"
-
-            # После всех итераций получаем информационные биты
-            decoded_block = ''.join(map(str, corrected[:k]))
-            decoded_blocks.append(decoded_block)
-            steps += f"\nДекодированный блок: {decoded_block}\n"
+            print(corrected)
+            print(g)
+            remainder_corrected = self.polynomial_division(''.join(map(str, corrected)), ''.join(map(str, g)))
+            print(remainder)
+            print()
+            if remainder_corrected == '0' * m:
+                # После всех итераций получаем информационные биты
+                decoded_block = ''.join(map(str, corrected[:k]))
+                decoded_blocks.append(decoded_block)
+                steps += f"\nДекодированный блок: {decoded_block}\n"
+            else:
+                steps += f"Остаток не равен 0, не получилось декодировать блок: {block}\n"
 
         decoded_data = ''.join(decoded_blocks)
 

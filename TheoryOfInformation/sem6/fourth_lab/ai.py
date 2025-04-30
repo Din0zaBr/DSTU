@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 import PySimpleGUI as sg
 import random
+import numpy as np
 
 
-# 0011101000101100111010010110001110100111010011101010011100111010101100
-# 0011101000101100111010010110001110100111010011101010011100111010101100
 class CyclicCodeApp:
     def __init__(self):
         self.polynomial = "1011"
@@ -35,14 +34,16 @@ class CyclicCodeApp:
     def create_encode_tab(self):
         return [
             [sg.Frame('Входные данные', [
+                [sg.Radio('Ввод с клавиатуры', 'input_type', default=True, key='-INPUT_KEYBOARD-'),
+                 sg.Radio('Загрузка из файла', 'input_type', key='-INPUT_FILE-')],
                 [sg.Text('Текст для кодирования:')],
                 [sg.Multiline(size=(60, 5), key='-INPUT_TEXT-')],
                 [sg.Button('Загрузить из файла', key='-LOAD_FILE-')]
             ])],
 
             [sg.Frame('Параметры кода', [
-                [sg.Radio('Полиномиальный код', 'code_type', default=True, key='-POLY_CODE-', enable_events=True),
-                 sg.Radio('Матричный код', 'code_type', key='-MATRIX_CODE-', enable_events=True)],
+                [sg.Radio('Полиномиальный код', 'code_type', default=True, key='-POLY_CODE-'),
+                 sg.Radio('Матричный код', 'code_type', key='-MATRIX_CODE-')],
 
                 [sg.pin(sg.Column([
                     [sg.Text('Порождающий полином (двоичный):'), sg.Input("1011", size=(20, 1), key='-POLYNOMIAL-')],
@@ -73,9 +74,8 @@ class CyclicCodeApp:
             ])],
 
             [sg.Frame('Параметры кода', [
-                [sg.Radio('Полиномиальный код', 'decode_code_type', default=True, key='-DECODE_POLY_CODE-',
-                          enable_events=True),
-                 sg.Radio('Матричный код', 'decode_code_type', key='-DECODE_MATRIX_CODE-', enable_events=True)],
+                [sg.Radio('Полиномиальный код', 'decode_code_type', default=True, key='-DECODE_POLY_CODE-'),
+                 sg.Radio('Матричный код', 'decode_code_type', key='-DECODE_MATRIX_CODE-')],
 
                 [sg.pin(sg.Column([
                     [sg.Text('Порождающий полином (двоичный):'),
@@ -91,8 +91,8 @@ class CyclicCodeApp:
             ])],
 
             [sg.Frame('Внесение ошибок', [
-                [sg.Radio('Случайные ошибки', 'error_type', default=True, key='-RANDOM_ERRORS-', enable_events=True),
-                 sg.Radio('Ручное указание ошибок', 'error_type', key='-MANUAL_ERRORS-', enable_events=True)],
+                [sg.Radio('Случайные ошибки', 'error_type', default=True, key='-RANDOM_ERRORS-'),
+                 sg.Radio('Ручное указание ошибок', 'error_type', key='-MANUAL_ERRORS-')],
 
                 [sg.pin(sg.Column([
                     [sg.Text('Количество ошибок:'), sg.Input("1", size=(5, 1), key='-NUM_ERRORS-')]
@@ -119,7 +119,6 @@ class CyclicCodeApp:
             if event == sg.WINDOW_CLOSED:
                 break
 
-            # Обработка переключения между полиномиальным и матричным кодом в кодировании
             elif event == '-POLY_CODE-':
                 self.window['-POLY_FRAME-'].update(visible=True)
                 self.window['-MATRIX_FRAME-'].update(visible=False)
@@ -128,7 +127,6 @@ class CyclicCodeApp:
                 self.window['-POLY_FRAME-'].update(visible=False)
                 self.window['-MATRIX_FRAME-'].update(visible=True)
 
-            # Обработка переключения между полиномиальным и матричным кодом в декодировании
             elif event == '-DECODE_POLY_CODE-':
                 self.window['-DECODE_POLY_FRAME-'].update(visible=True)
                 self.window['-DECODE_MATRIX_FRAME-'].update(visible=False)
@@ -137,7 +135,6 @@ class CyclicCodeApp:
                 self.window['-DECODE_POLY_FRAME-'].update(visible=False)
                 self.window['-DECODE_MATRIX_FRAME-'].update(visible=True)
 
-            # Обработка переключения между случайными и ручными ошибками
             elif event == '-RANDOM_ERRORS-':
                 self.window['-RANDOM_ERROR_FRAME-'].update(visible=True)
                 self.window['-MANUAL_ERROR_FRAME-'].update(visible=False)
@@ -247,34 +244,57 @@ class CyclicCodeApp:
 
             binary_data = ''.join(format(ord(c), '08b') for c in input_data)
 
-            # Всегда используем полиномиальный метод для кодирования
-            g_str = values['-POLYNOMIAL-']
-            if not g_str:
-                sg.popup_error("Введите порождающий полином")
-                return
+            if values['-POLY_CODE-']:
+                g_str = values['-POLYNOMIAL-']
+                if not g_str:
+                    sg.popup_error("Введите порождающий полином")
+                    return
 
-            try:
-                n = int(values['-N-'])
-                k = int(values['-K-'])
-            except ValueError:
-                sg.popup_error("Параметры n и k должны быть целыми числами")
-                return
+                try:
+                    n = int(values['-N-'])
+                    k = int(values['-K-'])
+                except ValueError:
+                    sg.popup_error("Параметры n и k должны быть целыми числами")
+                    return
 
-            g = [int(bit) for bit in g_str]
-            encoded = self.polynomial_encode(binary_data, g, n, k)
-
-            # Если выбран матричный код, преобразуем полином в матрицу для отображения
-            if values['-MATRIX_CODE-']:
+                g = [int(bit) for bit in g_str]
+                encoded = self.polynomial_encode(binary_data, g, n, k)
                 G = self.poly_to_matrix(g_str, n, k)
                 matrix_str = '\n'.join(''.join(str(bit) for bit in row) for row in G)
-                info = f"Порождающая матрица (сгенерирована из полинома):\n{matrix_str}\n\n"
-            else:
-                info = ""
 
-            info += f"Порождающий полином: {g_str}\n"
-            info += f"Полиномиальное представление: {self.binary_to_poly(g_str)}\n\n"
-            info += f"Исходные данные (бинарно): {binary_data}\n"
-            info += f"Закодированные данные: {encoded}"
+                info = f"Порождающий полином: {g_str}\n"
+                info += f"Полиномиальное представление: {self.binary_to_poly(g_str)}\n\n"
+                info += f"Порождающая матрица:\n{matrix_str}\n\n"
+                info += f"Исходные данные (бинарно): {binary_data}\n"
+                info += f"Закодированные данные: {encoded}"
+
+            else:
+                matrix_text = values['-MATRIX_TEXT-']
+                if not matrix_text:
+                    sg.popup_error("Введите порождающую матрицу")
+                    return
+
+                G = []
+                for line in matrix_text.split('\n'):
+                    row = [int(bit) for bit in line.strip()]
+                    G.append(row)
+
+                try:
+                    n = len(G[0])
+                    k = len(G)
+                except IndexError:
+                    sg.popup_error("Некорректная порождающая матрица")
+                    return
+
+                encoded = self.matrix_encode(binary_data, G)
+                poly_str = self.matrix_to_poly(G)
+                poly_repr = self.binary_to_poly(poly_str)
+
+                info = f"Порождающая матрица:\n{matrix_text}\n\n"
+                info += f"Порождающий полином (двоичный): {poly_str}\n"
+                info += f"Полиномиальное представление: {poly_repr}\n\n"
+                info += f"Исходные данные (бинарно): {binary_data}\n"
+                info += f"Закодированные данные: {encoded}"
 
             self.window['-OUTPUT_TEXT-'].update(encoded)
             self.window['-ENCODE_INFO-'].update(info)
@@ -293,64 +313,115 @@ class CyclicCodeApp:
                 sg.popup_error("Данные должны содержать только 0 и 1")
                 return
 
-            # Всегда используем полиномиальный метод для декодирования
-            g_str = values['-DECODE_POLYNOMIAL-']
-            if not g_str:
-                sg.popup_error("Введите порождающий полином")
-                return
-
-            try:
-                n = int(values['-DECODE_N-'])
-                k = int(values['-DECODE_K-'])
-            except ValueError:
-                sg.popup_error("Параметры n и k должны быть целыми числами")
-                return
-
-            if len(encoded_data) % n != 0:
-                sg.popup_error(f"Длина данных ({len(encoded_data)}) должна быть кратна n ({n})")
-                return
-
-            g = [int(bit) for bit in g_str]
-
-            # Обработка ошибок
-            if values['-MANUAL_ERRORS-']:
-                error_pos = values['-ERROR_POSITIONS-']
-                try:
-                    error_positions = [int(pos) - 1 for pos in error_pos.split(',')] if error_pos else []
-                except ValueError:
-                    sg.popup_error("Позиции ошибок должны быть числами")
-                    return
-            else:
-                try:
-                    num_errors = int(values['-NUM_ERRORS-'])
-                    error_positions = random.sample(range(len(encoded_data)),
-                                                    min(num_errors, len(encoded_data)))
-                except ValueError:
-                    sg.popup_error("Количество ошибок должно быть числом")
+            if values['-DECODE_POLY_CODE-']:
+                g_str = values['-DECODE_POLYNOMIAL-']
+                if not g_str:
+                    sg.popup_error("Введите порождающий полином")
                     return
 
-            data_with_errors = list(encoded_data)
-            for pos in error_positions:
-                if pos < len(data_with_errors):
-                    data_with_errors[pos] = '1' if data_with_errors[pos] == '0' else '0'
-            data_with_errors = ''.join(data_with_errors)
+                try:
+                    n = int(values['-DECODE_N-'])
+                    k = int(values['-DECODE_K-'])
+                except ValueError:
+                    sg.popup_error("Параметры n и k должны быть целыми числами")
+                    return
 
-            decoded, steps = self.megitt_decode(data_with_errors, g, n, k)
+                if len(encoded_data) % n != 0:
+                    sg.popup_error(f"Длина данных ({len(encoded_data)}) должна быть кратна n ({n})")
+                    return
 
-            # Если выбран матричный код, преобразуем полином в матрицу для отображения
-            if values['-DECODE_MATRIX_CODE-']:
+                g = [int(bit) for bit in g_str]
+
+                if values['-MANUAL_ERRORS-']:
+                    error_pos = values['-ERROR_POSITIONS-']
+                    try:
+                        error_positions = [int(pos) - 1 for pos in error_pos.split(',')] if error_pos else []
+                    except ValueError:
+                        sg.popup_error("Позиции ошибок должны быть числами")
+                        return
+                else:
+                    try:
+                        num_errors = int(values['-NUM_ERRORS-'])
+                        error_positions = random.sample(range(len(encoded_data)),
+                                                        min(num_errors, len(encoded_data)))
+                    except ValueError:
+                        sg.popup_error("Количество ошибок должно быть числом")
+                        return
+
+                data_with_errors = list(encoded_data)
+                for pos in error_positions:
+                    if pos < len(data_with_errors):
+                        data_with_errors[pos] = '1' if data_with_errors[pos] == '0' else '0'
+                data_with_errors = ''.join(data_with_errors)
+
+                decoded, steps = self.megitt_decode(data_with_errors, g, n, k)
+
                 G = self.poly_to_matrix(g_str, n, k)
                 matrix_str = '\n'.join(''.join(str(bit) for bit in row) for row in G)
-                info = f"Порождающая матрица (сгенерирована из полинома):\n{matrix_str}\n\n"
-            else:
-                info = ""
 
-            info += f"Порождающий полином: {g_str}\n"
-            info += f"Полиномиальное представление: {self.binary_to_poly(g_str)}\n\n"
-            info += f"Закодированные данные: {encoded_data}\n"
-            info += f"Ошибки на позициях: {[p + 1 for p in error_positions]}\n"
-            info += f"Данные с ошибками: {data_with_errors}\n\n"
-            info += "Процесс декодирования:\n" + steps
+                info = f"Порождающий полином: {g_str}\n"
+                info += f"Полиномиальное представление: {self.binary_to_poly(g_str)}\n\n"
+                info += f"Порождающая матрица:\n{matrix_str}\n\n"
+                info += f"Закодированные данные: {encoded_data}\n"
+                info += f"Ошибки на позициях: {[p + 1 for p in error_positions]}\n"
+                info += f"Данные с ошибками: {data_with_errors}\n\n"
+                info += "Процесс декодирования:\n" + steps
+
+            else:
+                matrix_text = values['-DECODE_MATRIX_TEXT-']
+                if not matrix_text:
+                    sg.popup_error("Введите порождающую матрицу")
+                    return
+
+                G = []
+                for line in matrix_text.split('\n'):
+                    row = [int(bit) for bit in line.strip()]
+                    G.append(row)
+
+                try:
+                    n = len(G[0])
+                    k = len(G)
+                except IndexError:
+                    sg.popup_error("Некорректная порождающая матрица")
+                    return
+
+                if len(encoded_data) % n != 0:
+                    sg.popup_error(f"Длина данных ({len(encoded_data)}) должна быть кратна n ({n})")
+                    return
+
+                if values['-MANUAL_ERRORS-']:
+                    error_pos = values['-ERROR_POSITIONS-']
+                    try:
+                        error_positions = [int(pos) - 1 for pos in error_pos.split(',')] if error_pos else []
+                    except ValueError:
+                        sg.popup_error("Позиции ошибок должны быть числами")
+                        return
+                else:
+                    try:
+                        num_errors = int(values['-NUM_ERRORS-'])
+                        error_positions = random.sample(range(len(encoded_data)),
+                                                        min(num_errors, len(encoded_data)))
+                    except ValueError:
+                        sg.popup_error("Количество ошибок должно быть числом")
+                        return
+
+                data_with_errors = list(encoded_data)
+                for pos in error_positions:
+                    if pos < len(data_with_errors):
+                        data_with_errors[pos] = '1' if data_with_errors[pos] == '0' else '0'
+                data_with_errors = ''.join(data_with_errors)
+
+                poly_str = self.matrix_to_poly(G)
+                g = [int(bit) for bit in poly_str]
+                decoded, steps = self.megitt_decode(data_with_errors, g, n, k)
+
+                info = f"Порождающая матрица:\n{matrix_text}\n\n"
+                info += f"Порождающий полином (двоичный): {poly_str}\n"
+                info += f"Полиномиальное представление: {self.binary_to_poly(poly_str)}\n\n"
+                info += f"Закодированные данные: {encoded_data}\n"
+                info += f"Ошибки на позициях: {[p + 1 for p in error_positions]}\n"
+                info += f"Данные с ошибками: {data_with_errors}\n\n"
+                info += "Процесс декодирования:\n" + steps
 
             self.window['-DECODED_TEXT-'].update(decoded)
             self.window['-DECODE_INFO-'].update(info)
@@ -458,12 +529,14 @@ class CyclicCodeApp:
         return G
 
     def matrix_to_poly(self, matrix):
-        if not matrix:
-            return '0'
-        # Берем первую строку матрицы для циклического кода
-        first_row = matrix[0]
-        binary_str = ''.join(str(bit) for bit in first_row)
-        return binary_str.rstrip('0') or '0'  # Удаляем нули справа
+        n = len(matrix[0])
+        k = len(matrix)
+        last_row = matrix[-1]
+        binary_str = ''.join(str(bit) for bit in last_row)
+        binary_str = binary_str.lstrip('0')
+        if not binary_str:
+            binary_str = '0'
+        return binary_str
 
 
 if __name__ == "__main__":

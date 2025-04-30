@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-import psycopg2
-from psycopg2.extras import Json
+from pymongo import MongoClient
 import json
 import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog, filedialog
+from bson import ObjectId
+from datetime import datetime
 
 
 class DocumentDBApp:
@@ -11,29 +12,24 @@ class DocumentDBApp:
         self.root = root
         self.root.title("Document Database Client")
         self.root.geometry("800x600")
-        self.root.configure(bg="#2c3e50")  # Темно-синий фон окна
+        self.root.configure(bg="#2c3e50")
 
-        # Параметры подключения к БД
         self.db_params = {
-            'dbname': 'DocumentDB',
-            'user': 'postgres',
-            'password': 'superuser',
             'host': 'localhost',
-            'port': '5432'
+            'port': 27017,
+            'database': 'DocumentDB'
         }
 
-        self.conn = None
+        self.client = None
+        self.db = None
         self.connect_to_db()
 
-        # Настройка стилей
         self.setup_styles()
-
         self.setup_ui()
 
     def setup_styles(self):
         style = ttk.Style()
 
-        # Общий стиль фреймов
         style.configure("Main.TFrame", background="#34495e")  # Темно-серый фон
         style.configure("Action.TFrame", background="#34495e")
         style.configure("View.TFrame", background="#34495e")
@@ -52,7 +48,8 @@ class DocumentDBApp:
 
     def connect_to_db(self):
         try:
-            self.conn = psycopg2.connect(**self.db_params)
+            self.client = MongoClient(self.db_params['host'], self.db_params['port'])
+            self.db = self.client[self.db_params['database']]
             messagebox.showinfo("Success", "Connected to database successfully!")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to connect to database: {e}")
@@ -106,17 +103,16 @@ class DocumentDBApp:
 
     def load_documents(self):
         try:
-            with self.conn.cursor() as cur:
-                cur.execute("SELECT id, doc_type, created_at, updated_at FROM documents ORDER BY id")
-                rows = cur.fetchall()
+            documents = self.db.documents.find().sort("_id")
 
-                # Очищаем текущие данные
-                for item in self.tree.get_children():
-                    self.tree.delete(item)
+            # Очищаем текущие данные
+            for item in self.tree.get_children():
+                self.tree.delete(item)
 
-                # Добавляем новые данные
-                for row in rows:
-                    self.tree.insert('', tk.END, values=row)
+            # Добавляем новые данные
+            for doc in documents:
+                self.tree.insert('', tk.END,
+                                 values=(str(doc['_id']), doc['doc_type'], doc['created_at'], doc['updated_at']))
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load documents: {e}")
 
@@ -126,15 +122,12 @@ class DocumentDBApp:
             return
 
         item = self.tree.item(selected_item[0])
-        doc_id = item['values'][0]
+        doc_id = ObjectId(item['values'][0])
 
         try:
-            with self.conn.cursor() as cur:
-                cur.execute("SELECT data FROM documents WHERE id = %s", (doc_id,))
-                data = cur.fetchone()[0]
-
-                self.detail_text.delete(1.0, tk.END)
-                self.detail_text.insert(tk.END, json.dumps(data, indent=2))
+            document = self.db.documents.find_one({"_id": doc_id})
+            self.detail_text.delete(1.0, tk.END)
+            self.detail_text.insert(tk.END, json.dumps(document, indent=2, default=str))
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load document details: {e}")
 
@@ -157,16 +150,15 @@ class DocumentDBApp:
                 return
 
             # Сохраняем документ в БД
-            with self.conn.cursor() as cur:
-                cur.execute(
-                    "INSERT INTO documents (doc_type, data) VALUES (%s, %s) RETURNING id",
-                    (doc_type, Json(data)))
-
-                doc_id = cur.fetchone()[0]
-                self.conn.commit()
-
-                messagebox.showinfo("Success", f"Document created with ID: {doc_id}")
-                self.load_documents()
+            document = {
+                "doc_type": doc_type,
+                "data": data,
+                "created_at": datetime.now(),
+                "updated_at": datetime.now()
+            }
+            result = self.db.documents.insert_one(document)
+            messagebox.showinfo("Success", f"Document created with ID: {result.inserted_id}")
+            self.load_documents()
         except Exception as e:
             messagebox.showerror("Error", f"Failed to create document: {e}")
 
@@ -177,21 +169,18 @@ class DocumentDBApp:
             return
 
         try:
-            with self.conn.cursor() as cur:
-                cur.execute(
-                    "SELECT id, doc_type, created_at, updated_at FROM documents WHERE doc_type = %s ORDER BY id",
-                    (doc_type,))
-                rows = cur.fetchall()
+            documents = self.db.documents.find({"doc_type": doc_type}).sort("_id")
 
-                # Очищаем текущие данные
-                for item in self.tree.get_children():
-                    self.tree.delete(item)
+            # Очищаем текущие данные
+            for item in self.tree.get_children():
+                self.tree.delete(item)
 
-                # Добавляем найденные документы
-                for row in rows:
-                    self.tree.insert('', tk.END, values=row)
+            # Добавляем найденные документы
+            for doc in documents:
+                self.tree.insert('', tk.END,
+                                 values=(str(doc['_id']), doc['doc_type'], doc['created_at'], doc['updated_at']))
 
-                messagebox.showinfo("Info", f"Found {len(rows)} documents of type '{doc_type}'")
+            messagebox.showinfo("Info", f"Found {documents.count()} documents of type '{doc_type}'")
         except Exception as e:
             messagebox.showerror("Error", f"Search failed: {e}")
 
@@ -202,38 +191,39 @@ class DocumentDBApp:
             return
 
         item = self.tree.item(selected_item[0])
-        doc_id = item['values'][0]
+        doc_id = ObjectId(item['values'][0])
 
         try:
-            with self.conn.cursor() as cur:
-                # Получаем текущие данные документа
-                cur.execute("SELECT doc_type, data FROM documents WHERE id = %s", (doc_id,))
-                doc_type, data = cur.fetchone()
+            document = self.db.documents.find_one({"_id": doc_id})
 
-                # Запрашиваем новые данные
-                new_type = simpledialog.askstring("Document Type", "Enter new document type:", initialvalue=doc_type)
-                if not new_type:
-                    return
+            # Запрашиваем новые данные
+            new_type = simpledialog.askstring("Document Type", "Enter new document type:",
+                                              initialvalue=document['doc_type'])
+            if not new_type:
+                return
 
-                new_data = simpledialog.askstring("Document Data", "Enter new JSON data:",
-                                                  initialvalue=json.dumps(data, indent=2))
-                if not new_data:
-                    return
+            new_data = simpledialog.askstring("Document Data", "Enter new JSON data:",
+                                              initialvalue=json.dumps(document['data'], indent=2))
+            if not new_data:
+                return
 
-                try:
-                    parsed_data = json.loads(new_data)
-                except json.JSONDecodeError:
-                    messagebox.showerror("Error", "Invalid JSON format")
-                    return
+            try:
+                parsed_data = json.loads(new_data)
+            except json.JSONDecodeError:
+                messagebox.showerror("Error", "Invalid JSON format")
+                return
 
-                # Обновляем документ
-                cur.execute(
-                    "UPDATE documents SET doc_type = %s, data = %s WHERE id = %s",
-                    (new_type, Json(parsed_data), doc_id))
-                self.conn.commit()
-
-                messagebox.showinfo("Success", "Document updated successfully")
-                self.load_documents()
+            # Обновляем документ
+            self.db.documents.update_one(
+                {"_id": doc_id},
+                {"$set": {
+                    "doc_type": new_type,
+                    "data": parsed_data,
+                    "updated_at": datetime.now()
+                }}
+            )
+            messagebox.showinfo("Success", "Document updated successfully")
+            self.load_documents()
         except Exception as e:
             messagebox.showerror("Error", f"Failed to update document: {e}")
 
@@ -244,56 +234,40 @@ class DocumentDBApp:
             return
 
         item = self.tree.item(selected_item[0])
-        doc_id = item['values'][0]
+        doc_id = ObjectId(item['values'][0])
 
         if not messagebox.askyesno("Confirm", f"Are you sure you want to delete document #{doc_id}?"):
             return
 
         try:
-            with self.conn.cursor() as cur:
-                cur.execute("DELETE FROM documents WHERE id = %s", (doc_id,))
-                self.conn.commit()
-
-                messagebox.showinfo("Success", "Document deleted successfully")
-                self.load_documents()
+            self.db.documents.delete_one({"_id": doc_id})
+            messagebox.showinfo("Success", "Document deleted successfully")
+            self.load_documents()
         except Exception as e:
             messagebox.showerror("Error", f"Failed to delete document: {e}")
 
     def export_to_json(self):
         try:
-            with self.conn.cursor() as cur:
-                cur.execute("""
-                    SELECT id, doc_type, data, created_at, updated_at, tags 
-                    FROM documents 
-                    ORDER BY id
-                """)
-                rows = cur.fetchall()
+            documents = self.db.documents.find().sort("_id")
 
-                # Формируем JSON
-                documents = []
-                for row in rows:
-                    doc_id, doc_type, data, created_at, updated_at, tags = row
-                    documents.append({
-                        "id": doc_id,
-                        "type": doc_type,
-                        "data": data,
-                        "created_at": str(created_at),
-                        "updated_at": str(updated_at),
-                        "tags": tags
-                    })
+            # Формируем JSON
+            docs_list = []
+            for doc in documents:
+                doc['_id'] = str(doc['_id'])
+                docs_list.append(doc)
 
-                # Сохраняем JSON в файл
-                file_path = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON files", "*.json")])
-                if file_path:
-                    with open(file_path, "w", encoding="utf-8") as f:
-                        json.dump(documents, f, indent=4)
-                    messagebox.showinfo("Success", f"Documents exported to {file_path}")
+            # Сохраняем JSON в файл
+            file_path = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON files", "*.json")])
+            if file_path:
+                with open(file_path, "w", encoding="utf-8") as f:
+                    json.dump(docs_list, f, indent=4, default=str)
+                messagebox.showinfo("Success", f"Documents exported to {file_path}")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to export documents: {e}")
 
     def __del__(self):
-        if self.conn:
-            self.conn.close()
+        if self.client:
+            self.client.close()
 
 
 if __name__ == "__main__":

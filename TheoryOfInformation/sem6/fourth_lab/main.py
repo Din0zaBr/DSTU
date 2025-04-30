@@ -7,6 +7,11 @@ import random
 # 0011101000101100111010010110001110100111010011101010011100111010101100
 class CyclicCodeApp:
     def __init__(self):
+        """
+        Инициализация начальных параметров и создание графического интерфейса, т.е.
+        Устанавливает начальные значения для полинома, параметров кода, типа ввода и ошибок.
+        Вызывает метод setup_layout для создания интерфейса
+        """
         self.polynomial = "1011"
         self.n = 7
         self.k = 4
@@ -21,6 +26,11 @@ class CyclicCodeApp:
         self.window = sg.Window("Циклический код - Кодер/Декодер", self.layout, finalize=True)
 
     def setup_layout(self):
+        """
+        Создает основной макет интерфейса с двумя вкладками: "Кодирование" и "Декодирование", т.е.
+        Вызывает методы create_encode_tab и create_decode_tab для создания содержимого вкладок.
+        :return:
+        """
         tab1 = self.create_encode_tab()
         tab2 = self.create_decode_tab()
 
@@ -33,6 +43,15 @@ class CyclicCodeApp:
             ]]
 
     def create_encode_tab(self):
+        """
+        Создает вкладку "Кодирование" с полями для ввода данных, параметров кода и кнопками для выполнения действий, т.е.
+        Содержит поля для:
+        - ввода текста
+        - выбора типа кода (полиномиальный или матричный)
+        - ввода параметров кода
+        - отображения результатов кодирования.
+        :return:
+        """
         return [
             [sg.Frame('Входные данные', [
                 [sg.Text('Текст для кодирования:')],
@@ -42,7 +61,7 @@ class CyclicCodeApp:
 
             [sg.Frame('Параметры кода', [
                 [sg.Radio('Полиномиальный код', 'code_type', default=True, key='-POLY_CODE-', enable_events=True),
-                 sg.Radio('Матричный код', 'code_type', key='-MATRIX_CODE-', enable_events=True)],
+                 ],
 
                 [sg.pin(sg.Column([
                     [sg.Text('Порождающий полином (двоичный):'), sg.Input("1011", size=(20, 1), key='-POLYNOMIAL-')],
@@ -66,6 +85,17 @@ class CyclicCodeApp:
         ]
 
     def create_decode_tab(self):
+        """
+         Создает вкладку "Декодирование" с полями для ввода закодированной последовательности, параметров кода,
+         внесения ошибок и отображения результатов декодирования, т.е.
+         Содержит: поля для:
+         - ввода закодированной последовательности
+         - выбора типа кода
+         - ввода параметров кода
+         - выбора типа ошибок
+         - отображения результатов декодирования.
+        :return:
+        """
         return [
             [sg.Frame('Входные данные', [
                 [sg.Text('Закодированная последовательность:')],
@@ -75,7 +105,7 @@ class CyclicCodeApp:
             [sg.Frame('Параметры кода', [
                 [sg.Radio('Полиномиальный код', 'decode_code_type', default=True, key='-DECODE_POLY_CODE-',
                           enable_events=True),
-                 sg.Radio('Матричный код', 'decode_code_type', key='-DECODE_MATRIX_CODE-', enable_events=True)],
+                 ],
 
                 [sg.pin(sg.Column([
                     [sg.Text('Порождающий полином (двоичный):'),
@@ -113,6 +143,15 @@ class CyclicCodeApp:
         ]
 
     def run(self):
+        """
+        Основной цикл обработки событий интерфейса, т.е.
+        Обрабатывает события переключения между:
+        - типами кода
+        - внесения ошибок
+        - загрузки файла
+        - кодирования и декодирования
+        :return:
+        """
         while True:
             event, values = self.window.read()
 
@@ -164,6 +203,12 @@ class CyclicCodeApp:
         self.window.close()
 
     def binary_to_poly(self, binary_str):
+        """
+        Преобразует двоичную строку в полиномиальное представление, т.е.
+        Преобразует каждый бит двоичной строки в соответствующий член полинома.
+        :param binary_str:
+        :return:
+        """
         terms = []
         degree = len(binary_str) - 1
         for i, bit in enumerate(binary_str):
@@ -177,7 +222,17 @@ class CyclicCodeApp:
         return " + ".join(terms) if terms else "0"
 
     def polynomial_encode(self, data, g, n, k):
+        """
+        Кодирует данные с использованием полиномиального кода, т.е.
+        Разбивает данные на блоки, добавляет контрольные биты и возвращает закодированную последовательность.
+        :param data:
+        :param g:
+        :param n:
+        :param k:
+        :return:
+        """
         m = len(g) - 1
+        # print(n, k, m)
         if n - k != m:
             raise ValueError("Несоответствие параметров n, k и степени полинома")
 
@@ -188,27 +243,48 @@ class CyclicCodeApp:
             block = block.zfill(k)
             extended = block + '0' * m
             remainder = self.polynomial_division(extended, g)
-            codeword = block + remainder
+
+            extended_list = [int(bit) for bit in extended]
+            remainder_list = [int(bit) for bit in remainder.zfill(n)]
+            # print(extended_list)
+            # print(remainder_list)
+            # print()
+            codeword_list = [extended_list[i] ^ remainder_list[i] for i in range(len(extended_list))]
+
+            codeword = ''.join(map(str, codeword_list))
+
             encoded_blocks.append(codeword)
 
         return ''.join(encoded_blocks)
 
     def polynomial_division(self, dividend, divisor):
+        """
+        Выполняет деление полиномов в двоичном виде
+        :param dividend (делимое):
+        :param divisor (делитель):
+        :return:
+        """
         dividend = [int(bit) for bit in dividend]
         divisor = [int(bit) for bit in divisor]
 
+        # Удаление ведущих нулей
         while len(dividend) > 0 and dividend[0] == 0:
             dividend = dividend[1:]
 
         while len(divisor) > 0 and divisor[0] == 0:
             divisor = divisor[1:]
 
+        # Проверка на пустой делимое
         if not dividend:
             return '0' * (len(divisor) - 1)
-
+        # Проверка длины делителя:
+        # Если dividend = [1, 0, 1] и divisor = [1, 1, 0, 1], то возвращается "0101".
         if len(divisor) > len(dividend):
             return ''.join(map(str, dividend)).zfill(len(divisor) - 1)
 
+        # Основной цикл выполняет деление полиномов.
+        # Если текущий бит current[i] равен 1, выполняется операция XOR между соответствующими битами current и divisor.
+        # Если current = [1, 0, 1, 1] и divisor = [1, 1, 0, 1], то на первой итерации current станет [0, 1, 1, 0].
         current = list(dividend)
         divisor_len = len(divisor)
 
@@ -217,28 +293,20 @@ class CyclicCodeApp:
                 for j in range(divisor_len):
                     current[i + j] ^= divisor[j]
 
+        # Извлекает остаток от деления, который находится в последних divisor_len - 1 битах current.
+        # Если divisor_len равен 1, остаток равен [0].
+        # Если current = [0, 1, 1, 0] и divisor_len = 4, то остаток remainder = [1, 1, 0].
         remainder = current[-(divisor_len - 1):] if divisor_len > 1 else [0]
         return ''.join(map(str, remainder)).zfill(len(divisor) - 1)
 
-    def matrix_encode(self, data, G):
-        k = len(G)
-        n = len(G[0])
-        blocks = [data[i:i + k] for i in range(0, len(data), k)]
-        encoded_blocks = []
-
-        for block in blocks:
-            block = block.zfill(k)
-            block_vector = [int(bit) for bit in block]
-            codeword = [0] * n
-            for i in range(n):
-                for j in range(k):
-                    codeword[i] += block_vector[j] * G[j][i]
-                codeword[i] %= 2
-            encoded_blocks.append(''.join(map(str, codeword)))
-
-        return ''.join(encoded_blocks)
-
     def encode(self, values):
+        """
+        Выполняет кодирование данных, т.е.
+        Преобразует введенные данные в двоичный вид,
+        кодирует их с использованием полиномиального метода и отображает результаты.
+        :param values:
+        :return:
+        """
         try:
             input_data = values['-INPUT_TEXT-']
             if not input_data:
@@ -263,13 +331,9 @@ class CyclicCodeApp:
             g = [int(bit) for bit in g_str]
             encoded = self.polynomial_encode(binary_data, g, n, k)
 
-            # Если выбран матричный код, преобразуем полином в матрицу для отображения
-            if values['-MATRIX_CODE-']:
-                G = self.poly_to_matrix(g_str, n, k)
-                matrix_str = '\n'.join(''.join(str(bit) for bit in row) for row in G)
-                info = f"Порождающая матрица (сгенерирована из полинома):\n{matrix_str}\n\n"
-            else:
-                info = ""
+            G = self.poly_to_matrix(g_str, n, k)
+            matrix_str = '\n'.join(''.join(str(bit) for bit in row) for row in G)
+            info = f"Порождающая матрица (сгенерирована из полинома):\n{matrix_str}\n\n"
 
             info += f"Порождающий полином: {g_str}\n"
             info += f"Полиномиальное представление: {self.binary_to_poly(g_str)}\n\n"
@@ -283,6 +347,13 @@ class CyclicCodeApp:
             sg.popup_error(f"Ошибка кодирования: {str(e)}")
 
     def decode(self, values):
+        """
+        Выполняет декодирование данных + вносит ошибки, т.е.
+        Вносит ошибки в закодированную последовательность,
+        декодирует её с использованием алгоритма Меггита и отображает результаты.
+        :param values:
+        :return:
+        """
         try:
             encoded_data = values['-ENCODED_INPUT-']
             if not encoded_data:
@@ -293,7 +364,6 @@ class CyclicCodeApp:
                 sg.popup_error("Данные должны содержать только 0 и 1")
                 return
 
-            # Всегда используем полиномиальный метод для декодирования
             g_str = values['-DECODE_POLYNOMIAL-']
             if not g_str:
                 sg.popup_error("Введите порождающий полином")
@@ -337,13 +407,9 @@ class CyclicCodeApp:
 
             decoded, steps = self.megitt_decode(data_with_errors, g, n, k)
 
-            # Если выбран матричный код, преобразуем полином в матрицу для отображения
-            if values['-DECODE_MATRIX_CODE-']:
-                G = self.poly_to_matrix(g_str, n, k)
-                matrix_str = '\n'.join(''.join(str(bit) for bit in row) for row in G)
-                info = f"Порождающая матрица (сгенерирована из полинома):\n{matrix_str}\n\n"
-            else:
-                info = ""
+            G = self.poly_to_matrix(g_str, n, k)
+            matrix_str = '\n'.join(''.join(str(bit) for bit in row) for row in G)
+            info = f"Порождающая матрица (сгенерирована из полинома):\n{matrix_str}\n\n"
 
             info += f"Порождающий полином: {g_str}\n"
             info += f"Полиномиальное представление: {self.binary_to_poly(g_str)}\n\n"
@@ -359,6 +425,16 @@ class CyclicCodeApp:
             sg.popup_error(f"Ошибка декодирования: {str(e)}")
 
     def megitt_decode(self, encoded_data, g, n, k):
+        """
+        Декодирует данные с использованием алгоритма Меггита.
+        Вносит ошибки в закодированную последовательность, строит таблицу синдромов, исправляет ошибки
+        и возвращает декодированную последовательность и промежуточные результаты.
+        :param encoded_data:
+        :param g:
+        :param n:
+        :param k:
+        :return:
+        """
         m = len(g) - 1  # степень порождающего полинома
         steps = ""
         blocks = [encoded_data[i:i + n] for i in range(0, len(encoded_data), n)]
@@ -431,7 +507,7 @@ class CyclicCodeApp:
         # Преобразуем бинарные данные обратно в текст
         try:
             # Удаляем возможные нули в конце
-            decoded_data = decoded_data.rstrip('0')
+            # decoded_data = decoded_data.rstrip('0')
             # Дополняем до целого числа байт
             if len(decoded_data) % 8 != 0:
                 decoded_data = decoded_data.ljust((len(decoded_data) // 8 + 1) * 8, '0')
@@ -448,22 +524,22 @@ class CyclicCodeApp:
         return decoded_text, steps
 
     def poly_to_matrix(self, poly_str, n, k):
+        """
+        Преобразует полином в порождающую матрицу, т.е.
+        Создает порождающую матрицу на основе полинома.
+        :param poly_str:
+        :param n:
+        :param k:
+        :return:
+        """
         g = [int(bit) for bit in poly_str]
-        m = len(g) - 1
+        # m = len(g) - 1
         G = []
         for i in range(k):
             row = [0] * i + g + [0] * (k - i - 1)
             row = row[:n]
             G.append(row)
         return G
-
-    def matrix_to_poly(self, matrix):
-        if not matrix:
-            return '0'
-        # Берем первую строку матрицы для циклического кода
-        first_row = matrix[0]
-        binary_str = ''.join(str(bit) for bit in first_row)
-        return binary_str.rstrip('0') or '0'  # Удаляем нули справа
 
 
 if __name__ == "__main__":

@@ -1,80 +1,181 @@
+import wave
 import numpy as np
-import soundfile as sf
-from scipy.signal import butter, lfilter
+import matplotlib.pyplot as plt
+from typing import Tuple, Callable, Optional
 
 
-class PCMProcessor:
-    def __init__(self, sample_rate=44100, bits=8):
+class WavPCMProcessor:
+    """Класс для обработки WAV файлов с визуализацией изменений"""
+
+    def __init__(self):
+        self.sample_width = 2  # 16-bit PCM по умолчанию
+        self.sample_rate = 44100
+        self.channels = 1
+
+    def load_wav(self, filename: str) -> Tuple[np.ndarray, dict]:
+        """Загрузка WAV файла"""
+        with wave.open(filename, 'rb') as wav_file:
+            self.sample_rate = wav_file.getframerate()
+            self.channels = wav_file.getnchannels()
+            self.sample_width = wav_file.getsampwidth()
+
+            frames = wav_file.readframes(wav_file.getnframes())
+            dtype = np.int16 if self.sample_width == 2 else np.int8
+            pcm_data = np.frombuffer(frames, dtype=dtype)
+
+            metadata = {
+                'sample_rate': self.sample_rate,
+                'channels': self.channels,
+                'sample_width': self.sample_width,
+                'duration': wav_file.getnframes() / self.sample_rate
+            }
+
+            return pcm_data, metadata
+
+    def save_wav(self, pcm_data: np.ndarray, filename: str):
         """
-        Инициализация процессора PCM
-
-        Args:
-            sample_rate: частота дискретизации в Гц
-            bits: количество бит для квантования
+        Сохранение в WAV файл
         """
-        self.sample_rate = sample_rate
-        self.bits = bits
+        with wave.open(filename, 'wb') as wav_file:
+            wav_file.setnchannels(self.channels)
+            wav_file.setsampwidth(self.sample_width)
+            wav_file.setframerate(self.sample_rate)
+            wav_file.writeframes(pcm_data.tobytes())
 
-    def load_audio(self, filename):
-        """Загрузка аудиофайла"""
-        data, sr = sf.read(filename)
-        if len(data.shape) > 1:  # Если стерео, конвертируем в моно
-            data = np.mean(data, axis=1)
-        return data
-
-    def save_audio(self, signal, filename):
-        """Сохранение аудиосигнала в файл"""
-        sf.write(filename, signal, self.sample_rate)
-
-    def quantize_signal(self, signal):
-        """Квантование сигнала"""
-        max_val = np.max(np.abs(signal))
-        levels = 2 ** self.bits
-        return np.round((signal / max_val * (levels - 1))) * (max_val / (levels - 1))
-
-    def decode_signal(self, quantized_signal):
-        """Декодирование сигнала"""
-        return quantized_signal.copy()
-
-    def apply_filter(self, signal):
-        """Применение ЦИХ фильтра"""
-        nyq_freq = 0.5 * self.sample_rate
-        cutoff_freq = 20000
-        order = 8
-
-        b, a = butter(order, cutoff_freq / nyq_freq, btype='low')
-        return lfilter(b, a, signal)
-
-    def process_pcm(self, input_filename, output_filename=None):
+    def pcm_to_float(self, pcm_data: np.ndarray) -> np.ndarray:
         """
-        Полная обработка PCM для файла
-
-        Args:
-            input_filename: имя входного файла
-            output_filename: имя выходного файла (если None, вернёт сигнал)
-
-        Returns:
-            Обработанный сигнал если output_filename=None
+        Конвертация PCM в float [-1, 1]
+        WAV → Float
         """
-        # Загружаем файл
-        signal = self.load_audio(input_filename)
+        if self.sample_width == 1:
+            return pcm_data.astype(np.float32) / 127.0
+        return pcm_data.astype(np.float32) / 32767.0
 
-        # Квантуем сигнал
-        quantized = self.quantize_signal(signal)
+    def float_to_pcm(self, float_audio: np.ndarray) -> np.ndarray:
+        """
+        Конвертация float в PCM
+        Float → PCM
+        """
 
-        # Декодируем и применяем фильтр
-        decoded = self.decode_signal(quantized)
-        filtered = self.apply_filter(decoded)
+        if self.sample_width == 1:
+            return (float_audio * 127).astype(np.int8)
+        return (float_audio * 32767).astype(np.int16)
 
-        # Сохраняем результат или возвращаем его
-        if output_filename:
-            self.save_audio(filtered, output_filename)
-            return None
-        return filtered
+    def process_with_visualization(self, input_file: str, output_file: str,
+                                   process_func: Callable[[np.ndarray], np.ndarray],
+                                   title: str = "Audio Processing"):
+        """
+        Полная обработка с визуализацией изменений
+        """
+        # Загрузка исходного файла
+        original_pcm, meta = self.load_wav(input_file)
+        original_float = self.pcm_to_float(original_pcm)
+
+        # Обработка аудио
+        processed_float = process_func(original_float)
+        processed_pcm = self.float_to_pcm(processed_float)
+
+        # Сохранение результата
+        self.save_wav(processed_pcm, output_file)
+
+        # Визуализация
+        self._plot_comparison(original_float, processed_float,
+                              original_pcm, processed_pcm,
+                              title, meta['sample_rate'])
+
+        return processed_pcm
+
+    def _plot_comparison(self, original_float: np.ndarray, processed_float: np.ndarray,
+                         original_pcm: np.ndarray, processed_pcm: np.ndarray,
+                         title: str, sample_rate: int):
+        """Сравнение оригинального и обработанного аудио"""
+        plt.figure(figsize=(15, 10))
+
+        # Временная область (первые 0.1 секунды)
+        samples_to_show = int(0.1 * sample_rate)
+
+        # 1. Сравнение float сигналов
+        plt.subplot(3, 1, 1)
+        plt.plot(original_float[:samples_to_show], 'b', label='Original', alpha=0.7)
+        plt.plot(processed_float[:samples_to_show], 'r', label='Processed', alpha=0.7)
+        plt.title(f'{title} - Float Signal Comparison')
+        plt.xlabel('Samples')
+        plt.ylabel('Amplitude')
+        plt.legend()
+        plt.grid(True)
+
+        # 2. Сравнение PCM сигналов
+        plt.subplot(3, 1, 2)
+        plt.plot(original_pcm[:samples_to_show], 'b', label='Original', alpha=0.7)
+        plt.plot(processed_pcm[:samples_to_show], 'r', label='Processed', alpha=0.7)
+        plt.title('PCM Signal Comparison')
+        plt.xlabel('Samples')
+        plt.ylabel('PCM Value')
+        plt.legend()
+        plt.grid(True)
+
+        # 3. Сравнение спектров
+        plt.subplot(3, 1, 3)
+        freqs = np.fft.rfftfreq(len(original_float), 1 / sample_rate)
+        plt.semilogy(freqs, np.abs(np.fft.rfft(original_float)), 'b',
+                     label='Original', alpha=0.7)
+        plt.semilogy(freqs, np.abs(np.fft.rfft(processed_float)), 'r',
+                     label='Processed', alpha=0.7)
+        plt.title('Frequency Spectrum Comparison')
+        plt.xlabel('Frequency (Hz)')
+        plt.ylabel('Magnitude')
+        plt.legend()
+        plt.grid(True)
+
+        plt.tight_layout()
+        plt.show()
 
 
-# Пример использования:
-processor = PCMProcessor(bits=8)
-processed_signal = processor.process_pcm('input.wav')
+# Примеры эффектов для обработки
+# def gain_effect(audio: np.ndarray, gain: float = 2.0) -> np.ndarray:
+#     """Эффект усиления сигнала"""
+#     return np.clip(audio * gain, -0.99, 0.99)
+#
+#
+# def distortion_effect(audio: np.ndarray, intensity: float = 3.0) -> np.ndarray:
+#     """Эффект дисторшна"""
+#     return np.tanh(audio * intensity)
+#
+#
+# def lowpass_effect(audio: np.ndarray, cutoff: float = 2000.0, sr: int = 44100) -> np.ndarray:
+#     """Простой низкочастотный фильтр"""
+#     fft_audio = np.fft.rfft(audio)
+#     freqs = np.fft.rfftfreq(len(audio), 1 / sr)
+#     fft_audio[freqs > cutoff] *= 0.1  # Ослабляем высокие частоты
+#     return np.fft.irfft(fft_audio)
 
-processor.process_pcm('input.wav', 'output.wav')
+
+# Сравнение правильного и ошибочного декодирования
+print("Сравнение правильного и ошибочного декодирования")
+WavPCMProcessor.compare_decoding(input_file='input.wav')
+
+    # # Обработка с усилением
+    # print("Пример обработки - усиление сигнала")
+    # processor.process_with_visualization(
+    #     input_file='input.wav',
+    #     output_file='output_gain.wav',
+    #     process_func=lambda x: gain_effect(x, gain=2.0),
+    #     title="Gain Effect (2x)"
+    # )
+    #
+    # # Обработка с дисторшном
+    # print("\nПример обработки - дисторшн")
+    # processor.process_with_visualization(
+    #     input_file='input.wav',
+    #     output_file='output_distortion.wav',
+    #     process_func=lambda x: distortion_effect(x, intensity=5.0),
+    #     title="Distortion Effect"
+    # )
+    #
+    # # Обработка с низкочастотным фильтром
+    # print("\nПример обработки - низкочастотный фильтр")
+    # processor.process_with_visualization(
+    #     input_file='input.wav',
+    #     output_file='output_lowpass.wav',
+    #     process_func=lambda x: lowpass_effect(x, cutoff=2000.0),
+    #     title="Lowpass Filter (2kHz)"

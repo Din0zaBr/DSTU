@@ -13,7 +13,7 @@ import random
 
 
 class WavPCMProcessor:
-    """Полная реализация PCM с бинарными ошибками"""
+    """Обработчик PCM-аудио с поддержкой бинарных ошибок."""
 
     def __init__(self):
         self.sample_rate = 44100
@@ -22,61 +22,53 @@ class WavPCMProcessor:
 
     def analog_to_pcm(self, analog_signal: Callable[[np.ndarray], np.ndarray],
                       duration: float) -> np.ndarray:
-        """Полный цикл: аналоговый сигнал -> PCM"""
-        # 1. Дискретизация
+        """Преобразует аналоговый сигнал в PCM."""
         t = np.linspace(0, duration, int(self.sample_rate * duration), endpoint=False)
         samples = analog_signal(t)
-
-        # 2. Квантование
         pcm_data = np.round(samples * self.max_level).astype(np.int32)
         return np.clip(pcm_data, -self.max_level, self.max_level)
 
     def pcm_to_binary(self, pcm_data: np.ndarray) -> bytes:
-        """PCM -> бинарные данные (с учетом битности)"""
+        """Конвертирует PCM в бинарные данные."""
         fmt = {16: 'h', 24: 'i', 32: 'i'}[self.bit_depth]
         return struct.pack(f'<{len(pcm_data)}{fmt}', *pcm_data)
 
     def binary_to_pcm(self, binary_data: bytes) -> np.ndarray:
-        """Бинарные данные -> PCM"""
+        """Конвертирует бинарные данные обратно в PCM."""
         fmt = {16: 'h', 24: 'i', 32: 'i'}[self.bit_depth]
         return np.array(struct.unpack(f'<{len(binary_data) // (self.bit_depth // 8)}{fmt}', binary_data))
 
     def corrupt_binary(self, binary_data: bytes, error_level: int) -> bytes:
-        """Внесение ошибок в бинарные данные с выводом бинарного представления"""
-
+        """Вносит ошибки в бинарные данные."""
         corrupted = bytearray(binary_data)
 
-        if error_level == 1:  # Слабые ошибки (1% битов)
+        if error_level == 1:  # 1% битов
             for i in random.sample(range(len(corrupted)), k=len(corrupted) // 100):
                 corrupted[i] ^= 0b00000001
 
-        elif error_level == 2:  # Умеренные ошибки (5% битов + шум)
+        elif error_level == 2:  # 5% битов + шум
             for i in random.sample(range(len(corrupted)), k=len(corrupted) // 20):
                 corrupted[i] ^= 0b00000011
             for i in range(0, len(corrupted), len(corrupted) // 50):
                 corrupted[i] = random.randint(0, 255)
 
-        elif error_level == 3:  # Ошибки 20%
-            for i in random.sample(range(len(corrupted)), k=len(corrupted) // 5):
-                corrupted[i] ^= 0b00000011
-
-        elif error_level == 4:  # Ошибки 50%
-            for i in random.sample(range(len(corrupted)), k=len(corrupted) // 2):
-                corrupted[i] ^= 0b00000011
-
-        elif error_level == 5:  # Ошибки 100%
-            for i in range(len(corrupted)):
-                corrupted[i] ^= 0b00000011
+        elif error_level >= 3:  # 20%–100% битов
+            error_mask = 0b00000011
+            k = len(corrupted) // (6 - error_level)  # 3→20%, 4→50%, 5→100%
+            for i in random.sample(range(len(corrupted)), k=k):
+                corrupted[i] ^= error_mask
 
         return bytes(corrupted)
 
     def load_wav(self, filename: str) -> Tuple[np.ndarray, dict]:
-        """Загрузка WAV с проверкой формата"""
+        """Загружает WAV-файл с проверкой формата."""
         with wave.open(filename, 'rb') as wav_file:
             if wav_file.getnchannels() != 1:
-                raise ValueError("Только моно-файлы")
+                raise ValueError("Только монофайлы поддерживаются.")
             if wav_file.getsampwidth() not in (2, 3):
-                raise ValueError("Только 16/24 бита")
+                raise ValueError("Только 16/24-битные файлы.")
+            if wav_file.getframerate() not in (44100, 48000, 96000):
+                raise ValueError("Частота дискретизации должна быть 44.1kHz, 48kHz или 96kHz.")
 
             self.sample_rate = wav_file.getframerate()
             self.bit_depth = wav_file.getsampwidth() * 8
@@ -92,7 +84,7 @@ class WavPCMProcessor:
             }
 
     def save_wav(self, pcm_data: np.ndarray, filename: str):
-        """Сохранение PCM в WAV"""
+        """Сохраняет PCM-данные в WAV-файл."""
         with wave.open(filename, 'wb') as wav_file:
             wav_file.setnchannels(1)
             wav_file.setsampwidth(self.bit_depth // 8)
@@ -112,66 +104,75 @@ class PCMGUI(QMainWindow):
         main_widget = QWidget()
         layout = QHBoxLayout()
 
-        # Левая панель
-        control_panel = QGroupBox("Управление")
-        control_layout = QVBoxLayout()
+        # Левая панель: управление
+        control_panel = self._create_control_panel()
+        layout.addWidget(control_panel, stretch=1)
 
-        # Генерация тестового сигнала
+        # Правая панель: графика
+        graph_panel = self._create_graph_panel()
+        layout.addWidget(graph_panel, stretch=3)
+
+        main_widget.setLayout(layout)
+        self.setCentralWidget(main_widget)
+
+    def _create_control_panel(self) -> QGroupBox:
+        """Создаёт панель управления."""
+        panel = QGroupBox("Управление")
+        layout = QVBoxLayout()
+
         self.btn_generate = QPushButton("Сгенерировать сигнал 440 Гц")
         self.btn_generate.clicked.connect(self.generate_signal)
-        control_layout.addWidget(self.btn_generate)
+        layout.addWidget(self.btn_generate)
 
-        # Загрузка WAV
         self.btn_load = QPushButton("Загрузить WAV (16/24 бит)")
         self.btn_load.clicked.connect(self.load_wav)
-        control_layout.addWidget(self.btn_load)
+        layout.addWidget(self.btn_load)
 
-        # Информация
         self.file_info = QTextEdit()
         self.file_info.setReadOnly(True)
-        control_layout.addWidget(QLabel("Метаданные:"))
-        control_layout.addWidget(self.file_info)
+        layout.addWidget(QLabel("Метаданные:"))
+        layout.addWidget(self.file_info)
 
-        # Уровень ошибок
-        control_layout.addWidget(QLabel("Уровень ошибок:"))
+        layout.addWidget(QLabel("Уровень ошибок:"))
         self.error_slider = QSlider(Qt.Horizontal)
-        self.error_slider.setRange(0, 5)  # Устанавливаем диапазон до 5
+        self.error_slider.setRange(0, 5)
         self.error_slider.setTickPosition(QSlider.TicksBelow)
         self.error_slider.valueChanged.connect(self.update_error_label)
-        control_layout.addWidget(self.error_slider)
+        layout.addWidget(self.error_slider)
 
         self.error_label = QLabel("0 - Без ошибок")
-        control_layout.addWidget(self.error_label)
+        layout.addWidget(self.error_label)
 
-        # Кнопки обработки
-        self.btn_apply = QPushButton("Применить ошибки к бинарным данным")
+        self.btn_apply = QPushButton("Применить ошибки")
         self.btn_apply.clicked.connect(self.apply_errors)
         self.btn_apply.setEnabled(False)
-        control_layout.addWidget(self.btn_apply)
+        layout.addWidget(self.btn_apply)
 
         self.btn_save = QPushButton("Сохранить WAV")
         self.btn_save.clicked.connect(self.save_wav)
         self.btn_save.setEnabled(False)
-        control_layout.addWidget(self.btn_save)
+        layout.addWidget(self.btn_save)
 
-        control_panel.setLayout(control_layout)
+        panel.setLayout(layout)
+        return panel
 
-        # Правая панель
-        graph_panel = QGroupBox("Визуализация")
-        graph_layout = QVBoxLayout()
+    def _create_graph_panel(self) -> QGroupBox:
+        """Создаёт панель с графиками."""
+        panel = QGroupBox("Визуализация")
+        layout = QVBoxLayout()
 
-        self.figure, (self.ax_orig, self.ax_corr) = plt.subplots(2, 1, figsize=(10, 8))
+        self.figure, ((self.ax_full_orig, self.ax_full_corr),
+                      (self.ax_zoom_orig, self.ax_zoom_corr)) = plt.subplots(
+            2, 2, figsize=(12, 10))
+
         self.canvas = FigureCanvas(self.figure)
-        graph_layout.addWidget(self.canvas)
+        layout.addWidget(self.canvas)
 
-        graph_panel.setLayout(graph_layout)
-
-        layout.addWidget(control_panel, stretch=1)
-        layout.addWidget(graph_panel, stretch=3)
-        main_widget.setLayout(layout)
-        self.setCentralWidget(main_widget)
+        panel.setLayout(layout)
+        return panel
 
     def update_error_label(self, value):
+        """Обновляет описание уровня ошибок."""
         levels = {
             0: "0 - Без ошибок",
             1: "1 - 1% битов",
@@ -183,8 +184,8 @@ class PCMGUI(QMainWindow):
         self.error_label.setText(levels[value])
 
     def generate_signal(self):
-        """Генерация тестового сигнала"""
-        duration = 2.0  # 2 секунды
+        """Генерирует тестовый сигнал 440 Гц."""
+        duration = 2.0
         signal = lambda t: 0.5 * np.sin(2 * np.pi * 440 * t) + 0.1 * np.random.normal(size=len(t))
 
         self.original_pcm = self.processor.analog_to_pcm(signal, duration)
@@ -201,6 +202,7 @@ class PCMGUI(QMainWindow):
         self.plot_signals()
 
     def load_wav(self):
+        """Загружает WAV-файл."""
         filepath, _ = QFileDialog.getOpenFileName(
             self, "Выберите WAV", "", "WAV files (*.wav)")
 
@@ -225,24 +227,20 @@ class PCMGUI(QMainWindow):
             QMessageBox.critical(self, "Ошибка", f"Неверный формат:\n{str(e)}")
 
     def apply_errors(self):
-        """Применение ошибок к бинарным данным"""
+        """Применяет бинарные ошибки к сигналу."""
         error_level = self.error_slider.value()
         if error_level == 0:
             self.corrupted_pcm = self.original_pcm.copy()
         else:
-            # Конвертируем в бинарный вид
             binary_data = self.processor.pcm_to_binary(self.original_pcm)
-
-            # Вносим ошибки
             corrupted_binary = self.processor.corrupt_binary(binary_data, error_level)
-
-            # Обратно в PCM
             self.corrupted_pcm = self.processor.binary_to_pcm(corrupted_binary)
 
         self.plot_signals()
         self.file_info.append(f"\nПрименены ошибки уровня {error_level}")
 
     def save_wav(self):
+        """Сохраняет искажённый WAV-файл."""
         filepath, _ = QFileDialog.getSaveFileName(
             self, "Сохранить WAV", "", "WAV files (*.wav)")
 
@@ -256,16 +254,44 @@ class PCMGUI(QMainWindow):
             QMessageBox.critical(self, "Ошибка", str(e))
 
     def plot_signals(self):
-        self.ax_orig.clear()
-        self.ax_corr.clear()
+        """Отрисовывает 4 графика:
+        1. Полный оригинальный сигнал
+        2. Полный искажённый сигнал
+        3. Первые 2000 отсчётов оригинального сигнала
+        4. Первые 2000 отсчётов искажённого сигнала
+        """
+        # Очистка предыдущих графиков
+        for ax in [self.ax_full_orig, self.ax_full_corr,
+                   self.ax_zoom_orig, self.ax_zoom_corr]:
+            ax.clear()
 
-        # Оригинал
-        self.ax_orig.plot(self.original_pcm[:2000], 'b')
-        self.ax_orig.set_title("Оригинальный PCM")
+        # Полный сигнал (оригинал)
+        self.ax_full_orig.plot(self.original_pcm, 'b', linewidth=0.5)
+        self.ax_full_orig.set_title("Оригинальный сигнал (полный)")
+        self.ax_full_orig.set_xlabel("Отсчёты")
+        self.ax_full_orig.set_ylabel("Амплитуда")
+        self.ax_full_orig.grid(True)
 
-        # Искажённый
-        self.ax_corr.plot(self.corrupted_pcm[:2000], 'r')
-        self.ax_corr.set_title("С ошибками")
+        # Полный сигнал (с ошибками)
+        self.ax_full_corr.plot(self.corrupted_pcm, 'r', linewidth=0.5)
+        self.ax_full_corr.set_title("Искажённый сигнал (полный)")
+        self.ax_full_corr.set_xlabel("Отсчёты")
+        self.ax_full_corr.set_ylabel("Амплитуда")
+        self.ax_full_corr.grid(True)
+
+        # Увеличенный участок (оригинал)
+        self.ax_zoom_orig.plot(self.original_pcm[:2000], 'b', linewidth=1)
+        self.ax_zoom_orig.set_title("Оригинальный сигнал (первые 2000 отсчётов)")
+        self.ax_zoom_orig.set_xlabel("Отсчёты")
+        self.ax_zoom_orig.set_ylabel("Амплитуда")
+        self.ax_zoom_orig.grid(True)
+
+        # Увеличенный участок (с ошибками)
+        self.ax_zoom_corr.plot(self.corrupted_pcm[:2000], 'r', linewidth=1)
+        self.ax_zoom_corr.set_title("Искажённый сигнал (первые 2000 отсчётов)")
+        self.ax_zoom_corr.set_xlabel("Отсчёты")
+        self.ax_zoom_corr.set_ylabel("Амплитуда")
+        self.ax_zoom_corr.grid(True)
 
         self.figure.tight_layout()
         self.canvas.draw()

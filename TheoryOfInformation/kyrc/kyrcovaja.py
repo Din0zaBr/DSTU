@@ -64,6 +64,10 @@ class WavPCMProcessor:
             for i in random.sample(range(len(corrupted)), k=len(corrupted) // 2):
                 corrupted[i] ^= 0b00000011
 
+        elif error_level == 5:  # Ошибки 100%
+            for i in range(len(corrupted)):
+                corrupted[i] ^= 0b00000011
+
         return bytes(corrupted)
 
     def load_wav(self, filename: str) -> Tuple[np.ndarray, dict]:
@@ -131,7 +135,7 @@ class PCMGUI(QMainWindow):
         # Уровень ошибок
         control_layout.addWidget(QLabel("Уровень ошибок:"))
         self.error_slider = QSlider(Qt.Horizontal)
-        self.error_slider.setRange(0, 4)
+        self.error_slider.setRange(0, 5)  # Устанавливаем диапазон до 5
         self.error_slider.setTickPosition(QSlider.TicksBelow)
         self.error_slider.valueChanged.connect(self.update_error_label)
         control_layout.addWidget(self.error_slider)
@@ -173,7 +177,8 @@ class PCMGUI(QMainWindow):
             1: "1 - 1% битов",
             2: "2 - 5% битов + шум",
             3: "3 - 20% битов",
-            4: "4 - 50% битов"
+            4: "4 - 50% битов",
+            5: "5 - 100% битов"
         }
         self.error_label.setText(levels[value])
 

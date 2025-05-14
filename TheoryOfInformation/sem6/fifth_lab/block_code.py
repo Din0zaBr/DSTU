@@ -1,7 +1,6 @@
 import customtkinter as ctk
 import numpy as np
 import random
-import re
 from tkinter import messagebox
 from helpers import text_to_binary, binary_to_text
 
@@ -20,29 +19,26 @@ class BlockCodeModule:
         self.main_frame = ctk.CTkFrame(parent_frame)
         self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Заголовок модуля
-        self.title_label = ctk.CTkLabel(self.main_frame, text="Адаптивная система с блочным кодом",
-                                        font=ctk.CTkFont(size=20, weight="bold"))
-        self.title_label.pack(padx=10, pady=10)
-
         # Фрейм для ввода параметров
         self.params_frame = ctk.CTkFrame(self.main_frame)
         self.params_frame.pack(fill="x", padx=10, pady=10)
 
         # Параметры кода
         self.params_label = ctk.CTkLabel(self.params_frame, text="Параметры кода:",
-                                         font=ctk.CTkFont(weight="bold"))
+                                         font=ctk.CTkFont(weight="bold", size=14))
         self.params_label.grid(row=0, column=0, padx=10, pady=5, sticky="w")
 
         # n
-        self.n_label = ctk.CTkLabel(self.params_frame, text="n (длина кодового слова):")
+        self.n_label = ctk.CTkLabel(self.params_frame, text="n (длина кодового слова):",
+                                    font=ctk.CTkFont(size=12))
         self.n_label.grid(row=1, column=0, padx=10, pady=5, sticky="w")
         self.n_entry = ctk.CTkEntry(self.params_frame, width=60)
         self.n_entry.grid(row=1, column=1, padx=10, pady=5, sticky="w")
         self.n_entry.insert(0, str(self.n))
 
         # k
-        self.k_label = ctk.CTkLabel(self.params_frame, text="k (кол-во информационных бит):")
+        self.k_label = ctk.CTkLabel(self.params_frame, text="k (кол-во информационных бит):",
+                                    font=ctk.CTkFont(size=12))
         self.k_label.grid(row=1, column=2, padx=10, pady=5, sticky="w")
         self.k_entry = ctk.CTkEntry(self.params_frame, width=60)
         self.k_entry.grid(row=1, column=3, padx=10, pady=5, sticky="w")
@@ -50,12 +46,13 @@ class BlockCodeModule:
 
         # Кнопка для генерации или ввода матрицы
         self.matrix_button = ctk.CTkButton(self.params_frame, text="Сгенерировать матрицу",
-                                           command=self.generate_matrix)
+                                           command=self.generate_matrix, fg_color="#2E86C1", hover_color="#1A5276")
         self.matrix_button.grid(row=1, column=4, padx=10, pady=5)
 
         # Информация о корректирующей способности
         self.info_label = ctk.CTkLabel(self.params_frame,
-                                       text=f"Текущая корректирующая способность: {self.error_correction_capability} ошибок")
+                                       text=f"Текущая корректирующая способность: {self.error_correction_capability} ошибок",
+                                       font=ctk.CTkFont(size=12))
         self.info_label.grid(row=2, column=0, columnspan=5, padx=10, pady=5, sticky="w")
 
         # Фрейм для ввода текста
@@ -64,7 +61,7 @@ class BlockCodeModule:
 
         # Заголовок для ввода текста
         self.input_label = ctk.CTkLabel(self.input_frame, text="Исходный текст:",
-                                        font=ctk.CTkFont(weight="bold"))
+                                        font=ctk.CTkFont(weight="bold", size=14))
         self.input_label.pack(padx=10, pady=5, anchor="w")
 
         # Текстовое поле для ввода
@@ -107,30 +104,39 @@ class BlockCodeModule:
                                           command=self.adapt_code, state="disabled")
         self.adapt_button.pack(side="left", padx=10, pady=10)
 
-        # Фрейм для отображения результатов
-        self.result_frame = ctk.CTkFrame(self.main_frame)
-        self.result_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        # Основной фрейм для матриц и результатов
+        self.content_frame = ctk.CTkFrame(self.main_frame)
+        self.content_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Фрейм для отображения матриц (слева)
+        self.matrix_display_frame = ctk.CTkFrame(self.content_frame)
+        self.matrix_display_frame.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
+
+        self.matrix_label = ctk.CTkLabel(self.matrix_display_frame, text="Матрицы кода:",
+                                         font=ctk.CTkFont(weight="bold", size=14))
+        self.matrix_label.pack(padx=10, pady=5, anchor="w")
+
+        self.matrix_text = ctk.CTkTextbox(self.matrix_display_frame, height=200)
+        self.matrix_text.pack(fill="both", expand=True, padx=10, pady=5)
+
+        # Фрейм для отображения результатов (справа)
+        self.result_frame = ctk.CTkFrame(self.content_frame)
+        self.result_frame.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
 
         # Заголовок для результатов
         self.result_label = ctk.CTkLabel(self.result_frame, text="Результаты:",
-                                         font=ctk.CTkFont(weight="bold"))
+                                         font=ctk.CTkFont(weight="bold", size=14))
         self.result_label.pack(padx=10, pady=5, anchor="w")
 
         # Текстовое поле для вывода результатов
-        self.result_text = ctk.CTkTextbox(self.result_frame, height=200)
+        self.result_text = ctk.CTkTextbox(self.result_frame, height=250)
         self.result_text.pack(fill="both", expand=True, padx=10, pady=5)
 
-        # Поле для отображения матрицы
-        self.matrix_display_frame = ctk.CTkFrame(self.main_frame)
-        self.matrix_display_frame.pack(fill="x", padx=10, pady=10)
+        # Настройка веса колонок для корректного распределения пространства
+        self.content_frame.grid_columnconfigure(0, weight=1)
+        self.content_frame.grid_columnconfigure(1, weight=1)
 
-        self.matrix_label = ctk.CTkLabel(self.matrix_display_frame, text="Матрицы кода:",
-                                         font=ctk.CTkFont(weight="bold"))
-        self.matrix_label.pack(padx=10, pady=5, anchor="w")
-
-        self.matrix_text = ctk.CTkTextbox(self.matrix_display_frame, height=100)
-        self.matrix_text.pack(fill="x", padx=10, pady=5)
-
+    # Остальные методы остаются без изменений
     def load_text(self):
         text = self.parent.load_text_from_file()
         if text:
@@ -212,8 +218,7 @@ class BlockCodeModule:
         """
         Вычисляет минимальное расстояние Хэмминга для кода
         """
-        # Для небольших значений k можно непосредственно вычислить все кодовые слова
-        if self.k <= 10:  # Ограничение для предотвращения ошибок при больших k
+        if self.k <=15:  # Ограничение для предотвращения ошибок при больших k
             # Генерируем все возможные кодовые слова
             all_messages = [format(i, f'0{self.k}b') for i in range(2 ** self.k)]
             codewords = []
@@ -221,27 +226,22 @@ class BlockCodeModule:
             for msg in all_messages:
                 # Преобразуем сообщение в массив бит
                 msg_bits = np.array([int(bit) for bit in msg])
-
+                
                 # Умножаем на порождающую матрицу по модулю 2
                 codeword = np.remainder(np.dot(msg_bits, self.G_matrix), 2)
                 codewords.append(codeword)
 
-            # Находим минимальное расстояние между всеми парами кодовых слов
-            min_distance = float('inf')
-            for i in range(len(codewords)):
-                for j in range(i + 1, len(codewords)):
-                    # Вычисляем расстояние Хэмминга (количество различающихся позиций)
-                    distance = np.sum(codewords[i] != codewords[j])
-                    if distance < min_distance:
-                        min_distance = distance
+            # Находим минимальный вес Хэмминга среди всех ненулевых кодовых слов
+            min_weight = float('inf')
+            for codeword in codewords:
+                # Вычисляем вес Хэмминга (количество ненулевых элементов)
+                weight = np.sum(codeword)
+                if weight > 0 and weight < min_weight:  # Проверяем только ненулевые кодовые слова
+                    min_weight = weight
 
-            return min_distance if min_distance != float('inf') else 0
+            return min_weight if min_weight != float('inf') else 0
         else:
-            # Для больших k используем аппроксимацию - линейные коды имеют
-            # минимальное расстояние d >= n-k+1 (граница Синглтона)
-            # Но для практических кодов обычно d = n-k+1-δ, где δ≥0
-            # Для систематического кода можно предположить d = n-k-1
-            # Гарантированное минимальное расстояние для случайного кода
+            # Для больших k используем аппроксимацию
             return max(3, self.n - self.k)
 
     def encode_text(self):
@@ -454,16 +454,11 @@ class BlockCodeModule:
 
         # Проверяем, были ли блоки, которые не удалось декодировать
         if error_blocks > 0:
-            if self.error_correction_capability < 2:
-                messagebox.showwarning("Предупреждение",
-                                       f"Не удалось декодировать {error_blocks} блоков. " +
-                                       "Код не способен исправить 2 и более ошибок.")
-                # Активируем кнопку адаптации
-                self.adapt_button.configure(state="normal")
-            else:
-                messagebox.showwarning("Предупреждение",
-                                       f"Не удалось декодировать {error_blocks} блоков. " +
-                                       "Возможно, некоторые блоки содержат более 2 ошибок.")
+            # Активируем кнопку адаптации в любом случае, если есть ошибки
+            self.adapt_button.configure(state="normal")
+        else:
+            # Если все блоки декодированы успешно, деактивируем кнопку
+            self.adapt_button.configure(state="disabled")
 
         # Сохраняем декодированные данные
         self.parent.decoded_text = decoded_data
@@ -514,6 +509,20 @@ class BlockCodeModule:
             decoded_text = binary_to_text(decoded_data)
             self.result_text.insert("end", "\n\nДекодированный текст:\n")
             self.result_text.insert("end", decoded_text)
+
+            # Проверяем корректирующую способность кода
+            if self.error_correction_capability < 2:
+                self.adapt_button.configure(state="normal")
+
+            # Проверяем успешность декодирования, сравнивая с исходным текстом
+            input_text = self.input_text.get("1.0", "end-1c")
+            if input_text and input_text != decoded_text:
+                messagebox.showwarning("Ошибка декодирования",
+                                   f"Декодированный текст не совпадает с исходным.\n"
+                                   f"Текущая корректирующая способность кода: {self.error_correction_capability} ошибок.\n"
+                                   f"Рекомендуется адаптировать параметры кода для исправления ошибок.")
+                self.adapt_button.configure(state="normal")
+                return False
 
             return error_blocks == 0  # Возвращаем True, если все блоки декодированы успешно
         except Exception as e:
@@ -598,20 +607,21 @@ class BlockCodeModule:
         # Обновляем информацию о корректирующей способности
         self.info_label.configure(text=f"Текущая корректирующая способность: {self.error_correction_capability} ошибок")
 
-        # Выводим матрицы для отладки
-        G_str = ""
+        # Выводим матрицы в текстовое поле
+        self.matrix_text.delete("1.0", "end")
+        
+        # Форматируем и выводим порождающую матрицу G
+        G_str = "Порождающая матрица G:\n"
         for row in self.G_matrix:
             G_str += ' '.join(map(str, row)) + '\n'
-
-        H_str = ""
+        
+        # Форматируем и выводим проверочную матрицу H
+        H_str = "\nПроверочная матрица H:\n"
         for row in self.H_matrix:
             H_str += ' '.join(map(str, row)) + '\n'
-
-        self.result_text.insert("end", "\nСгенерированные матрицы кода:\n")
-        self.result_text.insert("end", "Порождающая матрица G:\n")
-        self.result_text.insert("end", G_str + "\n")
-        self.result_text.insert("end", "Проверочная матрица H:\n")
-        self.result_text.insert("end", H_str + "\n")
+        
+        # Выводим обе матрицы в интерфейс
+        self.matrix_text.insert("1.0", G_str + H_str)
 
         # Обновляем информацию
         messagebox.showinfo("Адаптация",
@@ -631,6 +641,3 @@ class BlockCodeModule:
             self.result_text.insert("end", "\n\nДекодирование после адаптации не успешно. Повторяем адаптацию...\n")
             self.adapt_code()  # Рекурсивно пытаемся адаптировать код дальше
             return
-
-        # Деактивируем кнопку адаптации
-        self.adapt_button.configure(state="disabled")

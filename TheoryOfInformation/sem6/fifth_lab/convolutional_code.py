@@ -879,8 +879,9 @@ class ConvolutionalCodeModule:
                         noisy_data += bit
 
             total_bits = bits_processed
-            error_prob = error_count / total_bits if total_bits > 0 else 0
-            erasure_prob = erasure_count / total_bits if total_bits > 0 else 0
+            # Сохраняем фактические вероятности как атрибуты класса
+            self.error_prob = error_count / total_bits if total_bits > 0 else 0
+            self.erasure_prob = erasure_count / total_bits if total_bits > 0 else 0
 
             z_prob = 0
             if self.channel_type == "Z-канал" and z_channel_ones_count > 0:
@@ -909,7 +910,7 @@ class ConvolutionalCodeModule:
             self.result_text.insert("end", f"\nСтатистика канала:\n")
             self.result_text.insert("end", f"- Общее количество битов: {total_bits}\n")
             self.result_text.insert("end", f"- Количество ошибок: {error_count}\n")
-            self.result_text.insert("end", f"- Фактическая вероятность ошибки: {error_prob:.6f}\n")
+            self.result_text.insert("end", f"- Фактическая вероятность ошибки: {self.error_prob:.6f}\n")
 
             if error_count > 0:
                 self.result_text.insert("end", f"\nТипы битовых ошибок:\n")
@@ -921,7 +922,7 @@ class ConvolutionalCodeModule:
 
             if self.channel_type == "ДСКС":
                 self.result_text.insert("end", f"- Количество стираний: {erasure_count}\n")
-                self.result_text.insert("end", f"- Фактическая вероятность стирания: {erasure_prob:.6f}\n")
+                self.result_text.insert("end", f"- Фактическая вероятность стирания: {self.erasure_prob:.6f}\n")
 
             if self.channel_type == "Z-канал":
                 self.result_text.insert("end", f"- Количество единиц в исходных данных: {z_channel_ones_count}\n")
@@ -1031,22 +1032,14 @@ class ConvolutionalCodeModule:
 
     def calculate_capacity(self):
         try:
-            # Получаем параметры канала
-            p = float(self.error_entry.get())
-            q = float(self.erasure_entry.get()) if self.channel_type == "ДСКС" else 0
-
-            # Проверка корректности вероятностей
-            if p < 0 or p > 1:
-                messagebox.showerror("Ошибка", "Вероятность ошибки должна быть в диапазоне [0, 1]")
+            # Проверяем, были ли внесены ошибки
+            if not hasattr(self, 'error_prob') or not hasattr(self, 'erasure_prob'):
+                messagebox.showerror("Ошибка", "Сначала внесите ошибки в закодированный текст")
                 return
 
-            if q < 0 or q > 1:
-                messagebox.showerror("Ошибка", "Вероятность стирания должна быть в диапазоне [0, 1]")
-                return
-
-            if p + q > 1:
-                messagebox.showerror("Ошибка", "Сумма вероятностей ошибки и стирания не может превышать 1")
-                return
+            # Используем фактические вероятности из add_noise
+            p = self.error_prob
+            q = self.erasure_prob if self.channel_type == "ДСКС" else 0
 
             # Используем универсальную функцию для всех каналов
             capacity_dsk = self.get_channel_capacity(p, 0, "ДСК")
@@ -1055,9 +1048,9 @@ class ConvolutionalCodeModule:
 
             # Выводим результаты
             self.result_text.insert("end", "\n\n=== Результаты расчета пропускной способности ===\n")
-            self.result_text.insert("end", f"Вероятность ошибки (p): {p}\n")
+            self.result_text.insert("end", f"Фактическая вероятность ошибки (p): {p:.6f}\n")
             if self.channel_type == "ДСКС":
-                self.result_text.insert("end", f"Вероятность стирания (q): {q}\n")
+                self.result_text.insert("end", f"Фактическая вероятность стирания (q): {q:.6f}\n")
 
             self.result_text.insert("end", "\nПропускная способность каналов:\n")
             self.result_text.insert("end", f"1. Двоичный симметричный канал (ДСК): {capacity_dsk:.4f} бит/символ\n")

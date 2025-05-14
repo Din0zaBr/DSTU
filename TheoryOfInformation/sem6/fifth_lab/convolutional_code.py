@@ -801,15 +801,13 @@ class ConvolutionalCodeModule:
             # Получаем закодированные данные
             encoded_data = self.parent.encoded_text
 
-            # Вносим ошибки и стирания в зависимости от типа канала
             noisy_data = ""
             error_count = 0
             erasure_count = 0
             bits_processed = 0
 
-            # Для детальной статистики
-            zero_to_one_count = 0  # 0->1
-            one_to_zero_count = 0  # 1->0
+            zero_to_one_count = 0
+            one_to_zero_count = 0
             zeros_count = 0
             ones_count = 0
 
@@ -826,12 +824,10 @@ class ConvolutionalCodeModule:
             if self.channel_type == "ДСКС":
                 self.result_text.insert("end", f"- Вероятность стирания (q): {self.erasure_probability}\n")
 
-            # Обрабатываем данные
             for bit in encoded_data:
                 bits_processed += 1
                 r = random.random()
 
-                # Учитываем исходные биты для статистики
                 if bit == '0':
                     zeros_count += 1
                 elif bit == '1':
@@ -840,13 +836,13 @@ class ConvolutionalCodeModule:
                         z_channel_ones_count += 1
 
                 if self.channel_type == "ДСК":
-                    # Двоичный симметричный канал
+                    # ДСК
                     if r < self.error_probability:
                         new_bit = '1' if bit == '0' else '0'
                         noisy_data += new_bit
                         error_count += 1
 
-                        # Подсчет типов ошибок
+                        # ошибки
                         if bit == '0':
                             zero_to_one_count += 1
                         else:
@@ -855,7 +851,7 @@ class ConvolutionalCodeModule:
                         noisy_data += bit
 
                 elif self.channel_type == "ДСКС":
-                    # Двоичный симметричный канал со стираниями
+                    # ДСКС
                     if r < self.error_probability:
                         new_bit = '1' if bit == '0' else '0'
                         noisy_data += new_bit
@@ -882,12 +878,10 @@ class ConvolutionalCodeModule:
                     else:
                         noisy_data += bit
 
-            # Вычисляем вероятности ошибок и стираний
             total_bits = bits_processed
             error_prob = error_count / total_bits if total_bits > 0 else 0
             erasure_prob = erasure_count / total_bits if total_bits > 0 else 0
 
-            # Для Z-канала отдельно считаем вероятность ошибок при передаче 1
             z_prob = 0
             if self.channel_type == "Z-канал" and z_channel_ones_count > 0:
                 z_prob = z_channel_error_count / z_channel_ones_count
@@ -895,7 +889,6 @@ class ConvolutionalCodeModule:
             # Сохраняем данные с ошибками
             self.parent.noisy_text = noisy_data
 
-            # Выводим результат
             self.result_text.insert("end", "\n\n=== Статистика внесения ошибок ===\n")
 
             if total_bits > 100:
@@ -918,7 +911,6 @@ class ConvolutionalCodeModule:
             self.result_text.insert("end", f"- Количество ошибок: {error_count}\n")
             self.result_text.insert("end", f"- Фактическая вероятность ошибки: {error_prob:.6f}\n")
 
-            # Детальная статистика по типам ошибок
             if error_count > 0:
                 self.result_text.insert("end", f"\nТипы битовых ошибок:\n")
                 zero_to_one_ratio = zero_to_one_count / error_count if error_count > 0 else 0
@@ -936,7 +928,6 @@ class ConvolutionalCodeModule:
                 self.result_text.insert("end", f"- Количество ошибок типа 1->0: {z_channel_error_count}\n")
                 self.result_text.insert("end", f"- Вероятность ошибки при передаче '1': {z_prob:.6f}\n")
 
-            # Добавляем инструкцию для следующего шага
             self.result_text.insert("end",
                                     "\n✓ Ошибки и стирания внесены. Теперь вы можете нажать 'Декодировать' для восстановления данных.\n")
 
@@ -951,35 +942,26 @@ class ConvolutionalCodeModule:
         # Получаем данные с ошибками/стираниями
         noisy_data = self.parent.noisy_text
 
-        # Если в канале были стирания, заменяем их на более вероятные биты
         if '!' in noisy_data:
-            # Для простоты заменяем стирания на '0'
             noisy_data = noisy_data.replace('!', '0')
-
-        # Конвертируем полиномы в числовой формат
         numeric_polynomials = self.binary_polys_to_numeric()
 
 
         try:
             decoded_data = self.viterbi_decode(noisy_data, numeric_polynomials)
 
-            # Удаляем добавленные биты в конце (tail bits)
             if len(decoded_data) >= self.constraint_length - 1:
                 decoded_data = decoded_data[:-self.constraint_length + 1]
 
-            # Сохраняем декодированные данные
             self.parent.decoded_text = decoded_data
 
-            # Выводим результат
             self.result_text.insert("end", "\n\nДекодированные данные:\n")
             self.result_text.insert("end", decoded_data)
 
-            # Добавляем информацию о процессе декодирования
             self.result_text.insert("end", f"\n\nИнформация о декодировании:\n")
             self.result_text.insert("end", f"Количество полиномов: {len(numeric_polynomials)}\n")
             self.result_text.insert("end", f"Использован метод декодирования: алгоритм Витерби\n")
 
-            # Преобразуем двоичные данные обратно в текст
             try:
                 decoded_text = binary_to_text(decoded_data)
                 self.result_text.insert("end", "\n\nДекодированный текст:\n")

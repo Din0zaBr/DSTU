@@ -3,9 +3,8 @@ from tkinter import filedialog
 from block_code import BlockCodeModule
 from convolutional_code import ConvolutionalCodeModule
 
-# Настройка темы и стиля приложения
-ctk.set_appearance_mode("dark")  # Темная тема
-ctk.set_default_color_theme("blue")  # Синяя цветовая схема
+ctk.set_appearance_mode("dark")
+ctk.set_default_color_theme("blue")
 
 
 class CommunicationChannelApp(ctk.CTk):

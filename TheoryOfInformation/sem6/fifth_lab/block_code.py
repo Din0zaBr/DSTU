@@ -218,25 +218,19 @@ class BlockCodeModule:
         """
         Вычисляет минимальное расстояние Хэмминга для кода
         """
-        if self.k <=15:  # Ограничение для предотвращения ошибок при больших k
-            # Генерируем все возможные кодовые слова
+        if self.k <= 15:
             all_messages = [format(i, f'0{self.k}b') for i in range(2 ** self.k)]
             codewords = []
 
             for msg in all_messages:
-                # Преобразуем сообщение в массив бит
                 msg_bits = np.array([int(bit) for bit in msg])
-                
-                # Умножаем на порождающую матрицу по модулю 2
                 codeword = np.remainder(np.dot(msg_bits, self.G_matrix), 2)
                 codewords.append(codeword)
 
-            # Находим минимальный вес Хэмминга среди всех ненулевых кодовых слов
             min_weight = float('inf')
             for codeword in codewords:
-                # Вычисляем вес Хэмминга (количество ненулевых элементов)
                 weight = np.sum(codeword)
-                if weight > 0 and weight < min_weight:  # Проверяем только ненулевые кодовые слова
+                if 0 < weight < min_weight:
                     min_weight = weight
 
             return min_weight if min_weight != float('inf') else 0
@@ -293,17 +287,12 @@ class BlockCodeModule:
             # Умножаем на порождающую матрицу по модулю 2
             codeword = np.remainder(np.dot(block_bits, self.G_matrix), 2)
 
-            # Преобразуем закодированный блок обратно в строку
             encoded_block = ''.join(map(str, codeword))
             encoded_data += encoded_block
 
-            # Выводим процесс кодирования для этого блока
             self.result_text.insert("end", f"Блок {i // self.k + 1}: {block} -> {encoded_block}\n")
 
-        # Сохраняем закодированные данные
         self.parent.encoded_text = encoded_data
-
-        # Выводим итоговый результат
         self.result_text.insert("end", "\nЗакодированные данные:\n")
         self.result_text.insert("end", encoded_data)
 
@@ -312,16 +301,13 @@ class BlockCodeModule:
             messagebox.showerror("Ошибка", "Сначала закодируйте текст")
             return False
 
-        # Получаем закодированные данные
         encoded_data = self.parent.encoded_text
-
-        # Вносим ошибки в каждый блок длиной n
         noisy_data = ""
         self.result_text.insert("end", "\n\nПроцесс внесения ошибок по блокам:\n")
 
         for i in range(0, len(encoded_data), self.n):
             block = encoded_data[i:i + self.n]
-            if len(block) < self.n:  # Если последний блок неполный, дополняем его нулями
+            if len(block) < self.n:
                 block = block + '0' * (self.n - len(block))
 
             # Выбираем 2 разные случайные позиции для внесения ошибок
@@ -341,7 +327,6 @@ class BlockCodeModule:
             self.result_text.insert("end",
                                     f"Блок {i // self.n + 1}: {block} -> {noisy_block}, ошибки в позициях: {error_positions}\n")
 
-        # Сохраняем данные с ошибками
         self.parent.noisy_text = noisy_data
 
         # Итоговый результат
@@ -359,10 +344,8 @@ class BlockCodeModule:
             messagebox.showerror("Ошибка", "Матрица кода не сгенерирована")
             return
 
-        # Получаем данные с ошибками
         noisy_data = self.parent.noisy_text
 
-        # Декодируем каждый блок
         decoded_data = ""
         error_blocks = 0
 
@@ -375,13 +358,8 @@ class BlockCodeModule:
                 block = block + '0' * (self.n - len(block))
                 self.result_text.insert("end", f"{block}\n")
 
-            # Преобразуем блок в массив бит
             received_vector = np.array([int(bit) for bit in block])
-
-            # Вычисляем синдром ошибки
             syndrome = np.remainder(np.dot(received_vector, self.H_matrix.T), 2)
-
-            # Информация о синдроме
             syndrome_str = ''.join(map(str, syndrome))
 
             # Если синдром не нулевой, пытаемся исправить ошибки
@@ -389,21 +367,18 @@ class BlockCodeModule:
                 self.result_text.insert("end",
                                         f"Блок {i // self.n + 1}: {block}, синдром: {syndrome_str} - Обнаружена ошибка, ")
 
-                # Создаем словарь синдромов для всех возможных векторов ошибок
                 error_syndromes = {}
 
                 # Пытаемся исправить ошибки в зависимости от нашей корректирующей способности
                 correctable = False
                 error_pos = []
 
-                # Проверяем все возможные векторы ошибок с 1 ошибкой
                 for pos in range(self.n):
                     error_vector = np.zeros(self.n, dtype=int)
                     error_vector[pos] = 1
                     error_syndrome = np.remainder(np.dot(error_vector, self.H_matrix.T), 2)
                     error_syndromes[tuple(error_syndrome)] = (error_vector, [pos])
 
-                # Если наш код может исправлять 2 ошибки, проверяем векторы с 2 ошибками
                 if self.error_correction_capability >= 2:
                     for pos1 in range(self.n):
                         for pos2 in range(pos1 + 1, self.n):
@@ -415,7 +390,6 @@ class BlockCodeModule:
 
                 # Если синдром соответствует одному из известных векторов ошибок
                 if tuple(syndrome) in error_syndromes:
-                    # Исправляем ошибку
                     error_vector, error_pos = error_syndromes[tuple(syndrome)]
                     corrected_vector = np.remainder(received_vector + error_vector, 2)
                     correctable = True
@@ -518,9 +492,9 @@ class BlockCodeModule:
             input_text = self.input_text.get("1.0", "end-1c")
             if input_text and input_text != decoded_text:
                 messagebox.showwarning("Ошибка декодирования",
-                                   f"Декодированный текст не совпадает с исходным.\n"
-                                   f"Текущая корректирующая способность кода: {self.error_correction_capability} ошибок.\n"
-                                   f"Рекомендуется адаптировать параметры кода для исправления ошибок.")
+                                       f"Декодированный текст не совпадает с исходным.\n"
+                                       f"Текущая корректирующая способность кода: {self.error_correction_capability} ошибок.\n"
+                                       f"Рекомендуется адаптировать параметры кода для исправления ошибок.")
                 self.adapt_button.configure(state="normal")
                 return False
 
@@ -561,8 +535,6 @@ class BlockCodeModule:
         success = False
 
         for attempt in range(max_attempts):
-            # Генерируем порождающую матрицу G
-            # Сначала создаем единичную матрицу k x k
             I_k = np.eye(self.k, dtype=int)
 
             # Затем создаем случайную матрицу k x (n-k)
@@ -571,8 +543,6 @@ class BlockCodeModule:
             # Объединяем их, чтобы получить G в систематической форме [I_k | P]
             self.G_matrix = np.hstack((I_k, P))
 
-            # Генерируем проверочную матрицу H
-            # Создаем матрицу P^T
             P_t = P.T
 
             # Создаем единичную матрицу (n-k) x (n-k)
@@ -591,8 +561,6 @@ class BlockCodeModule:
                 break
 
         if not success:
-            # Если не удалось сгенерировать код с нужной корректирующей способностью,
-            # увеличиваем n еще больше
             old_n = self.n
             self.n += 2
             self.n_entry.delete(0, "end")
@@ -609,34 +577,26 @@ class BlockCodeModule:
 
         # Выводим матрицы в текстовое поле
         self.matrix_text.delete("1.0", "end")
-        
+
         # Форматируем и выводим порождающую матрицу G
         G_str = "Порождающая матрица G:\n"
         for row in self.G_matrix:
             G_str += ' '.join(map(str, row)) + '\n'
-        
+
         # Форматируем и выводим проверочную матрицу H
         H_str = "\nПроверочная матрица H:\n"
         for row in self.H_matrix:
             H_str += ' '.join(map(str, row)) + '\n'
-        
+
         # Выводим обе матрицы в интерфейс
         self.matrix_text.insert("1.0", G_str + H_str)
 
-        # Обновляем информацию
         messagebox.showinfo("Адаптация",
                             f"Код адаптирован для исправления 2 ошибок.\nПараметры изменены с ({old_n}, {old_k}) на ({self.n}, {self.k}).")
-
-        # Автоматически перекодируем исходный текст
         self.encode_text()
-
-        # Автоматически вносим ошибки
         self.add_noise()
-
-        # Автоматически декодируем
         success = self.decode_text()
 
-        # Повторяем адаптацию, если декодирование не удалось и n не слишком большое
         if not success and self.n < 20:  # Ограничиваем n, чтобы избежать бесконечного цикла
             self.result_text.insert("end", "\n\nДекодирование после адаптации не успешно. Повторяем адаптацию...\n")
             self.adapt_code()  # Рекурсивно пытаемся адаптировать код дальше

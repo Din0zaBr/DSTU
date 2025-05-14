@@ -405,7 +405,7 @@ class BlockCodeModule:
                 else:
                     info_bits = corrected_vector
             else:
-                # Если синдром нулевой, ошибок нет или они скомпенсировали друг друга
+                # Если синдром нулевой
                 self.result_text.insert("end",
                                         f"Блок {i // self.n + 1}: {block}, синдром: {syndrome_str} - Ошибок не обнаружено\n")
 

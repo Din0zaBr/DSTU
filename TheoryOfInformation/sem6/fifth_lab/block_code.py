@@ -108,7 +108,7 @@ class BlockCodeModule:
         self.content_frame = ctk.CTkFrame(self.main_frame)
         self.content_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Фрейм для отображения матриц (слева)
+        # Фрейм для отображения матриц слева
         self.matrix_display_frame = ctk.CTkFrame(self.content_frame)
         self.matrix_display_frame.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
 
@@ -119,7 +119,7 @@ class BlockCodeModule:
         self.matrix_text = ctk.CTkTextbox(self.matrix_display_frame, height=200)
         self.matrix_text.pack(fill="both", expand=True, padx=10, pady=5)
 
-        # Фрейм для отображения результатов (справа)
+        # Фрейм для отображения результатов справа
         self.result_frame = ctk.CTkFrame(self.content_frame)
         self.result_frame.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
 
@@ -136,7 +136,6 @@ class BlockCodeModule:
         self.content_frame.grid_columnconfigure(0, weight=1)
         self.content_frame.grid_columnconfigure(1, weight=1)
 
-    # Остальные методы остаются без изменений
     def load_text(self):
         text = self.parent.load_text_from_file()
         if text:
@@ -396,42 +395,34 @@ class BlockCodeModule:
 
                     self.result_text.insert("end", f"исправлены ошибки в позициях {error_pos}\n")
                 else:
-                    # Если не можем исправить ошибки
                     error_blocks += 1
-                    corrected_vector = received_vector  # Оставляем как есть
+                    corrected_vector = received_vector
 
                     self.result_text.insert("end", f"невозможно исправить\n")
 
-                # Для систематического кода первые k бит - это информационные биты
                 if self.k <= len(corrected_vector):
                     info_bits = corrected_vector[:self.k]
                 else:
-                    info_bits = corrected_vector  # На случай, если k каким-то образом больше n
+                    info_bits = corrected_vector
             else:
                 # Если синдром нулевой, ошибок нет или они скомпенсировали друг друга
                 self.result_text.insert("end",
                                         f"Блок {i // self.n + 1}: {block}, синдром: {syndrome_str} - Ошибок не обнаружено\n")
 
-                # Для систематического кода первые k бит - это информационные биты
                 if self.k <= len(received_vector):
                     info_bits = received_vector[:self.k]
                 else:
-                    info_bits = received_vector  # На случай, если k каким-то образом больше n
+                    info_bits = received_vector
 
-            # Преобразуем информационные биты обратно в строку
             decoded_block = ''.join(map(str, info_bits))
             decoded_data += decoded_block
 
-            # Показываем извлеченные информационные биты
             info_bits_str = ''.join(map(str, info_bits))
             self.result_text.insert("end", f"Извлеченные информационные биты: {info_bits_str}\n")
 
-        # Проверяем, были ли блоки, которые не удалось декодировать
         if error_blocks > 0:
-            # Активируем кнопку адаптации в любом случае, если есть ошибки
             self.adapt_button.configure(state="normal")
         else:
-            # Если все блоки декодированы успешно, деактивируем кнопку
             self.adapt_button.configure(state="disabled")
 
         # Сохраняем декодированные данные

@@ -1207,7 +1207,7 @@ class ConvolutionalCodeModule:
         poly_window = ctk.CTkToplevel(self.parent)
         poly_window.title("Настройка полиномов генератора")
         poly_window.geometry("600x400")
-        poly_window.grab_set()  # Делаем окно модальным
+        poly_window.grab_set()
 
         # Заголовок
         header_frame = ctk.CTkFrame(poly_window)

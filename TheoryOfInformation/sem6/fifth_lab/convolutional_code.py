@@ -6,181 +6,241 @@ from helpers import text_to_binary, binary_to_text
 
 
 class ConvolutionalCodeModule:
+    CHANNEL_INFO = {
+        "ДСК": {
+            "name": "Двоичный симметричный канал (ДСК)",
+            "characteristics": [
+                "Ошибки 0<->1 с вероятностью p",
+                "Симметричный канал",
+                "C = 1 + p*log2(p) + (1-p)*log2(1-p)"
+            ],
+            "diagram": [
+                "  0 --p--> 1",
+                "  1 --p--> 0"
+            ],
+            "recommendations": [
+                "Симметричные полиномы"
+            ]
+        },
+        "ДСКС": {
+            "name": "Двоичный симметричный канал со стираниями (ДСКС)",
+            "characteristics": [
+                "Ошибки 0<->1 с p, стирания с q",
+                "C = 1 - q + (1-p-q)*log2((1-p-q)/(1-q)) + p*log2(p/(1-q))"
+            ],
+            "diagram": [
+                "  0 --p--> 1",
+                "  0 --q--> e",
+                "  1 --p--> 0",
+                "  1 --q--> e"
+            ],
+            "recommendations": [
+                "Больше полиномов при больших q",
+                "Стирания проще исправлять"
+            ]
+        },
+        "Z-канал": {
+            "name": "Z-канал (асимметричный)",
+            "characteristics": [
+                "1->0 с вероятностью p, 0 не искажается",
+                "C = log2(1 + (1-p)*p^(p/(1-p)))"
+            ],
+            "diagram": [
+                "  1 --p--> 0",
+                "  0 --1--> 0"
+            ],
+            "recommendations": [
+            ]
+        }
+    }
+
+    GENERAL_INFO = [
+        "Сверточные коды эффективны при последовательной передаче данных",
+        "Длина ограничения определяет память кода и сложность декодирования",
+        "Количество полиномов влияет на скорость кода и его избыточность",
+        "Скорость кода R = 1/n, где n - количество полиномов",
+        "Для надежной передачи скорость кода должна быть меньше пропускной способности канала"
+    ]
+
+    INITIAL_STEPS = [
+        "Введите исходный текст или загрузите его из файла",
+        "Настройте параметры кода (длина ограничения, количество и значения полиномов)",
+        "Нажмите 'Кодировать' для получения сверточного кода"
+    ]
+
     def __init__(self, parent):
         self.parent = parent
-        self.constraint_length = 3  # Длина ограничения
-        self.rate = 1 / 2  # Скорость кода (1/2 означает, что из 1 бита получается 2)
-        self.generator_polynomials = ["111", "101"]  # Полиномы генератора (начальные)
-        self.num_polynomials = 2  # Количество полиномов
-        self.registers = None  # Регистры сдвига
-        self.error_probability = 0.05  # Вероятность ошибки
-        self.erasure_probability = 0.03  # Вероятность стирания
-        self.channel_type = "ДСК"  # Тип канала (ДСК, ДСКС, Z-канал)
+        self.constraint_length = 3
+        self.rate = 1 / 2
+        self.generator_polynomials = ["111", "101"]
+        self.num_polynomials = 2
+        self.registers = None
+        self.error_probability = 0.05
+        self.erasure_probability = 0.03
+        self.channel_type = "ДСК"
 
     def create_widgets(self, parent_frame):
         # Создание основного фрейма
         self.main_frame = ctk.CTkFrame(parent_frame)
         self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Заголовок модуля
-        self.title_label = ctk.CTkLabel(self.main_frame, text="Модели каналов связи со сверточным кодом",
-                                        font=ctk.CTkFont(size=20, weight="bold"))
-        self.title_label.pack(padx=10, pady=10)
+        # Создаем вкладки
+        self.tabview = ctk.CTkTabview(self.main_frame)
+        self.tabview.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Фрейм для ввода параметров
-        self.params_frame = ctk.CTkFrame(self.main_frame)
-        self.params_frame.pack(fill="x", padx=10, pady=10)
+        # Добавляем вкладки
+        self.tabview.add("Кодирование")
+        self.tabview.add("Канал")
+        self.tabview.add("Декодирование")
+        self.tabview.add("Анализ")
 
-        # Параметры кода
-        self.params_label = ctk.CTkLabel(self.params_frame, text="Параметры сверточного кода:",
-                                         font=ctk.CTkFont(weight="bold"))
-        self.params_label.grid(row=0, column=0, padx=10, pady=5, sticky="w", columnspan=3)
+        # === Вкладка Кодирование ===
+        encode_frame = self.tabview.tab("Кодирование")
+        
+        # Карточка с параметрами кода
+        code_params_card = ctk.CTkFrame(encode_frame)
+        code_params_card.pack(fill="x", padx=10, pady=5)
+        
+        # Заголовок карточки
+        ctk.CTkLabel(code_params_card, text="Параметры сверточного кода",
+                    font=ctk.CTkFont(size=16, weight="bold")).pack(padx=10, pady=5)
+
+        # Сетка параметров
+        params_grid = ctk.CTkFrame(code_params_card)
+        params_grid.pack(fill="x", padx=10, pady=5)
 
         # Длина ограничения
-        self.constraint_label = ctk.CTkLabel(self.params_frame, text="Длина ограничения:")
-        self.constraint_label.grid(row=1, column=0, padx=10, pady=5, sticky="w")
-        self.constraint_entry = ctk.CTkEntry(self.params_frame, width=60)
-        self.constraint_entry.grid(row=1, column=1, padx=10, pady=5, sticky="w")
+        ctk.CTkLabel(params_grid, text="Длина ограничения:").grid(row=0, column=0, padx=5, pady=5)
+        self.constraint_entry = ctk.CTkEntry(params_grid, width=60)
+        self.constraint_entry.grid(row=0, column=1, padx=5, pady=5)
         self.constraint_entry.insert(0, str(self.constraint_length))
-
-        # Кнопка обновления длины ограничения
-        self.update_constraint_button = ctk.CTkButton(self.params_frame, text="Обновить длину",
-                                                      command=self.update_constraint_length)
-        self.update_constraint_button.grid(row=1, column=2, padx=10, pady=5, sticky="w")
+        
+        ctk.CTkButton(params_grid, text="Обновить",
+                     command=self.update_constraint_length).grid(row=0, column=2, padx=5, pady=5)
 
         # Количество полиномов
-        self.num_poly_label = ctk.CTkLabel(self.params_frame, text="Количество полиномов:")
-        self.num_poly_label.grid(row=2, column=0, padx=10, pady=5, sticky="w")
-        self.num_poly_entry = ctk.CTkEntry(self.params_frame, width=60)
-        self.num_poly_entry.grid(row=2, column=1, padx=10, pady=5, sticky="w")
+        ctk.CTkLabel(params_grid, text="Количество полиномов:").grid(row=1, column=0, padx=5, pady=5)
+        self.num_poly_entry = ctk.CTkEntry(params_grid, width=60)
+        self.num_poly_entry.grid(row=1, column=1, padx=5, pady=5)
         self.num_poly_entry.insert(0, str(self.num_polynomials))
+        
+        ctk.CTkButton(params_grid, text="Обновить",
+                     command=self.update_polynomials_count).grid(row=1, column=2, padx=5, pady=5)
 
-        # Кнопка обновления количества полиномов
-        self.update_poly_button = ctk.CTkButton(self.params_frame, text="Обновить количество",
-                                                command=self.update_polynomials_count)
-        self.update_poly_button.grid(row=2, column=2, padx=10, pady=5, sticky="w")
+        # Карточка с полиномами
+        poly_card = ctk.CTkFrame(encode_frame)
+        poly_card.pack(fill="x", padx=10, pady=5)
+        
+        # Заголовок и кнопка редактирования
+        poly_header = ctk.CTkFrame(poly_card)
+        poly_header.pack(fill="x", padx=10, pady=5)
+        
+        ctk.CTkLabel(poly_header, text="Полиномы генератора",
+                    font=ctk.CTkFont(size=16, weight="bold")).pack(side="left", padx=5)
+        
+        ctk.CTkButton(poly_header, text="Редактировать",
+                     command=self.open_polynomials_window).pack(side="right", padx=5)
 
-        # Фрейм для информации о полиномах и кнопки их редактирования
-        self.poly_info_frame = ctk.CTkFrame(self.main_frame)
-        self.poly_info_frame.pack(fill="x", padx=10, pady=10)
-
-        # Заголовок с информацией о полиномах
-        self.poly_label = ctk.CTkLabel(self.poly_info_frame, text=f"Полиномы генератора ({self.num_polynomials}):",
-                                       font=ctk.CTkFont(weight="bold"))
-        self.poly_label.pack(side="left", padx=10, pady=10)
-
-        # Кнопка для открытия окна редактирования полиномов
-        self.edit_poly_button = ctk.CTkButton(self.poly_info_frame, text="Редактировать полиномы",
-                                              command=self.open_polynomials_window)
-        self.edit_poly_button.pack(side="right", padx=10, pady=10)
-
-        # Фрейм со сводной информацией о полиномах
-        self.poly_summary_frame = ctk.CTkFrame(self.main_frame)
-        self.poly_summary_frame.pack(fill="x", padx=10, pady=(0, 10))
-
-        # Добавляем текстовое поле для отображения сводки о полиномах
-        self.poly_summary = ctk.CTkTextbox(self.poly_summary_frame, height=60)
-        self.poly_summary.pack(fill="x", padx=10, pady=10)
-        self.poly_summary.configure(state="normal")
-        self.poly_summary.delete("1.0", "end")
-
-        # Отображаем сводку полиномов
+        # Сводка полиномов
+        self.poly_summary = ctk.CTkTextbox(poly_card, height=60)
+        self.poly_summary.pack(fill="x", padx=10, pady=5)
         self.update_polynomials_summary()
 
-        # Параметры канала
-        self.channel_frame = ctk.CTkFrame(self.main_frame)
-        self.channel_frame.pack(fill="x", padx=10, pady=10)
+        # Карточка ввода текста
+        input_card = ctk.CTkFrame(encode_frame)
+        input_card.pack(fill="x", padx=10, pady=5)
+        
+        ctk.CTkLabel(input_card, text="Исходный текст",
+                    font=ctk.CTkFont(size=16, weight="bold")).pack(padx=10, pady=5)
+        
+        self.input_text = ctk.CTkTextbox(input_card, height=100)
+        self.input_text.pack(fill="x", padx=10, pady=5)
+        
+        # Кнопки управления текстом
+        input_buttons = ctk.CTkFrame(input_card)
+        input_buttons.pack(fill="x", padx=10, pady=5)
+        
+        ctk.CTkButton(input_buttons, text="Загрузить из файла",
+                     command=self.load_text).pack(side="left", padx=5)
+        
+        ctk.CTkButton(input_buttons, text="Очистить",
+                     command=lambda: self.input_text.delete("1.0", "end")).pack(side="left", padx=5)
+        
+        ctk.CTkButton(input_buttons, text="Кодировать",
+                     command=self.encode_text).pack(side="right", padx=5)
 
-        self.channel_label = ctk.CTkLabel(self.channel_frame, text="Параметры канала:",
-                                          font=ctk.CTkFont(weight="bold"))
-        self.channel_label.grid(row=0, column=0, padx=10, pady=5, sticky="w", columnspan=2)
+        # === Вкладка Канал ===
+        channel_frame = self.tabview.tab("Канал")
+        
+        # Карточка параметров канала
+        channel_params_card = ctk.CTkFrame(channel_frame)
+        channel_params_card.pack(fill="x", padx=10, pady=5)
+        
+        ctk.CTkLabel(channel_params_card, text="Параметры канала",
+                    font=ctk.CTkFont(size=16, weight="bold")).pack(padx=10, pady=5)
 
         # Тип канала
-        self.channel_type_label = ctk.CTkLabel(self.channel_frame, text="Тип канала:")
-        self.channel_type_label.grid(row=1, column=0, padx=10, pady=5, sticky="w")
-
+        channel_type_frame = ctk.CTkFrame(channel_params_card)
+        channel_type_frame.pack(fill="x", padx=10, pady=5)
+        
+        ctk.CTkLabel(channel_type_frame, text="Тип канала:").pack(side="left", padx=5)
+        
         self.channel_type_var = ctk.StringVar(value=self.channel_type)
-        self.channel_type_combo = ctk.CTkComboBox(self.channel_frame,
-                                                  values=["ДСК", "ДСКС", "Z-канал"],
-                                                  variable=self.channel_type_var,
-                                                  command=self.on_channel_changed)
-        self.channel_type_combo.grid(row=1, column=1, padx=10, pady=5, sticky="w")
+        self.channel_type_combo = ctk.CTkComboBox(channel_type_frame,
+                                                 values=["ДСК", "ДСКС", "Z-канал"],
+                                                 variable=self.channel_type_var,
+                                                 command=self.on_channel_changed)
+        self.channel_type_combo.pack(side="left", padx=5)
 
+        # Вероятности
+        prob_frame = ctk.CTkFrame(channel_params_card)
+        prob_frame.pack(fill="x", padx=10, pady=5)
+        
         # Вероятность ошибки
-        self.error_label = ctk.CTkLabel(self.channel_frame, text="Вероятность ошибки (p):")
-        self.error_label.grid(row=2, column=0, padx=10, pady=5, sticky="w")
-        self.error_entry = ctk.CTkEntry(self.channel_frame, width=60)
-        self.error_entry.grid(row=2, column=1, padx=10, pady=5, sticky="w")
+        ctk.CTkLabel(prob_frame, text="Вероятность ошибки (p):").grid(row=0, column=0, padx=5, pady=5)
+        self.error_entry = ctk.CTkEntry(prob_frame, width=60)
+        self.error_entry.grid(row=0, column=1, padx=5, pady=5)
         self.error_entry.insert(0, str(self.error_probability))
 
         # Вероятность стирания
-        self.erasure_label = ctk.CTkLabel(self.channel_frame, text="Вероятность стирания (q):")
-        self.erasure_label.grid(row=3, column=0, padx=10, pady=5, sticky="w")
-        self.erasure_entry = ctk.CTkEntry(self.channel_frame, width=60)
-        self.erasure_entry.grid(row=3, column=1, padx=10, pady=5, sticky="w")
+        ctk.CTkLabel(prob_frame, text="Вероятность стирания (q):").grid(row=1, column=0, padx=5, pady=5)
+        self.erasure_entry = ctk.CTkEntry(prob_frame, width=60)
+        self.erasure_entry.grid(row=1, column=1, padx=5, pady=5)
         self.erasure_entry.insert(0, str(self.erasure_probability))
 
-        # Фрейм для ввода текста
-        self.input_frame = ctk.CTkFrame(self.main_frame)
-        self.input_frame.pack(fill="x", padx=10, pady=10)
+        # Кнопка внесения ошибок
+        ctk.CTkButton(channel_params_card, text="Внести ошибки/стирания",
+                     command=self.add_noise).pack(padx=10, pady=10)
 
-        # Заголовок для ввода текста
-        self.input_label = ctk.CTkLabel(self.input_frame, text="Исходный текст:",
-                                        font=ctk.CTkFont(weight="bold"))
-        self.input_label.pack(padx=10, pady=5, anchor="w")
+        # === Вкладка Декодирование ===
+        decode_frame = self.tabview.tab("Декодирование")
+        
+        # Карточка декодирования
+        decode_card = ctk.CTkFrame(decode_frame)
+        decode_card.pack(fill="x", padx=10, pady=5)
+        
+        ctk.CTkLabel(decode_card, text="Декодирование",
+                    font=ctk.CTkFont(size=16, weight="bold")).pack(padx=10, pady=5)
+        
+        ctk.CTkButton(decode_card, text="Декодировать",
+                     command=self.decode_text).pack(padx=10, pady=10)
 
-        # Текстовое поле для ввода
-        self.input_text = ctk.CTkTextbox(self.input_frame, height=100)
-        self.input_text.pack(fill="x", padx=10, pady=5)
+        # === Вкладка Анализ ===
+        analysis_frame = self.tabview.tab("Анализ")
+        
+        # Карточка анализа
+        analysis_card = ctk.CTkFrame(analysis_frame)
+        analysis_card.pack(fill="x", padx=10, pady=5)
+        
+        ctk.CTkLabel(analysis_card, text="Анализ канала",
+                    font=ctk.CTkFont(size=16, weight="bold")).pack(padx=10, pady=5)
+        
+        ctk.CTkButton(analysis_card, text="Рассчитать пропускную способность",
+                     command=self.calculate_capacity).pack(padx=10, pady=10)
 
-        # Кнопки для загрузки текста из файла и очистки
-        self.buttons_frame = ctk.CTkFrame(self.input_frame)
-        self.buttons_frame.pack(fill="x", padx=10, pady=5)
-
-        self.load_button = ctk.CTkButton(self.buttons_frame, text="Загрузить из файла",
-                                         command=self.load_text)
-        self.load_button.pack(side="left", padx=5)
-
-        self.clear_button = ctk.CTkButton(self.buttons_frame, text="Очистить",
-                                          command=lambda: self.input_text.delete("1.0", "end"))
-        self.clear_button.pack(side="left", padx=5)
-
-        # Фрейм для операций кодирования
-        self.operation_frame = ctk.CTkFrame(self.main_frame)
-        self.operation_frame.pack(fill="x", padx=10, pady=10)
-
-        # Кнопка для кодирования
-        self.encode_button = ctk.CTkButton(self.operation_frame, text="Кодировать",
-                                           command=self.encode_text)
-        self.encode_button.pack(side="left", padx=10, pady=10)
-
-        # Кнопка для внесения ошибок и стираний
-        self.noise_button = ctk.CTkButton(self.operation_frame, text="Внести ошибки/стирания",
-                                          command=self.add_noise)
-        self.noise_button.pack(side="left", padx=10, pady=10)
-
-        # Кнопка для декодирования
-        self.decode_button = ctk.CTkButton(self.operation_frame, text="Декодировать",
-                                           command=self.decode_text)
-        self.decode_button.pack(side="left", padx=10, pady=10)
-
-        # Кнопка для расчета пропускной способности
-        self.capacity_button = ctk.CTkButton(self.operation_frame, text="Рассчитать пропускную способность",
-                                             command=self.calculate_capacity)
-        self.capacity_button.pack(side="left", padx=10, pady=10)
-
-        # Фрейм для отображения результатов
-        self.result_frame = ctk.CTkFrame(self.main_frame)
-        self.result_frame.pack(fill="both", expand=True, padx=10, pady=10)
-
-        # Заголовок для результатов
-        self.result_label = ctk.CTkLabel(self.result_frame, text="Результаты:",
-                                         font=ctk.CTkFont(weight="bold"))
-        self.result_label.pack(padx=10, pady=5, anchor="w")
-
-        # Текстовое поле для вывода результатов
-        self.result_text = ctk.CTkTextbox(self.result_frame, height=250)
-        self.result_text.pack(fill="both", expand=True, padx=10, pady=5)
+        # === Общее текстовое поле для результатов ===
+        self.result_text = ctk.CTkTextbox(self.main_frame, height=200)
+        self.result_text.pack(fill="both", expand=True, padx=10, pady=10)
 
         # Настройка интерфейса в зависимости от типа канала
         self.on_channel_changed(self.channel_type)
@@ -265,10 +325,6 @@ class ConvolutionalCodeModule:
         controls_frame = ctk.CTkFrame(self.poly_frame)
         controls_frame.pack(fill="x", padx=10, pady=5)
 
-        # Добавляем кнопку информации о полиномах
-        info_button = ctk.CTkButton(controls_frame, text="?", width=25, height=25,
-                                    command=self._show_polynomials_help)
-        info_button.pack(side="left", padx=5)
 
         # Если есть рекомендуемые полиномы, добавляем кнопку их применения
         if self.constraint_length <= 5:
@@ -285,36 +341,6 @@ class ConvolutionalCodeModule:
                                              width=140, height=25,
                                              command=self._apply_same_polynomial)
             same_poly_button.pack(side="left", padx=5)
-
-    def _show_polynomials_help(self):
-        """Показывает информацию о полиномах"""
-        help_text = (
-            "Полиномы генератора определяют правила кодирования информационных битов.\n\n"
-            f"Длина полинома ({self.constraint_length} бит) должна соответствовать длине ограничения.\n"
-            "Рекомендуется, чтобы первый и последний биты полинома были равны 1.\n\n"
-            "Полиномы можно записать в двух форматах:\n"
-            "1. Двоичный формат: строка из 0 и 1 длиной с длину ограничения\n"
-            "   Пример: '111' - означает, что будут использованы все регистры\n"
-            "2. Формат индексов: список индексов регистров через запятую\n"
-            "   Пример: '0,1,2' - это эквивалент '111' (используются регистры с индексами 0, 1 и 2)\n\n"
-            "Примеры эффективных полиномов:\n"
-        )
-
-        # Добавляем примеры для разных длин ограничения
-        for length in range(2, min(6, self.constraint_length + 1)):
-            suggestions = self.get_polynomial_suggestions(length)
-            if suggestions:
-                binary_examples = ', '.join(suggestions)
-                index_examples = []
-                for suggestion in suggestions:
-                    indices = [i for i, bit in enumerate(suggestion) if bit == '1']
-                    index_examples.append(str(indices).replace('[', '').replace(']', ''))
-
-                help_text += f"Для длины {length}:\n"
-                help_text += f"- Двоичный: {binary_examples}\n"
-                help_text += f"- Индексы: {', '.join(index_examples)}\n"
-
-        messagebox.showinfo("Информация о полиномах", help_text)
 
     def _apply_recommended_polynomials(self, suggestions):
         """Применяет рекомендуемые полиномы"""
@@ -455,119 +481,64 @@ class ConvolutionalCodeModule:
             messagebox.showerror("Ошибка", "Количество полиномов должно быть целым числом")
 
     def on_channel_changed(self, channel_type):
-        # Сохраняем новый тип канала
+        """Обработка изменения типа канала"""
         self.channel_type = channel_type
+        self._update_erasure_field()
+        self._update_error_field()
+        self._display_channel_info()
 
-        # Настраиваем интерфейс в зависимости от типа канала
-        if channel_type == "ДСКС":
-            # В канале со стираниями активируем поле для вероятности стирания
-            self.erasure_label.configure(state="normal")
+    def _update_erasure_field(self):
+        """Обновление поля вероятности стирания"""
+        if self.channel_type == "ДСКС":
             self.erasure_entry.configure(state="normal")
-            # Устанавливаем значение из сохраненного параметра
-            self.erasure_entry.delete(0, "end")
-            self.erasure_entry.insert(0, str(self.erasure_probability))
         else:
-            # В других каналах деактивируем поле для вероятности стирания
-            self.erasure_label.configure(state="disabled")
             self.erasure_entry.configure(state="disabled")
-            # Устанавливаем значение 0 для вероятности стирания
             self.erasure_entry.delete(0, "end")
             self.erasure_entry.insert(0, "0")
             self.erasure_probability = 0
 
-        # Проверяем значение вероятности ошибки
+    def _update_error_field(self):
+        """Обновление поля вероятности ошибки"""
         if not self.error_entry.get():
-            # Устанавливаем значение по умолчанию, если поле пустое
             self.error_entry.delete(0, "end")
             self.error_entry.insert(0, str(self.error_probability))
 
-        # Очищаем текстовое поле для результатов и добавляем информацию о выбранном канале
+    def _display_channel_info(self):
+        """Отображение информации о канале"""
         self.result_text.delete("1.0", "end")
-        self.result_text.insert("1.0", f"=== Выбран канал: {channel_type} ===\n\n")
+        self.result_text.insert("1.0", f"=== Выбран канал: {self.channel_type} ===\n\n")
 
-        # Показываем описание и характеристики выбранного канала
-        if channel_type == "ДСК":
-            self.result_text.insert("end", "Двоичный симметричный канал (ДСК)\n\n")
-            self.result_text.insert("end", "Характеристики:\n")
-            self.result_text.insert("end", "- 0→1 и 1→0 происходят с одинаковой вероятностью p\n")
-            self.result_text.insert("end", "- Симметричность ошибок (одинаковая вероятность для 0 и 1)\n")
-            self.result_text.insert("end", "- Формула пропускной способности: C = 1 - H(p)\n")
-            self.result_text.insert("end", "- Где H(p) = -p·log₂(p) - (1-p)·log₂(1-p) - двоичная энтропия\n\n")
-
-            # Схематичное представление канала
-            self.result_text.insert("end", "Схема канала:\n")
-            self.result_text.insert("end", "  ╭─── 1-p ───> 0\n")
-            self.result_text.insert("end", "0─┤\n")
-            self.result_text.insert("end", "  ╰──── p ────> 1\n\n")
-
-            # Рекомендации для ДСК
-            self.result_text.insert("end", "Рекомендации для кодирования:\n")
-            self.result_text.insert("end", "- Оптимальны симметричные коды\n")
-            self.result_text.insert("end", "- Эффективны коды с большим кодовым расстоянием\n")
-            self.result_text.insert("end", "- Хороши сверточные коды с равномерным распределением единиц в полиномах\n")
-
-        elif channel_type == "ДСКС":
-            self.result_text.insert("end", "Двоичный симметричный канал со стираниями (ДСКС)\n\n")
-            self.result_text.insert("end", "Характеристики:\n")
-            self.result_text.insert("end", "- 0→1 и 1→0 происходят с одинаковой вероятностью p\n")
-            self.result_text.insert("end", "- Стирание бита происходит с вероятностью q\n")
-            self.result_text.insert("end", "- Корректная передача происходит с вероятностью 1-p-q\n")
-            self.result_text.insert("end", "- Формула пропускной способности: C = (1-q)·(1-H(p/(1-q)))\n\n")
-
-            # Схематичное представление канала
-            self.result_text.insert("end", "Схема канала:\n")
-            self.result_text.insert("end", "  ╭─── 1-p-q ──> 0\n")
-            self.result_text.insert("end", "0─┼──── p ────> 1\n")
-            self.result_text.insert("end", "  ╰──── q ────> e\n\n")
-            self.result_text.insert("end", "  ╭─── 1-p-q ──> 1\n")
-            self.result_text.insert("end", "1─┼──── p ────> 0\n")
-            self.result_text.insert("end", "  ╰──── q ────> e\n")
-
-            # Рекомендации для ДСКС
-            self.result_text.insert("end", "Рекомендации для кодирования:\n")
-            self.result_text.insert("end", "- Стирания легче исправлять, чем ошибки (известна позиция стирания)\n")
-            self.result_text.insert("end", "- Для стираний эффективны сверточные коды с большой избыточностью\n")
-            self.result_text.insert("end",
-                                    "- При высокой вероятности стираний рекомендуется увеличивать число полиномов\n")
-
-        elif channel_type == "Z-канал":
-            self.result_text.insert("end", "Z-канал (канал с асимметричными ошибками)\n\n")
-            self.result_text.insert("end", "Характеристики:\n")
-            self.result_text.insert("end", "- 0→1 никогда не происходит (вероятность 0)\n")
-            self.result_text.insert("end", "- 1→0 происходит с вероятностью p\n")
-            self.result_text.insert("end", "- Асимметричность ошибок (только в одном направлении)\n")
-            self.result_text.insert("end",
-                                    "- При оптимальном распределении входных символов пропускная способность выше, чем у ДСК\n\n")
-
-            # Схематичное представление канала
-            self.result_text.insert("end", "Схема канала:\n")
-            self.result_text.insert("end", "0───── 1 ─────> 0\n\n")
-            self.result_text.insert("end", "  ╭─── 1-p ───> 1\n")
-            self.result_text.insert("end", "1─┤\n")
-            self.result_text.insert("end", "  ╰──── p ────> 0\n\n")
-
-            # Рекомендации для Z-канала
-            self.result_text.insert("end", "Рекомендации для кодирования:\n")
-            self.result_text.insert("end", "- Эффективны коды с большим весом (много единиц)\n")
-            self.result_text.insert("end",
-                                    "- Полиномы с большим числом единиц повышают вероятность обнаружения ошибок\n")
-            self.result_text.insert("end", "- Асимметрия канала может быть использована для оптимизации кодов\n")
-
-        # Общая информация о сверточных кодах
-        self.result_text.insert("end", "\n=== Общая информация о сверточных кодах ===\n")
-        self.result_text.insert("end", "- Сверточные коды эффективны при последовательной передаче данных\n")
-        self.result_text.insert("end", "- Длина ограничения определяет память кода и сложность декодирования\n")
-        self.result_text.insert("end", "- Количество полиномов влияет на скорость кода и его избыточность\n")
-        self.result_text.insert("end", "- Скорость кода R = 1/n, где n - количество полиномов\n")
-        self.result_text.insert("end",
-                                "- Для надежной передачи скорость кода должна быть меньше пропускной способности канала\n")
-
-        # Рекомендуем пользователю следующие шаги
+        info = self.CHANNEL_INFO[self.channel_type]
+        
+        # Вывод основной информации о канале
+        self.result_text.insert("end", f"{info['name']}\n\n")
+        
+        # Характеристики
+        self._insert_section("Характеристики:", info['characteristics'])
+        
+        # Схема канала
+        self.result_text.insert("end", "Схема канала:\n")
+        for line in info['diagram']:
+            self.result_text.insert("end", f"{line}\n")
+        self.result_text.insert("end", "\n")
+        
+        # Рекомендации
+        self._insert_section("Рекомендации для кодирования:", info['recommendations'])
+        
+        # Общая информация
+        self._insert_section("=== Общая информация о сверточных кодах ===", self.GENERAL_INFO)
+        
+        # Шаги
         self.result_text.insert("end", "\nДля начала работы:\n")
-        self.result_text.insert("end", "1. Введите исходный текст или загрузите его из файла\n")
-        self.result_text.insert("end",
-                                "2. Настройте параметры кода (длина ограничения, количество и значения полиномов)\n")
-        self.result_text.insert("end", "3. Нажмите 'Кодировать' для получения сверточного кода\n")
+        for i, step in enumerate(self.INITIAL_STEPS, 1):
+            self.result_text.insert("end", f"{i}. {step}\n")
+
+    def _insert_section(self, title, items):
+        """Вспомогательный метод для вставки секции с заголовком и списком"""
+        self.result_text.insert("end", f"{title}\n")
+        for item in items:
+            self.result_text.insert("end", f"- {item}\n")
+        self.result_text.insert("end", "\n")
 
     def load_text(self):
         text = self.parent.load_text_from_file()
@@ -628,70 +599,31 @@ class ConvolutionalCodeModule:
             self.result_text.insert("end",
                                     f"Скорость кода: R = 1/{len(self.generator_polynomials)} = {code_rate:.4f}\n")
 
-            # Анализируем эффективность кода для текущего канала
-            try:
-                # Получаем параметры канала
-                p = float(self.error_entry.get())
-                if self.channel_type == "ДСКС":
-                    q = float(self.erasure_entry.get())
-                else:
-                    q = 0
+            # Получаем параметры канала
+            p = float(self.error_entry.get())
+            if self.channel_type == "ДСКС":
+                q = float(self.erasure_entry.get())
+            else:
+                q = 0
 
-                # Расчёт приблизительной пропускной способности канала
-                channel_capacity = 0
-                if self.channel_type == "ДСК":
-                    if p == 0 or p == 1:
-                        channel_capacity = 1
-                    else:
-                        h_binary = -p * np.log2(p) - (1 - p) * np.log2(1 - p)
-                        channel_capacity = 1 - h_binary
-                elif self.channel_type == "ДСКС":
-                    if q == 1:
-                        channel_capacity = 0
-                    else:
-                        p_eff = p / (1 - q)  # q < 1 здесь гарантировано
-                        if p_eff == 0 or p_eff == 1:
-                            h_eff = 0
-                        else:  # Это означает, что 0 < p_eff < 1, так как p_eff всегда в [0,1]
-                            h_eff = -p_eff * np.log2(p_eff) - (1 - p_eff) * np.log2(1 - p_eff)
-                        channel_capacity = (1 - q) * (1 - h_eff)
-                elif self.channel_type == "Z-канал":
-                    if p == 0:
-                        channel_capacity = 1
-                    elif p == 1:
-                        channel_capacity = 0
-                    else:
-                        # Оценка для Z-канала
-                        a_opt = 1 / (1 + 2.5 * p)  # Приблизительная формула
-                        h_y = -((1 - a_opt * p) * np.log2(1 - a_opt * p) + a_opt * p * np.log2(
-                            a_opt * p)) if a_opt * p > 0 else -((1 - a_opt * p) * np.log2(1 - a_opt * p))
-                        h_yx = -(a_opt * (1 - p) * np.log2(1 - p) + a_opt * p * np.log2(p)) if 0 < p < 1 else 0
-                        channel_capacity = h_y - h_yx
+            # Расчёт пропускной способности через новую функцию
+            channel_capacity = self.get_channel_capacity(p, q, self.channel_type)
 
-                # Сравнение скорости кода и пропускной способности
-                self.result_text.insert("end", f"\nАнализ кода для канала {self.channel_type}:\n")
-                self.result_text.insert("end",
-                                        f"- Пропускная способность канала: C ≈ {channel_capacity:.4f} бит/символ\n")
+            # Сравнение скорости кода и пропускной способности
+            self.result_text.insert("end", f"\nАнализ кода для канала {self.channel_type}:\n")
+            self.result_text.insert("end", f"- Пропускная способность канала: C ≈ {channel_capacity:.4f} бит/символ\n")
 
-                if code_rate <= channel_capacity:
-                    self.result_text.insert("end",
-                                            f"✅ Скорость кода ({code_rate:.4f}) не превышает пропускную способность ({channel_capacity:.4f})\n")
-                    self.result_text.insert("end",
-                                            "   Согласно теореме Шеннона, возможно построение кода с произвольно малой вероятностью ошибки\n")
-                else:
-                    self.result_text.insert("end",
-                                            f"⚠️ Скорость кода ({code_rate:.4f}) превышает пропускную способность ({channel_capacity:.4f})\n")
-                    self.result_text.insert("end", "   Согласно теореме Шеннона, надежная передача невозможна\n")
+            if code_rate <= channel_capacity:
+                self.result_text.insert("end", f"✅ Скорость кода ({code_rate:.4f}) не превышает пропускную способность ({channel_capacity:.4f})\n")
+                self.result_text.insert("end", "   Согласно теореме Шеннона, возможно построение кода с произвольно малой вероятностью ошибки\n")
+            else:
+                self.result_text.insert("end", f"⚠️ Скорость кода ({code_rate:.4f}) превышает пропускную способность ({channel_capacity:.4f})\n")
+                self.result_text.insert("end", "   Согласно теореме Шеннона, надежная передача невозможна\n")
 
-                    # Рекомендации по улучшению
-                    required_polys = max(2, int(np.ceil(1 / channel_capacity)))
-                    if required_polys > len(self.generator_polynomials):
-                        self.result_text.insert("end",
-                                                f"   Рекомендуется использовать не менее {required_polys} полиномов для надежной передачи\n")
-            except Exception as e:
-                # Игнорируем ошибки при попытке расчета рекомендаций
-                self.result_text.insert("end",
-                                        f"\nПредупреждение: не удалось вычислить пропускную способность канала: {str(e)}\n")
+                # Рекомендации по улучшению
+                required_polys = max(2, int(np.ceil(1 / channel_capacity)))
+                if required_polys > len(self.generator_polynomials):
+                    self.result_text.insert("end", f"   Рекомендуется использовать не менее {required_polys} полиномов для надежной передачи\n")
 
             # Кодируем данные
             encoded_data = self.convolutional_encode(binary_data)
@@ -743,9 +675,9 @@ class ConvolutionalCodeModule:
                 self.result_text.insert("end", "- Рекомендуется использовать коды с большим расстоянием Хэмминга\n")
             elif self.channel_type == "Z-канал":
                 self.result_text.insert("end",
-                                        "- Z-канал имеет асимметричные ошибки (только 1→0), это можно использовать для оптимизации\n")
+                                        "- Z-канал имеет асимметричные ошибки (только 1->0), это можно использовать для оптимизации\n")
                 self.result_text.insert("end",
-                                        "- Полиномы с большим количеством единиц помогают лучше защититься от ошибок типа 1→0\n")
+                                        "- Полиномы с большим количеством единиц помогают лучше защититься от ошибок типа 1->0\n")
 
             # Следующий шаг
             self.result_text.insert("end",
@@ -772,7 +704,6 @@ class ConvolutionalCodeModule:
         for i, poly in enumerate(numeric_polynomials):
             self.result_text.insert("end", f"Полином {i + 1}: {poly} (индексы регистров)\n")
 
-        # Кодируем с использованием алгоритма из Laba.py
         encoded_data = ""
         max_register = max(max(p) for p in numeric_polynomials)
         registers = [0] * (max_register + 1)
@@ -895,29 +826,7 @@ class ConvolutionalCodeModule:
             if self.channel_type == "ДСКС":
                 self.result_text.insert("end", f"- Вероятность стирания (q): {self.erasure_probability}\n")
 
-            # Графическое представление модели канала
-            self.result_text.insert("end", "\nМодель канала:\n")
-
-            if self.channel_type == "ДСК":
-                self.result_text.insert("end", "  ╭─── 1-p ───> 0\n")
-                self.result_text.insert("end", "0─┤\n")
-                self.result_text.insert("end", "  ╰──── p ────> 1\n\n")
-                self.result_text.insert("end", "  ╭─── 1-p ───> 1\n")
-                self.result_text.insert("end", "1─┤\n")
-                self.result_text.insert("end", "  ╰──── p ────> 0\n")
-            elif self.channel_type == "ДСКС":
-                self.result_text.insert("end", "  ╭─── 1-p-q ──> 0\n")
-                self.result_text.insert("end", "0─┼──── p ────> 1\n")
-                self.result_text.insert("end", "  ╰──── q ────> e\n\n")
-                self.result_text.insert("end", "  ╭─── 1-p-q ──> 1\n")
-                self.result_text.insert("end", "1─┼──── p ────> 0\n")
-                self.result_text.insert("end", "  ╰──── q ────> e\n")
-            elif self.channel_type == "Z-канал":
-                self.result_text.insert("end", "0───── 1 ─────> 0\n\n")
-                self.result_text.insert("end", "  ╭─── 1-p ───> 1\n")
-                self.result_text.insert("end", "1─┤\n")
-                self.result_text.insert("end", "  ╰──── p ────> 0\n")
-
+            # Обрабатываем данные
             for bit in encoded_data:
                 bits_processed += 1
                 r = random.random()
@@ -958,7 +867,7 @@ class ConvolutionalCodeModule:
                         else:
                             one_to_zero_count += 1
                     elif r < self.error_probability + self.erasure_probability:
-                        noisy_data += 'e'  # Обозначаем стирание символом 'e'
+                        noisy_data += '!'  # Обозначаем стирание символом '!'
                         erasure_count += 1
                     else:
                         noisy_data += bit
@@ -1015,8 +924,8 @@ class ConvolutionalCodeModule:
                 zero_to_one_ratio = zero_to_one_count / error_count if error_count > 0 else 0
                 one_to_zero_ratio = one_to_zero_count / error_count if error_count > 0 else 0
 
-                self.result_text.insert("end", f"- 0→1: {zero_to_one_count} ({zero_to_one_ratio:.4f})\n")
-                self.result_text.insert("end", f"- 1→0: {one_to_zero_count} ({one_to_zero_ratio:.4f})\n")
+                self.result_text.insert("end", f"- 0->1: {zero_to_one_count} ({zero_to_one_ratio:.4f})\n")
+                self.result_text.insert("end", f"- 1->0: {one_to_zero_count} ({one_to_zero_ratio:.4f})\n")
 
             if self.channel_type == "ДСКС":
                 self.result_text.insert("end", f"- Количество стираний: {erasure_count}\n")
@@ -1024,7 +933,7 @@ class ConvolutionalCodeModule:
 
             if self.channel_type == "Z-канал":
                 self.result_text.insert("end", f"- Количество единиц в исходных данных: {z_channel_ones_count}\n")
-                self.result_text.insert("end", f"- Количество ошибок типа 1→0: {z_channel_error_count}\n")
+                self.result_text.insert("end", f"- Количество ошибок типа 1->0: {z_channel_error_count}\n")
                 self.result_text.insert("end", f"- Вероятность ошибки при передаче '1': {z_prob:.6f}\n")
 
             # Добавляем инструкцию для следующего шага
@@ -1043,14 +952,14 @@ class ConvolutionalCodeModule:
         noisy_data = self.parent.noisy_text
 
         # Если в канале были стирания, заменяем их на более вероятные биты
-        if 'e' in noisy_data:
+        if '!' in noisy_data:
             # Для простоты заменяем стирания на '0'
-            noisy_data = noisy_data.replace('e', '0')
+            noisy_data = noisy_data.replace('!', '0')
 
         # Конвертируем полиномы в числовой формат
         numeric_polynomials = self.binary_polys_to_numeric()
 
-        # Декодирование с использованием алгоритма Витерби из Laba.py
+
         try:
             decoded_data = self.viterbi_decode(noisy_data, numeric_polynomials)
 
@@ -1157,36 +1066,10 @@ class ConvolutionalCodeModule:
                 messagebox.showerror("Ошибка", "Сумма вероятностей ошибки и стирания не может превышать 1")
                 return
 
-            # Рассчитываем пропускную способность для разных каналов
-            capacity_dsk = 0
-            capacity_dsks = 0
-            capacity_z = 0
-
-            # Формула для ДСК
-            if p != 0 and p != 1:
-                capacity_dsk = 1 + p * np.log2(p) + (1 - p) * np.log2(1 - p)
-            else:
-                capacity_dsk = 1
-
-            # Формула для ДСКС
-            if q != 1:
-                if p != 0 and p != 1 - q:
-                    capacity_dsks = 1 - q + (1 - p - q) * np.log2((1 - p - q) / (1 - q)) + p * np.log2(p / (1 - q))
-                else:
-                    capacity_dsks = 1 - q
-            else:
-                capacity_dsks = 0
-
-            # Формула для Z-канала
-            if p != 0 and p != 1:
-                h = -((1 - p) * np.log2(1 - p) + p * np.log2(p))
-                if p == 1:
-                    capacity_z = 0
-                else:
-                    p_power = p ** (p / (1 - p))
-                    capacity_z = np.log2(1 + (1 - p) * p_power)
-            else:
-                capacity_z = 1
+            # Используем универсальную функцию для всех каналов
+            capacity_dsk = self.get_channel_capacity(p, 0, "ДСК")
+            capacity_dsks = self.get_channel_capacity(p, q, "ДСКС")
+            capacity_z = self.get_channel_capacity(p, 0, "Z-канал")
 
             # Выводим результаты
             self.result_text.insert("end", "\n\n=== Результаты расчета пропускной способности ===\n")
@@ -1196,21 +1079,18 @@ class ConvolutionalCodeModule:
 
             self.result_text.insert("end", "\nПропускная способность каналов:\n")
             self.result_text.insert("end", f"1. Двоичный симметричный канал (ДСК): {capacity_dsk:.4f} бит/символ\n")
-            self.result_text.insert("end",
-                                    f"2. Двоичный симметричный канал со стираниями (ДСКС): {capacity_dsks:.4f} бит/символ\n")
+            self.result_text.insert("end", f"2. Двоичный симметричный канал со стираниями (ДСКС): {capacity_dsks:.4f} бит/символ\n")
             self.result_text.insert("end", f"3. Z-канал: {capacity_z:.4f} бит/символ\n")
 
             # Выводим текущую пропускную способность канала
-            current_capacity = 0
-            if self.channel_type == "ДСК":
-                current_capacity = capacity_dsk
-            elif self.channel_type == "ДСКС":
-                current_capacity = capacity_dsks
-            elif self.channel_type == "Z-канал":
-                current_capacity = capacity_z
+            current_capacity = self.get_channel_capacity(p, q, self.channel_type)
+            self.result_text.insert("end", f"\nТекущая пропускная способность ({self.channel_type}): {current_capacity:.4f} бит/символ\n")
 
-            self.result_text.insert("end",
-                                    f"\nТекущая пропускная способность ({self.channel_type}): {current_capacity:.4f} бит/символ")
+            # Вставляем только корректные формулы
+            self.result_text.insert("end", "\nФормулы пропускной способности:\n")
+            self.result_text.insert("end", "ДСК:      C = 1 + p*log2(p) + (1-p)*log2(1-p)\n")
+            self.result_text.insert("end", "ДСКС:     C = 1 - q + (1-p-q)*log2((1-p-q)/(1-q)) + p*log2(p/(1-q))\n")
+            self.result_text.insert("end", "Z-канал:  C = log2(1 + (1-p)*p^(p/(1-p)))\n")
 
         except ValueError as e:
             messagebox.showerror("Ошибка", f"Ошибка в параметрах: {str(e)}")
@@ -1421,11 +1301,6 @@ class ConvolutionalCodeModule:
                                          command=lambda: self._apply_same_to_entries(poly_entries))
         same_poly_button.pack(side="left", padx=10, pady=10)
 
-        # Кнопка информации
-        info_button = ctk.CTkButton(button_frame, text="Информация о полиномах",
-                                    command=self._show_polynomials_help)
-        info_button.pack(side="left", padx=10, pady=10)
-
         # Кнопки OK и Отмена
         cancel_button = ctk.CTkButton(button_frame, text="Отмена",
                                       command=poly_window.destroy)
@@ -1586,3 +1461,25 @@ class ConvolutionalCodeModule:
                                          f"Полином {i + 1}: {self.generator_polynomials[i]} / {numeric_polys[i]}  ")
 
         self.poly_summary.configure(state="disabled")
+
+    def get_channel_capacity(self, p, q, channel_type):
+        """Вычисляет пропускную способность канала по типу и параметрам"""
+        if channel_type == "ДСК":
+            if p != 0 and p != 1:
+                return 1 + p * np.log2(p) + (1 - p) * np.log2(1 - p)
+            else:
+                return 1
+        elif channel_type == "ДСКС":
+            if q != 1:
+                if p != 0 and p != 1 - q:
+                    return 1 - q + (1 - p - q) * np.log2((1 - p - q) / (1 - q)) + p * np.log2(p / (1 - q))
+                else:
+                    return 1 - q
+            else:
+                return 0
+        elif channel_type == "Z-канал":
+            if p != 0 and p != 1:
+                return np.log2(1 + (1 - p) * (p ** (p / (1 - p))))
+            else:
+                return 1
+        return 0

@@ -7,7 +7,6 @@ from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog,
     QLabel, QWidget, QGroupBox, QTextEdit, QMessageBox, QSlider, QDoubleSpinBox
 )
-from PyQt5.QtCore import Qt
 
 
 class DPCMCodec:

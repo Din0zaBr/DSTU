@@ -11,6 +11,7 @@ from PyQt5.QtWidgets import (
 
 class DPCMCodec:
     """DPCM encoder/decoder for audio signals."""
+
     @staticmethod
     def encode(signal: np.ndarray, step: float) -> np.ndarray:
         """Encode signal using DPCM with given quantization step."""
@@ -61,12 +62,12 @@ class DPCMCodec:
         """Return compression statistics as a string."""
         # Размер оригинальных данных в байтах (16 бит на сэмпл)
         orig_size = len(original) * 2
-        
+
         # Размер закодированных данных в байтах
         # Каждая разность занимает 8 бит (1 байт)
         # Плюс 8 байт для хранения шага квантования (float64)
         enc_size = len(encoded) + 8
-        
+
         ratio = orig_size / enc_size if enc_size else 0
         decoded = DPCMCodec.decode(encoded, step)
         error = np.mean(np.abs(original - decoded))
@@ -84,6 +85,7 @@ class DPCMCodec:
 
 class WavProcessor:
     """WAV file loader/saver for mono 16-bit PCM audio."""
+
     def __init__(self):
         self.sample_rate = 44100
         self.bit_depth = 16
@@ -214,10 +216,10 @@ class DPCMGUI(QMainWindow):
         self.btn_save_compr.setEnabled(True)
         self.plot_signals()
         # Показываем предупреждение о возможных искажениях
-        QMessageBox.warning(self, "Предупреждение", 
-            "Используется 8-битное кодирование разностей.\n"
-            "Большие разности между сэмплами будут обрезаться,\n"
-            "что может привести к искажению сигнала.")
+        QMessageBox.warning(self, "Предупреждение",
+                            "Используется 8-битное кодирование разностей.\n"
+                            "Большие разности между сэмплами будут обрезаться,\n"
+                            "что может привести к искажению сигнала.")
 
     def save_compressed(self):
         if self.encoded is None:

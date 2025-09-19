@@ -3,7 +3,7 @@
 
 def binary_euclid(c, d):
     two_degrees = 0
-    while c != 0 and d != 0 and c != 1 and d != 1 and c != d:
+    while 1 < c != d > 1:
         if c % 2 == 0 and d % 2 == 0:
             print(f"{c}, {d} - чётные -> a = {c}/2, b = {d}/2")
             c = c // 2
@@ -38,28 +38,51 @@ def binary_euclid(c, d):
 
 
 def final(e, f, degree_of_two):
-    if e == 0 and f != 0:
-        print(f"НОД ({e},{f}) = {f}")
-    if e != 0 and f == 0:
-        print(f"НОД ({e},{f}) = {e}")
     if e == f:
         print(f"НОД ({e},{f}) = {e * (2 ** degree_of_two)}")
-    if e == 1 and f != 0:
-        print(f"НОД ({e},{f}) = {e}")
-    if e != 0 and f == 1:
-        print(f"НОД ({e},{f}) = {f}")
+    if e != 0:
+        if f == 1:
+            print(f"НОД ({e},{f}) = {f}")
+        if f == 0:
+            print(f"НОД ({e},{f}) = {e}")
+    if f != 0:
+        if e == 0:
+            print(f"НОД ({e},{f}) = {f}")
+        if e == 1:
+            print(f"НОД ({e},{f}) = {e}")
 
 
 def checking(w, y):
-    if w < 0:
-        w *= -1
-    if y < 0:
-        y *= -1
+    w, y = abs(w), abs(y)
+    if y != 0:
+        if w == 1:
+            print(f"НОД ({y},{w}) = {w}")
+            return False
+        if w == 0:
+            print(f"НОД ({y},{w}) = {y}")
+            return False
+    if w != 0:
+        if y == 0:
+            print(f"НОД ({y},{w}) = {w}")
+            return False
+        if y == 1:
+            print(f"НОД ({y},{w}) = {y}")
+            return False
+
     return w, y
 
 
-a, b = int(input("Введите первое число: ")), int(input("Введите второе число: "))
-print()
-a, b = checking(a, b)
-a, b, degree_2 = binary_euclid(a, b)
-final(a, b, degree_2)
+Flag = 1
+while Flag:
+    try:
+        a, b = int(input("a = ")), int(input("b = "))
+        print()
+        if checking(a, b):
+            a, b = checking(a, b)
+            a, b, degree_2 = binary_euclid(a, b)
+            final(a, b, degree_2)
+            Flag = int(input("Если хотите прервать программу, введите 0: "))
+            print()
+    except:
+        print("Введите два целых числа")
+        print()

@@ -44,17 +44,17 @@ def final(e, f, degree_of_two):
     if e != 0:
         if f == 1:
             print(f"НОД ({e},{f}) = {f}")
-            return f
+            return f * (2 ** degree_of_two)
         if f == 0:
             print(f"НОД ({e},{f}) = {e}")
-            return e
+            return e * (2 ** degree_of_two)
     if f != 0:
         if e == 0:
             print(f"НОД ({e},{f}) = {f}")
-            return f
+            return f * (2 ** degree_of_two)
         if e == 1:
             print(f"НОД ({e},{f}) = {e}")
-            return e
+            return e * (2 ** degree_of_two)
 
 
 def checking(w, y):

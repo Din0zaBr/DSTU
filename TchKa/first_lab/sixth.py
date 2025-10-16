@@ -43,17 +43,21 @@ def final(e, f, degree_of_two):
         return e * (2 ** degree_of_two)
     if e != 0:
         if f == 1:
-            print(f"НОД ({e},{f}) = {f}")
+            print(
+                f"НОД ({e},{f}) = {f} и домножаем на {degree_of_two} степень двойки. Значит {f * (2 ** degree_of_two)}")
             return f * (2 ** degree_of_two)
         if f == 0:
-            print(f"НОД ({e},{f}) = {e}")
+            print(
+                f"НОД ({e},{f}) = {e} и домножаем на {degree_of_two} степень двойки. Значит {e * (2 ** degree_of_two)}")
             return e * (2 ** degree_of_two)
     if f != 0:
         if e == 0:
-            print(f"НОД ({e},{f}) = {f}")
+            print(
+                f"НОД ({e},{f}) = {f} и домножаем на {degree_of_two} степень двойки. Значит {f * (2 ** degree_of_two)}")
             return f * (2 ** degree_of_two)
         if e == 1:
-            print(f"НОД ({e},{f}) = {e}")
+            print(
+                f"НОД ({e},{f}) = {e} и домножаем на {degree_of_two} степень двойки. Значит {e * (2 ** degree_of_two)}")
             return e * (2 ** degree_of_two)
 
 

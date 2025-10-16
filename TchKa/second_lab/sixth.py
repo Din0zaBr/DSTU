@@ -19,7 +19,7 @@ def checking(a, m, degree):
     if a < 0 and degree % 2 == 0:
         return abs(a), m, degree
     elif a < 0 and degree % 2 == 1:
-        return a * a, m, degree - 1
+        return a % m, m, degree
     else:
         return a, m, degree
 
@@ -30,7 +30,8 @@ def small_theorem(m, a, degree, k):
     print(f"Получим {small_degree} и умножим на {diff} = {small_degree * diff}")
     new_degree = degree - small_degree * diff
     print(f"Новая степень = {new_degree} вместо {degree}. Получаем {a} в степени {new_degree} по модулю {m}")
-    return (pow(a, new_degree) * k) % m
+    print(f"Не забываем, что надо умножить на {k}")
+    return (pow(a, new_degree) * k) % (m * k)
 
 
 def ailer(digit, base, degree, k):
@@ -42,7 +43,8 @@ def ailer(digit, base, degree, k):
         print(f"Получим {small_degree} и умножим на {diff} = {small_degree * diff}")
         new_degree = degree - small_degree * diff
         print(f"Новая степень = {new_degree} вместо {degree}. Получаем {base} в степени {new_degree} по модулю {digit}")
-        return pow(base, new_degree) % digit
+        print(f"Не забываем, что надо умножить на {k}")
+        return pow(base, new_degree) % (digit * k)
     else:
         for number in range(1, digit):
             print()
@@ -57,7 +59,8 @@ def ailer(digit, base, degree, k):
         print(f"Получим {small_degree} и умножим на {diff} = {small_degree * diff}")
         new_degree = degree - small_degree * diff
         print(f"Новая степень = {new_degree} вместо {degree}. Получаем {base} в степени {new_degree} по модулю {digit}")
-        return (pow(base, new_degree) * k) % digit
+        print(f"Не забываем, что надо умножить на {k}")
+        return (pow(base, new_degree) * k) % (digit * k)
 
 
 def main():
@@ -71,31 +74,29 @@ def main():
             NOD = final(a_check, m_check, degree_2)
             print()
             coefficient = 1
-            if NOD != 1:
-                print(f"НОД {a, m} = {NOD}, потому имеем право {a, m} поделить на {NOD}")
-                while NOD != 1:
-                    coefficient *= NOD
-                    a_check, a = a_check // 3, a // 3
-                    m_check, m = m_check // 3, m // 3
-                    a_check, m_check, degree_2 = binary_euclid(a_check, m_check)
-                    NOD = final(a_check, m_check, degree_2)
+            print(f"НОД {a, m} = {NOD}, потому имеем право {a, m} поделить на {NOD}")
+            while NOD != 1:
+                coefficient *= NOD
+                a_check, a = a_check // 3, a // 3
+                m_check, m = m_check // 3, m // 3
+                a_check, m_check, degree_2 = binary_euclid(a_check, m_check)
+                NOD = final(a_check, m_check, degree_2)
+            if is_prime(m):
+                print()
+                print("Используем малую теорему Ферма")
+                remainder = small_theorem(m, a, degree, coefficient)
+                print(f"Остаток = {remainder}")
+                sum += remainder
+                print(f"Итого: {sum}")
+
+
             else:
-                if is_prime(m):
-                    print()
-                    print("Используем малую теорему Ферма")
-                    remainder = small_theorem(m, a, degree, coefficient)
-                    print(f"Остаток = {remainder}")
-                    sum += remainder
-                    print(f"Итого: {sum}")
-
-
-                else:
-                    print()
-                    print("Используем теорему Эйлера")
-                    remainder = ailer(m, a, degree, coefficient)
-                    print(f"Остаток = {remainder}")
-                    sum += remainder
-                    print(f"Итого: {sum}")
+                print()
+                print("Используем теорему Эйлера")
+                remainder = ailer(m, a, degree, coefficient)
+                print(f"Остаток = {remainder}")
+                sum += remainder
+                print(f"Итого: {sum}")
 
             Flag = int(input("Если хотите прервать программу, введите 0: "))
             print()

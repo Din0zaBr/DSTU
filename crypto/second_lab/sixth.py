@@ -9,27 +9,29 @@ def main():
             if task == 1:
                 alp = input(
                     "Введите алфавит (по умолчанию АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ): " or "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ")
-                phrase: str = input("Введите сообщения для шифрования: ").upper()
                 key = int(input("Введите ключ шифрования (сдвиг): "))
                 if mod == 1:
+                    phrase: str = input("Введите сообщения для шифрования: ").upper()
                     if checking_caesar(key, alp):  # проверка
                         encrypted_phrase = encrypt_caesar(phrase, key, alp)  # шифрованное сообщение
                         print(encrypted_phrase)
                 elif mod == 2:
+                    phrase: str = input("Введите сообщения для дешифрования: ").upper()
                     if checking_caesar(key, alp):  # проверка
                         decrypted_phrase = decrypt_caesar(phrase, key, alp)  # шифрованное сообщение
                         print(decrypted_phrase)
             if task == 2:
                 alp = input(
                     "Введите алфавит (по умолчанию АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ): " or "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ")
-                phrase = input("Введите сообщения для шифрования: ").upper()
                 a, b = int(input("Введите a: ")), int(input("Введите b: "))
                 k1, k2, degree_of_two = binary_euclid(a, len(alp))
                 if mod == 1:
+                    phrase = input("Введите сообщения для шифрования: ").upper()
                     if final(k1, k2, degree_of_two) == 1:
                         encrypted_phrase = encrypt_affina_caesar(a, b, phrase, alp)  # шифрованное сообщение
                         print(encrypted_phrase)
                 elif mod == 2:
+                    phrase = input("Введите сообщения для дешифрования: ").upper()
                     if final(k1, k2, degree_of_two) == 1:
                         decrypted_phrase = decrypt_affina_caesar(a, b, phrase, alp)  # шифрованное сообщение
                         print(decrypted_phrase)
@@ -54,15 +56,16 @@ def main():
             if task == 4:
                 alp = input(
                     "Введите алфавит (по умолчанию АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ): " or "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ").upper()
-                text = input("Введите текст для шифрования: ").upper()
                 keyword = input("Введите ключевое слово: ").upper()
                 rows = int(input("Введите количество строк таблицы (по умолчанию 4): ") or "4")
                 cols = int(input("Введите количество столбцов таблицы (по умолчанию 8): ") or "8")
                 if mod == 1:
+                    text = input("Введите текст для шифрования: ").upper()
                     if checking_trisemus(rows, cols, alp):  # проверка
                         encrypted_phrase = encrypt_trisemus(text, keyword, alp, rows, cols)  # шифрованное сообщение
                         print(encrypted_phrase)
                 elif mod == 2:
+                    text = input("Введите текст для дешифрования: ").upper()
                     if checking_trisemus(rows, cols, alp):  # проверка
                         decrypted_phrase = decrypt_trisemus(text, keyword, alp, rows, cols)  # шифрованное сообщение
                         print(decrypted_phrase)
@@ -243,10 +246,10 @@ def decrypt_trisemus(ciphertext, keyword, alp, rows=4, cols=8):
 
 
 def checking_trisemus(rows, cols, alp):
-    if rows * cols > alp:
+    if rows * cols > len(alp):
         print(f"Количество букв в алфавите = {len(alp)}, что меньше чем {rows * cols} элементов")
         return False
-    elif rows * cols < alp:
+    elif rows * cols < len(alp):
         print(f"Количество букв в алфавите = {len(alp)}, что больше чем {rows * cols} элементов")
         return False
     else:

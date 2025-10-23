@@ -1,3 +1,5 @@
+from Cryptography.second_lab.sixth import create_trisemus_table
+
 import re
 
 
@@ -5,25 +7,7 @@ def unique_ordered(lst):
     return list(dict.fromkeys(lst))
 
 
-def create_trisemus_table(keyword, alp='АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ', rows=4, cols=8):
-    temp_alp = list(unique_ordered(keyword))
-    for alp_index in range(len(alp)):
-        if alp[alp_index] in temp_alp:
-            continue
-        else:
-            temp_alp += alp[alp_index]
-
-    # Формируем таблицу как список строк
-    table = []
-    for i in range(rows):
-        start_idx = i * cols
-        end_idx = start_idx + cols
-        table.append(''.join(temp_alp[start_idx:end_idx]))
-
-    return table
-
-
-def create_playfair_table(keyword, alp='АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ', rows=4, cols=8):
+def create_playfair_table(keyword, alp='АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ', rows=4, cols=8):
     """Создание таблицы Плейфейра через таблицу Трисемуса"""
     return create_trisemus_table(keyword, alp, rows, cols)
 
@@ -39,7 +23,7 @@ def find_position(table, char):
 
 def prepare_text(text):
     """Подготовка текста: удаление пробелов, приведение к верхнему регистру"""
-    text = text.upper().replace(' ', '')
+    text = text.upper()
     text = re.sub(r'[^А-ЯЁ]', '', text)  # Удаляем все не-буквы
     return text
 
@@ -57,6 +41,9 @@ def split_into_bigrams(text):
             if char1 == char2:
                 bigrams.append((char1, 'Ъ'))
                 i += 1
+                print("!!!")
+                print(bigrams)
+                print()
             else:
                 bigrams.append((char1, char2))
                 i += 2
@@ -114,41 +101,23 @@ def decrypt_bigram(table, bigram):
     return decrypted1 + decrypted2
 
 
-def playfair_encrypt(plaintext, keyword, alp='АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ', rows=4, cols=8):
+def playfair_encrypt(plaintext, keyword, alp='АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ', rows=4, cols=8):
     """Шифрование текста методом Плейфейра"""
-    # Создаем таблицу
     table = create_playfair_table(keyword, alp, rows, cols)
-
-    # Подготавливаем текст
     prepared_text = prepare_text(plaintext)
-
-    # Разбиваем на биграммы
     bigrams = split_into_bigrams(prepared_text)
-
-    # Шифруем каждую биграмму
     encrypted_bigrams = [encrypt_bigram(table, bigram) for bigram in bigrams]
-
-    # Объединяем результат
     ciphertext = ''.join(encrypted_bigrams)
 
     return ciphertext
 
 
-def playfair_decrypt(ciphertext, keyword, alp='АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ', rows=4, cols=8):
+def playfair_decrypt(ciphertext, keyword, alp='АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ', rows=4, cols=8):
     """Дешифрование текста методом Плейфейра"""
-    # Создаем таблицу
     table = create_playfair_table(keyword, alp, rows, cols)
-
-    # Подготавливаем текст
     prepared_text = prepare_text(ciphertext)
-
-    # Разбиваем на биграммы (по 2 символа)
     bigrams = [(prepared_text[i], prepared_text[i + 1]) for i in range(0, len(prepared_text), 2)]
-
-    # Дешифруем каждую биграмму
     decrypted_bigrams = [decrypt_bigram(table, bigram) for bigram in bigrams]
-
-    # Объединяем результат
     plaintext = ''.join(decrypted_bigrams)
 
     return plaintext
@@ -164,48 +133,16 @@ def print_table(table):
 
 # Демонстрация работы с примером из задания
 if __name__ == "__main__":
-    # Параметры из примера
-    keyword = "РАБОТА"
-    plaintext = "ПРИЛЕТАЮ ЗАВТРА"
-    rows, cols = 4, 8
-
-    print("=== Шифр Плейфейра ===")
-    print(f"Ключевое слово: {keyword}")
-    print(f"Исходный текст: {plaintext}")
-    print()
+    keyword = input("Введите ключ (слово)").upper()
+    plaintext = input("Введите фразу для шифрования")
+    rows, cols = int(input()), int(input())
 
     # Создаем и показываем таблицу
     table = create_playfair_table(keyword, rows=rows, cols=cols)
     print_table(table)
 
-    # Шифруем
     ciphertext = playfair_encrypt(plaintext, keyword, rows=rows, cols=cols)
     print(f"Зашифрованный текст: {ciphertext}")
 
-    # Дешифруем
     decrypted_text = playfair_decrypt(ciphertext, keyword, rows=rows, cols=cols)
     print(f"Расшифрованный текст: {decrypted_text}")
-
-    # Проверка соответствия с примером из задания
-    expected_cipher = "НАЙМЙРГЩЖБГВАБ"
-    print(f"Ожидаемый шифртекст из примера: {expected_cipher}")
-    print(f"Совпадение: {ciphertext == expected_cipher}")
-
-    # Дополнительный пример для проверки
-    print("\n" + "=" * 50)
-    print("Дополнительный пример:")
-
-    test_text = "ПРИВЕТ"
-    test_keyword = "ШИФР"
-
-    print(f"Ключевое слово: {test_keyword}")
-    print(f"Текст: {test_text}")
-
-    test_table = create_playfair_table(test_keyword, rows=4, cols=8)
-    print_table(test_table)
-
-    encrypted = playfair_encrypt(test_text, test_keyword, rows=4, cols=8)
-    decrypted = playfair_decrypt(encrypted, test_keyword, rows=4, cols=8)
-
-    print(f"Зашифровано: {encrypted}")
-    print(f"Расшифровано: {decrypted}")

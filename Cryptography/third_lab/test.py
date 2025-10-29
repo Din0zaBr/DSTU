@@ -1,7 +1,8 @@
 from Cryptography.second_lab.sixth import create_trisemus_table
 
 import re
-
+# В симметричной криптосистеме секретный ключ передается по защищенному каналу
+# СПРАВОЧНИК
 
 def unique_ordered(lst):
     return list(dict.fromkeys(lst))
@@ -41,9 +42,6 @@ def split_into_bigrams(text):
             if char1 == char2:
                 bigrams.append((char1, 'Ъ'))
                 i += 1
-                print("!!!")
-                print(bigrams)
-                print()
             else:
                 bigrams.append((char1, char2))
                 i += 2
@@ -131,18 +129,76 @@ def print_table(table):
     print()
 
 
-# Демонстрация работы с примером из задания
-if __name__ == "__main__":
-    keyword = input("Введите ключ (слово)").upper()
-    plaintext = input("Введите фразу для шифрования")
-    rows, cols = int(input()), int(input())
-
-    # Создаем и показываем таблицу
+def encrypt_mode():
+    """Режим шифрования"""
+    print("\n" + "=" * 60)
+    print("РЕЖИМ ШИФРОВАНИЯ")
+    print("=" * 60)
+    
+    keyword = input("Введите ключ (слово): ").upper()
+    plaintext = input("Введите текст для шифрования: ")
+    rows = int(input("Введите количество строк таблицы: "))
+    cols = int(input("Введите количество столбцов таблицы: "))
+    
+    print("\nСоздание таблицы Плейфейра...")
     table = create_playfair_table(keyword, rows=rows, cols=cols)
     print_table(table)
-
+    
+    print("Шифрование...")
     ciphertext = playfair_encrypt(plaintext, keyword, rows=rows, cols=cols)
+    
+    print("\n" + "=" * 60)
+    print("РЕЗУЛЬТАТ ШИФРОВАНИЯ:")
+    print("=" * 60)
+    print(f"Исходный текст: {plaintext}")
     print(f"Зашифрованный текст: {ciphertext}")
+    print("=" * 60)
 
+
+def decrypt_mode():
+    """Режим дешифрования"""
+    print("\n" + "=" * 60)
+    print("РЕЖИМ ДЕШИФРОВАНИЯ")
+    print("=" * 60)
+    
+    keyword = input("Введите ключ (слово): ").upper()
+    ciphertext = input("Введите текст для дешифрования: ")
+    rows = int(input("Введите количество строк таблицы: "))
+    cols = int(input("Введите количество столбцов таблицы: "))
+    
+    print("\nСоздание таблицы Плейфейра...")
+    table = create_playfair_table(keyword, rows=rows, cols=cols)
+    print_table(table)
+    
+    print("Дешифрование...")
     decrypted_text = playfair_decrypt(ciphertext, keyword, rows=rows, cols=cols)
+    
+    print("\n" + "=" * 60)
+    print("РЕЗУЛЬТАТ ДЕШИФРОВАНИЯ:")
+    print("=" * 60)
+    print(f"Зашифрованный текст: {ciphertext}")
     print(f"Расшифрованный текст: {decrypted_text}")
+    print("=" * 60)
+
+
+# Главная программа
+if __name__ == "__main__":
+    print("=" * 60)
+    print("ШИФР ПЛЕЙФЕЙРА")
+    print("=" * 60)
+    print("Выберите режим работы:")
+    print("1. Зашифровать текст")
+    print("2. Расшифровать текст")
+    print("0. Выход")
+    print("=" * 60)
+    
+    choice = input("Ваш выбор: ").strip()
+    
+    if choice == "1":
+        encrypt_mode()
+    elif choice == "2":
+        decrypt_mode()
+    elif choice == "0":
+        print("Выход из программы.")
+    else:
+        print("Неверный выбор! Пожалуйста, выберите 1, 2 или 0.")

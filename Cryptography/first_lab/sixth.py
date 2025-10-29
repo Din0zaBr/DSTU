@@ -24,12 +24,18 @@ def main():
                     row_count, colum_count = map(int,
                                                  input("Введите количество строк и столбцов через пробел: ").split())
                     encrypted_phrase_list: list = list(input("Введите сообщения для дешифрования: "))
-                    encrypted_phrase_dict, letter_index = {}, 0
+                    encrypted_phrase_dict = {}
                     encrypted_keyword = sorted(true_keyword)
-                    for row in range(0, row_count * colum_count, row_count):
-                        letter = encrypted_keyword[letter_index]
-                        encrypted_phrase_dict[letter] = encrypted_phrase_list[row:(row + 1 * row_count)]
-                        letter_index += 1
+                    # Разбиваем зашифрованный текст обратно на столбцы
+                    # Берем каждый colum_count-ый символ для каждого столбца
+                    for col_index in range(colum_count):
+                        letter = encrypted_keyword[col_index]
+                        column = []
+                        for row_index in range(row_count):
+                            char_index = row_index * colum_count + col_index
+                            if char_index < len(encrypted_phrase_list):
+                                column.append(encrypted_phrase_list[char_index])
+                        encrypted_phrase_dict[letter] = column
                     decrypted_message = decrypt_1(true_keyword, encrypted_phrase_dict)  # дешифрованное сообщение
                     print(decrypted_message)
                 else:
@@ -116,19 +122,31 @@ def checking_second(matrix):
 
 
 def encrypt_1(my_dict, keyword):
-    encrypted_my_dict = dict()
-    for letter in sorted(keyword):
-        encrypted_my_dict[letter] = my_dict[letter]
-
-    return encrypted_my_dict
+    # Сортируем ключевое слово и получаем отсортированные столбцы
+    sorted_keyword = sorted(keyword)
+    sorted_columns = [my_dict[letter] for letter in sorted_keyword]
+    
+    # Читаем по строкам (по 1 символу из каждого столбца)
+    encrypted_phrase = []
+    if sorted_columns:
+        for row_index in range(len(sorted_columns[0])):
+            for column in sorted_columns:
+                if row_index < len(column):
+                    encrypted_phrase.append(column[row_index])
+    
+    return ''.join(encrypted_phrase)
 
 
 def decrypt_1(keyword, my_dict):
-    decrypted_message: dict = {}
-    for letter in keyword:
-        decrypted_message[letter] = my_dict[letter]
-
-    return decrypted_message
+    # Получаем столбцы в правильном порядке (согласно исходному ключевому слову)
+    columns = [my_dict[letter] for letter in keyword]
+    print(columns)
+    # Читаем по столбцам (сначала весь первый столбец, потом второй и т.д.)
+    decrypted_phrase = []
+    for column in columns:
+        decrypted_phrase.extend(column)
+    
+    return ''.join(decrypted_phrase)
 
 
 def encrypt_2(phrase, table):

@@ -170,7 +170,6 @@ def decrypt_mode():
     rows = int(input("Введите количество строк таблицы: "))
     cols = int(input("Введите количество столбцов таблицы: "))
 
-    print("\nСоздание таблицы Плейфейра...")
     table = create_playfair_table(keyword, rows=rows, cols=cols)
     print_table(table)
 
@@ -178,7 +177,7 @@ def decrypt_mode():
     decrypted_text = playfair_decrypt(ciphertext, keyword, rows=rows, cols=cols)
 
     print("\n" + "=" * 60)
-    print("РЕЗУЛЬТАТ ДЕШИФРОВАНИЯ:")
+    print("РЕЗУЛЬТАТ РАСШИФРОВАНИЯ:")
     print("=" * 60)
     print(f"Зашифрованный текст: {ciphertext}")
     print(f"Расшифрованный текст: {decrypted_text}")

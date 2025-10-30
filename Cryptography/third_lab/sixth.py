@@ -12,7 +12,8 @@ def unique_ordered(lst):
 
 def create_playfair_table(keyword, alp='АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ', rows=4, cols=8):
     """Создание таблицы Плейфейра через таблицу Трисемуса"""
-    return create_trisemus_table(keyword, alp, rows, cols)
+    table = create_trisemus_table(keyword, alp, rows, cols)
+    return table
 
 
 def find_position(table, char):
@@ -25,8 +26,8 @@ def find_position(table, char):
 
 
 def prepare_text(text):
-    """Подготовка текста: удаление пробелов, приведение к верхнему регистру"""
-    text = text.upper()
+    """Подготовка текста: удаление пробелов, приведение к верхнему регистру, Ё -> Е"""
+    text = text.upper().replace('Ё', 'Е')
     text = re.sub(r'[^А-ЯЁ]', '', text)  # Удаляем все не-буквы
     return text
 
@@ -106,6 +107,7 @@ def playfair_encrypt(plaintext, keyword, alp='АБВГДЕЖЗИЙКЛМНОПР
     table = create_playfair_table(keyword, alp, rows, cols)
     prepared_text = prepare_text(plaintext)
     bigrams = split_into_bigrams(prepared_text)
+    print(bigrams)
     encrypted_bigrams = [encrypt_bigram(table, bigram) for bigram in bigrams]
     ciphertext = ''.join(encrypted_bigrams)
 
@@ -117,6 +119,7 @@ def playfair_decrypt(ciphertext, keyword, alp='АБВГДЕЖЗИЙКЛМНОП�
     table = create_playfair_table(keyword, alp, rows, cols)
     prepared_text = prepare_text(ciphertext)
     bigrams = [(prepared_text[i], prepared_text[i + 1]) for i in range(0, len(prepared_text), 2)]
+    print(bigrams)
     decrypted_bigrams = [decrypt_bigram(table, bigram) for bigram in bigrams]
     plaintext = ''.join(decrypted_bigrams)
 
@@ -142,7 +145,6 @@ def encrypt_mode():
     rows = int(input("Введите количество строк таблицы: "))
     cols = int(input("Введите количество столбцов таблицы: "))
 
-    print("\nСоздание таблицы Плейфейра...")
     table = create_playfair_table(keyword, rows=rows, cols=cols)
     print_table(table)
 
@@ -183,7 +185,6 @@ def decrypt_mode():
     print("=" * 60)
 
 
-# Главная программа
 if __name__ == "__main__":
     print("=" * 60)
     print("ШИФР ПЛЕЙФЕЙРА")

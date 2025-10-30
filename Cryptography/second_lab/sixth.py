@@ -204,7 +204,6 @@ def create_trisemus_table(keyword, alp='АБВГДЕЁЖЗИЙКЛМНОПРСТ
 
 def encrypt_trisemus(phrase, keyword, alp='АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ', rows=4, cols=8):
     table = create_trisemus_table(keyword, alp, rows, cols)
-
     encrypted_phrase = ''
 
     for char in phrase:

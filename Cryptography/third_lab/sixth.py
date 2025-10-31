@@ -3,7 +3,7 @@ from Cryptography.second_lab.sixth import create_trisemus_table
 import re
 
 
-# В симметричной криптосистеме секретный ключ передается по защищенному каналу
+# В симметричной криптосистеме секретный ключ передается по защищенному каналуу
 # СПРАВОЧНИК
 
 def unique_ordered(lst):
@@ -52,7 +52,7 @@ def split_into_bigrams(text):
             # Если нечетное количество букв, добавляем Ъ в конец
             bigrams.append((text[i], 'Ъ'))
             i += 1
-
+ 
     return bigrams
 
 

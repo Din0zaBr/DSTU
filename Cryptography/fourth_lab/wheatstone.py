@@ -246,7 +246,7 @@ def split_into_bigrams_double_square(text: str) -> List[Tuple[str, str]]:
     for i in range(0, len(text) - 1, 2):
         bigrams.append((text[i], text[i + 1]))
     if len(text) % 2 == 1:
-        bigrams.append((text[-1], 'Ъ'))
+        bigrams.append((text[-1], ' '))
     return bigrams
 
 

@@ -39,7 +39,15 @@ def main():
     r = razlosh(p)
     znam = []
     print("┌─ Определение типа символа ─┐")
-    if len(r) != 0:
+    # Проверяем, является ли p простым числом
+    # Простое число: разложение содержит только само число в степени 1
+    is_prime = len(r) == 1 and p in r and r[p] == 1
+    
+    if is_prime:
+        print(f'p = {p} - простое число')
+        print(f'→ Используем символ Лежандра')
+        znam = [p]
+    else:
         print(f'p = {p} - составное число')
         print(f'Разложение: p = ', end='')
         factors_str = []
@@ -52,10 +60,6 @@ def main():
                 factors_str.append(f'{key}^{item}')
         print(' · '.join(factors_str))
         print(f'Используем символ Якоби')
-    else:
-        print(f'p = {p} - простое число')
-        print(f'→ Используем символ Лежандра')
-        znam = [p]
     print(f'└──────────────────────────────┘')
     print()
 

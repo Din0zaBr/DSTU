@@ -63,18 +63,33 @@ def _apply_property_3_multiplicativity(a, p, factors):
     Свойство 3: Мультипликативность
     (a * b)/p = (a/p) * (b/p)
     """
-    if len(factors) == 0 or (len(factors) == 1 and a in factors and factors[a] == 1):
+    a_abs = abs(a)
+    if len(factors) == 0 or (len(factors) == 1 and a_abs in factors and factors[a_abs] == 1):
         return None
     
     # Разбиваем на простые множители
     primes = list(factors.keys())
-    symbols = [f'({prime}/{p})' for prime in primes]
-    print(f'\n  [Свойство 3: Мультипликативность]')
-    print(f'  ({a}/{p}) = {" · ".join(symbols)}')
-    print(f'  Вычисляем каждый символ:')
     
-    result = 1
-    values = []
+    # Учитываем знак a
+    sign = 1 if a >= 0 else -1
+    if sign == -1:
+        print(f'\n  [Свойство 3: Мультипликативность]')
+        print(f'  ({a}/{p}) = (-1/{p}) · {" · ".join([f"({prime}/{p})" for prime in primes])}')
+        print(f'  Вычисляем каждый символ:')
+        
+        # Вычисляем символ для -1
+        print(f'    (-1/{p})', end='')
+        minus_one_value = _apply_property_4_minus_one(p)
+        values = [minus_one_value]
+        result = minus_one_value
+    else:
+        symbols = [f'({prime}/{p})' for prime in primes]
+        print(f'\n  [Свойство 3: Мультипликативность]')
+        print(f'  ({a}/{p}) = {" · ".join(symbols)}')
+        print(f'  Вычисляем каждый символ:')
+        values = []
+        result = 1
+    
     for i, prime in enumerate(primes, 1):
         print(f'    {i}. ({prime}/{p})', end='')
         # Рекурсивный вызов для каждого простого множителя
@@ -125,8 +140,25 @@ def _apply_property_7_reciprocity(a, p):
     """
     Свойство 7: Закон квадратичной взаимности
     (a/p) = (-1)^((a-1)/2 * (p-1)/2) * (p/a)
+    Для отрицательных a используем: (a/p) = (-1/p) * (|a|/p)
     """
+    a_abs = abs(a)
+    a_sign = 1 if a >= 0 else -1
+    
     print(f'\n  [Свойство 7: Закон квадратичной взаимности]')
+    
+    # Если a отрицательное, сначала выносим знак
+    if a_sign == -1:
+        print(f'  ({a}/{p}) = (-1/{p}) · ({a_abs}/{p})')
+        minus_one_value = _apply_property_4_minus_one(p)
+        print(f'  Вычисляем ({a_abs}/{p}):')
+        # Рекурсивно вычисляем для положительного a
+        abs_result = _apply_property_7_reciprocity(a_abs, p)
+        result = minus_one_value * abs_result
+        print(f'  Итого: ({a}/{p}) = {minus_one_value} · {abs_result} = {result}')
+        return result
+    
+    # Для положительного a применяем стандартную формулу
     exp_a = (a - 1) // 2
     exp_p = (p - 1) // 2
     exponent = exp_a * exp_p
@@ -200,18 +232,18 @@ def symbol_Lezh(a, p):
         
         # Свойство 7: Закон взаимности (если a - простое число)
         if len(factors) == 1 and abs(a) in factors and factors[abs(a)] == 1:
-            return _apply_property_7_reciprocity(abs(a), p)
+            return _apply_property_7_reciprocity(a, p)
         
         # Свойство 3: Мультипликативность
         # Применяем только если есть несколько простых множителей
         if len(factors) > 1:
-            result = _apply_property_3_multiplicativity(abs(a), p, factors)
+            result = _apply_property_3_multiplicativity(a, p, factors)
             if result is not None:
                 return result
         
         # Если дошли сюда и a - простое число, применяем свойство 7
         if len(factors) == 1 and abs(a) in factors and factors[abs(a)] == 1:
-            return _apply_property_7_reciprocity(abs(a), p)
+            return _apply_property_7_reciprocity(a, p)
         
         # Если ни одно свойство не применилось, это ошибка
         raise ValueError(f"Не удалось вычислить символ Лежандра для ({a}/{p})")

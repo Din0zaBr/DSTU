@@ -80,20 +80,21 @@ def checking(w, y):
 
     return w, y
 
+
 # Эта часть куда выключена, так как используется в second_lab\sixth.py.
 # Её можно включить в кол, если необходим лишь этот файл
 
-# Flag = 1
-# while Flag:
-#     try:
-#         a, b = int(input("a = ")), int(input("b = "))
-#         print()
-#         if checking(a, b):
-#             a, b = checking(a, b)
-#             a, b, degree_2 = binary_euclid(a, b)
-#             final(a, b, degree_2)
-#             Flag = int(input("Если хотите прервать программу, введите 0: "))
-#             print()
-#     except:
-#         print("Введите два целых числа")
-#         print()
+Flag = 1
+while Flag:
+    try:
+        a, b = int(input("a = ")), int(input("b = "))
+        print()
+        if checking(a, b):
+            a, b = checking(a, b)
+            a, b, degree_2 = binary_euclid(a, b)
+            final(a, b, degree_2)
+            Flag = int(input("Если хотите прервать программу, введите 0: "))
+            print()
+    except:
+        print("Введите два целых числа")
+        print()

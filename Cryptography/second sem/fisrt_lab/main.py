@@ -76,6 +76,7 @@ def decrypt(block, key, show_steps=True):
 def pad_message(message):
     encoded = message.encode('utf-8')
     size = ((len(encoded) + BLOCK_SIZE - 1) // BLOCK_SIZE) * BLOCK_SIZE
+    # Вычисляет ближайшую длину блока, кратную BLOCK_SIZE и не меньшую чем BLOCK_SIZE
     return encoded.ljust(size, b'\x00')
 
 

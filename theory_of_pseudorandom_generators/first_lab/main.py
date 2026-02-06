@@ -13,13 +13,7 @@ def generate_sequence(m, a, b, x0, n):
 
 def find_full_period(m, a, b, x0):
     """
-    :param m:
-    :param a:
-    :param b:
-    :param x0:
-    :return:
-
-    seen — словарь «значение: номер шага»: при каком i мы впервые увидели данное x.
+    seen - словарь «значение: номер шага, т.е. при каком i мы впервые увидели данное x.
     """
     seen = {}
     x = x0

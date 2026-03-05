@@ -92,7 +92,7 @@ def s_block(value):
     for i in range(8):
         search_id = int(binary_value[i * 4 : (i + 1) * 4], 2)  # i-я тетрада (0..15)
         result.append(f"{S_BOX[i][search_id]:04b}")
-    return int("".join(result), 2)
+    return int("".join(result), 2) # , 2 - бинарный вид
 
 
 def _feistel_round(N1, N2, Ki, show_steps, round_num):
@@ -121,7 +121,8 @@ def encrypt(block, key, show_steps=True):
     block = block.ljust(BLOCK_SIZE, b'\x00')
     N1, N2 = struct.unpack('<II', block)  # N1 = левая половина (L), N2 = правая (R)
     for i in range(ROUNDS):
-        print("=" * 40)
+        if show_steps:
+            print("=" * 40)
         Ki = key[_get_subkey_index(i)]
         N1, N2 = _feistel_round(N1, N2, Ki, show_steps, i + 1)
     return struct.pack('<II', N2, N1)  # итог: сначала R, потом L (финальная перестановка)
@@ -132,10 +133,109 @@ def decrypt(block, key, show_steps=True):
     block = block.ljust(BLOCK_SIZE, b'\x00')
     N1, N2 = struct.unpack('<II', block)
     for i in reversed(range(ROUNDS)):
-        print("=" * 40)
+        if show_steps:
+            print("=" * 40)
         Ki = key[_get_subkey_index(i)]
         N1, N2 = _feistel_round(N1, N2, Ki, show_steps, ROUNDS - i)
     return struct.pack('<II', N2, N1)
+
+
+# -----------------------------------------------------------------------------
+# Режим выработки имитовставки ГОСТ 28147–89
+# -----------------------------------------------------------------------------
+# Имитовставка — 32 бита (первые/младшие 32 бита 64-битного результата).
+# Алгоритм: X1 → цикл 16-З (K0..K7, K0..K7) → Y1; Y1 XOR X2 → 16-З → … для всех блоков.
+# Из итогового 64-битного результата берутся первые 32 бита = имитовставка (4 байта).
+# Получатель по расшифрованным данным вырабатывает имитовставку и сравнивает с переданной.
+
+ROUNDS_IMITO = 16   # цикл 16-З: 16 шагов, ключи K0..K7, затем снова K0..K7
+IMITO_SIZE = 4      # длина имитовставки 32 бита = 4 байта (первые 32 бита 64-битного результата)
+
+
+def _xor_blocks(a, b):
+    """Побитовое сложение по модулю 2 (XOR) двух блоков по 8 байт."""
+    return bytes(x ^ y for x, y in zip(a.ljust(BLOCK_SIZE, b'\x00'), b.ljust(BLOCK_SIZE, b'\x00')))
+
+
+def encrypt_16_rounds(block, key, show_steps=False):
+    """
+    16 раундов в режиме простой замены (для имитовставки).
+    Подключи K[0]..K[7] для раундов 1–8, затем снова K[0]..K[7] для раундов 9–16.
+    В конце — обмен половинок (R, L), как после полных 32 раундов.
+    """
+    block = block.ljust(BLOCK_SIZE, b'\x00')
+    N1, N2 = struct.unpack('<II', block)
+    for i in range(ROUNDS_IMITO):
+        if show_steps:
+            print("    " + "=" * 36)
+        Ki = key[i % 8]  # раунды 0..15 → K[0]..K[7], K[0]..K[7]
+        N1, N2 = _feistel_round(N1, N2, Ki, show_steps, i + 1)
+    return struct.pack('<II', N2, N1)
+
+
+def imito_compute(data, key, show_steps=True):
+    """
+    Выработка имитовставки по открытому тексту (пункты 1–6 описания).
+    X1 → цикл 16-З → Y1; Y1 XOR X2 → 16-З → … для всех блоков.
+    Имитовставка = первые 32 бита итогового 64-битного результата (4 байта).
+    """
+    if isinstance(data, str):
+        data = pad_message(data)
+    blocks = [data[i:i + BLOCK_SIZE] for i in range(0, len(data), BLOCK_SIZE)]
+    if not blocks:
+        blocks = [b'\x00' * BLOCK_SIZE]
+
+    if show_steps:
+        print("\n" + "═" * 60)
+        print("  РЕЖИМ ВЫРАБОТКИ ИМИТОВСТАВКИ (цикл 16-З, зацепление блоков)")
+        print("  X1 → 16-З → Y1; Y1 XOR X2 → 16-З → … Имитовставка = первые 32 бита результата.")
+        print("═" * 60)
+
+    R = blocks[0]
+    if show_steps:
+        print(f"\n  Блок 1: P1 = {R.hex()}")
+        print("  Проходим 16 раундов простой замены:")
+    R = encrypt_16_rounds(R, key, show_steps=show_steps)
+    if show_steps:
+        print(f"  После 16 раундов: R = {R.hex()}  ({_format_binary(R)})")
+
+    for i in range(1, len(blocks)):
+        P_i = blocks[i]
+        if show_steps:
+            print(f"\n  Блок {i + 1}: P{i + 1} = {P_i.hex()}")
+            print(f"  Сложение по mod 2: R = R XOR P{i + 1} = {R.hex()} XOR {P_i.hex()}")
+        R = _xor_blocks(R, P_i)
+        if show_steps:
+            print(f"            = {R.hex()}  ({_format_binary(R)})")
+            print("  Проходим 16 раундов простой замены:")
+        R = encrypt_16_rounds(R, key, show_steps=show_steps)
+        if show_steps:
+            print(f"  После 16 раундов: R = {R.hex()}  ({_format_binary(R)})")
+
+    # Финиш: из 64-битного результата берём первые 32 бита = имитовставка (ГОСТ)
+    imito = R[:IMITO_SIZE]
+    if show_steps:
+        print("\n" + "─" * 50)
+        print("  64-битный результат после последнего блока:", R.hex())
+        print("  Имитовставка (первые 32 бита):", imito.hex(), "  ", _format_binary(imito))
+    return imito
+
+
+def imito_verify(data, key, imito_received, show_steps=True):
+    """
+    Проверка целостности: вычисляем имитовставку от данных и сравниваем с переданной.
+    Возвращает True, если совпадает (искажений нет), иначе False.
+    """
+    imito_calc = imito_compute(data, key, show_steps=show_steps)
+    match = imito_calc == imito_received
+    if show_steps:
+        print("\n  Переданная имитовставка:", imito_received.hex())
+        print("  Вычисленная имитовставка:", imito_calc.hex())
+        if match:
+            print("  ✓ Целостность подтверждена — искажений нет.")
+        else:
+            print("  ✗ Несовпадение! Сообщение считается искажённым (M блоков ложные).")
+    return match
 
 
 def pad_message(message):
@@ -266,13 +366,15 @@ def print_algorithm_reminder():
 
 def main():
     while True:
-        print("\n" + "=" * 40)
+        print("\n" + "=" * 50)
         print("0. Напомнить логику алгоритма (шпаргалка + пример)")
         print("1. Сгенерировать ключ и сохранить в файл")
-        print("2. Зашифровать текст")
-        print("3. Расшифровать текст")
-        print("4. Выйти")
-        print("=" * 40)
+        print("2. Зашифровать текст (режим простой замены)")
+        print("3. Расшифровать текст (режим простой замены)")
+        print("4. Выработать имитовставку (проверка целостности)")
+        print("5. Проверить целостность по имитовставке")
+        print("6. Выйти")
+        print("=" * 50)
         choice = input("Введите команду: ").strip()
 
         if choice == "0":
@@ -299,11 +401,35 @@ def main():
                     print(f"Расшифрованное (BIN): {_format_binary(dec)}")
                 except ValueError:
                     print("Ошибка: некорректный HEX-формат!")
-        elif choice == "4":
+        elif choice in ("4", "5"):
+            key_str = input("Ключ (64 HEX) или Enter для загрузки из файла: ").strip()
+            key = load_key() if not key_str else process_key(key_str)
+            if not key:
+                continue
+
+            if choice == "4":
+                msg = input("Введите сообщение (открытый текст): ").strip()
+                imito = imito_compute(msg, key, show_steps=True)
+                print("\n" + "=" * 50)
+                print("Имитовставка для передачи получателю (8 HEX = 32 бита = 4 байта):")
+                print(f"  HEX: {imito.hex()}")
+                print(f"  BIN: {_format_binary(imito)}")
+            else:
+                msg = input("Введите сообщение (расшифрованный текст для проверки): ").strip()
+                imito_hex = input("Переданная имитовставка (8 HEX-символов = 32 бита): ").strip()
+                try:
+                    imito_received = bytes.fromhex(imito_hex)
+                    if len(imito_received) != IMITO_SIZE:
+                        print("Ошибка: имитовставка должна быть 32 бита (8 HEX-символов = 4 байта).")
+                    else:
+                        imito_verify(msg, key, imito_received, show_steps=True)
+                except ValueError:
+                    print("Ошибка: некорректный HEX имитовставки.")
+        elif choice == "6":
             print("Программа завершена.")
             break
         else:
-            print("Выберите действие 0–4.")
+            print("Выберите действие 0–6.")
 
 
 if __name__ == "__main__":
